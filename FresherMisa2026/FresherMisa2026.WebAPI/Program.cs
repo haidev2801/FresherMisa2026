@@ -1,6 +1,7 @@
-using FresherMisa2026.WebAPI.Middlewares;
-using FresherMisa2026.Infrastructure;
 using FresherMisa2026.Application;
+using FresherMisa2026.Application.Extensions;
+using FresherMisa2026.Infrastructure;
+using FresherMisa2026.WebAPI.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+//Config sql load
+SQLExtension.Initialize();
 
 //Middlewares
 app.UseMiddleware<GlobalExceptionMiddleware>();

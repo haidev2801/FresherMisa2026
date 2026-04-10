@@ -23,17 +23,36 @@ namespace FresherMisa2026.WebAPI.Controllers
             _baseService = baseService;
         }
 
+        /// <summary>
+        /// Danh sách paging
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("paging")]
+        public async Task<ActionResult<ServiceResponse>> GetFilterPaping(
+            [FromQuery] string search,
+            [FromQuery] string sort,
+            [FromQuery] int pageSize,
+            [FromQuery] int pageIndex
+            )
+        {
+            var response = new ServiceResponse();
+            response.Data = await _baseService.GetEntities();
+            response.IsSuccess = true;
+
+            return response;
+        }
 
         /// <summary>
         /// Danh sách
         /// </summary>
         /// <returns></returns>
         [HttpGet()]
-        public async Task<ServiceResponse> Get()
+        public async Task<ActionResult<ServiceResponse>> Get()
         {
             var response = new ServiceResponse();
             response.Data = await _baseService.GetEntities();
             response.IsSuccess = true;
+
             return response;
         }
 
@@ -43,11 +62,15 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <param name="ID"></param>
         /// <returns></returns>
         [HttpGet("{ID}")]
-        public async Task<ServiceResponse> GetByID(Guid ID)
+        public async Task<ActionResult<ServiceResponse>> GetByID(Guid ID)
         {
             var response = new ServiceResponse();
             response.Data = await _baseService.GetEntityByID(ID);
             response.IsSuccess = true;
+
+            if (response.Data == null)
+                return NotFound();
+            
             return response;
         }
 
@@ -57,7 +80,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <param name="ID"></param>
         /// <returns></returns>
         [HttpDelete("{ID}")]
-        public async Task<ServiceResponse> DeleteByID(Guid ID)
+        public async Task<ActionResult<ServiceResponse>> DeleteByID(Guid ID)
         {
             var response = new ServiceResponse();
             bool success = await _baseService.DeleteByID(ID);
@@ -73,7 +96,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <returns>Sô bản ghi bị ảnh hưởng</returns>
         /// CreatedBy: DVHAI 07/07/2026
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] TEntity entity)
+        public async Task<ActionResult<ServiceResponse>> Post([FromBody] TEntity entity)
         {
             var serviceResult = new ServiceResponse();
             try
@@ -90,7 +113,6 @@ namespace FresherMisa2026.WebAPI.Controllers
             }
         }
 
-
         /// <summary>
         /// Sửa một thực thể
         /// </summary>
@@ -99,7 +121,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <returns>Số bản ghi bị ảnh hưởng</returns>
         /// CreatedBy: DVHAI 07/07/2021
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put([FromRoute] string id, [FromBody] TEntity entity)
+        public async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
         {
             var serviceResult = await _baseService.Update(Guid.Parse(id), entity);
 

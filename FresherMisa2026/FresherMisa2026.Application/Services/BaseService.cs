@@ -70,9 +70,17 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (07/07/2026)
         public async Task<bool> DeleteByID(Guid entityId)
         {
+            //1. Validate xóa
+            bool canDelete = await ValidateBeforeDelete(entityId);
+            if (!canDelete)
+                return false;
+            
+            //2. Thực hiện xóa
             int rowAffects = await _baseRepository.Delete(entityId);
             if(rowAffects > 0)
+                //3. Xóa thành công thì làm gì
                 AfterDelete();
+
             return rowAffects > 0;
         }
 
@@ -223,6 +231,14 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         protected virtual void AfterDelete()
         {
+        }
+
+        /// <summary>
+        /// Trước khi xóa
+        /// </summary>
+        protected virtual async Task<bool> ValidateBeforeDelete(Guid entityId)
+        {
+            return true;
         }
         #endregion
     }
