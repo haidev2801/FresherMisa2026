@@ -4,6 +4,11 @@ using System.Text.Json;
 
 namespace FresherMisa2026.WebAPI.Middlewares
 {
+    /// <summary>
+    /// Middleware bắt mọi exception không được catch ở tầng Controller/Service.
+    /// Trả về ServiceResponse ở dạng JSON với Code = 500 và thông điệp người dùng/Dev.
+    /// Gắn middleware này ở Program.cs để áp dụng cho toàn bộ pipeline.
+    /// </summary>
     public class GlobalExceptionMiddleware
     {
         private readonly RequestDelegate _next;
@@ -13,38 +18,46 @@ namespace FresherMisa2026.WebAPI.Middlewares
             _next = next;
         }
 
+        /// <summary>
+        /// Phương thức chính của middleware. Thực hiện try/catch xung quanh _next(context).
+        /// Nếu có exception sẽ xử lý bằng HandleExceptionAsync.
+        /// </summary>
         public async Task InvokeAsync(HttpContext context)
         {
             try
             {
                 Console.WriteLine("Before run middleware");
-                // Pass the request to the next middleware/component
+                // Chuyển tiếp request đến middleware/component tiếp theo
                 await _next(context);
                 Console.WriteLine("After run middleware");
             }
             catch (Exception ex)
             {
-                // Handle the exception globally
+                // Xử lý exception toàn cục
                 await HandleExceptionAsync(context, ex);
             }
         }
 
+        /// <summary>
+        /// Xử lý exception: thiết lập status code 500 và trả ServiceResponse dạng JSON.
+        /// Lưu ý: DevMessage chứa exception.Message; nếu muốn thêm chi tiết có thể thêm stack trace khi đang ở môi trường dev.
+        /// </summary>
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            // Set status code and content type
+            // Thiết lập status code và content type
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            // Create response payload
+            // Tạo payload phản hồi
             var response = new ServiceResponse
             {
                 IsSuccess = false,
                 Code = context.Response.StatusCode,
                 UserMessage = "Có lỗi xảy ra vui lòng liên hệ Misa!",
-                DevMessage = exception.Message // Optional: include for dev
+                DevMessage = exception.Message // Tùy chọn: bao gồm cho dev
             };
 
-            // Serialize the response to JSON
+            // Chuyển đổi phản hồi thành JSON
             var jsonResponse = JsonSerializer.Serialize(response);
 
             return context.Response.WriteAsync(jsonResponse);

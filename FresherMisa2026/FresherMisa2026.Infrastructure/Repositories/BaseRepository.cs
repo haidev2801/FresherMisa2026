@@ -12,7 +12,9 @@ using System.Text;
 namespace FresherMisa2026.Infrastructure.Repositories
 {
     /// <summary>
-    // Base repository
+    /// BaseRepository cung cấp các phương thức CRUD chung sử dụng Dapper và MySqlConnector.
+    /// TEntity phải kế thừa BaseModel để có các thuộc tính chung.
+    /// Repository dùng reflection (MethodExtensions) để lấy tên bảng, tên primary key và cờ IsDeleted.
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
@@ -30,15 +32,20 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public BaseRepository(IConfiguration configuration)
         {
             _configuration = configuration;
+            // Lấy connection string từ appsettings (key: DefaultConnection)
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+            // Khởi tạo connection MySql
             _dbConnection = new MySqlConnection(_connectionString);
+            // Lưu type của model để dùng reflection
             _modelType = typeof(TEntity);
+            // Lấy tên bảng từ attribute ConfigTable
             _tableName = _modelType.GetTableName();
         }
 
 
         /// <summary>
-        /// Dispose connection
+        /// Dispose connection nếu đang mở.
+        /// Đảm bảo giải phóng tài nguyên DB khi repository bị dispose.
         /// </summary>
         /// Created By: dvhai (09/04/2026)
         public void Dispose()
@@ -52,7 +59,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
         #region Method Get
         /// <summary>
-        /// Lấy danh sách entity
+        /// Lấy danh sách entity (gọi hàm private để build command text)
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
@@ -63,21 +70,24 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy tất cả theo command text
+        /// Lấy tất cả theo command text.
+        /// Nếu table có cột IsDeleted thì tự động thêm điều kiện lọc IsDeleted = FALSE.
+        /// Trả về danh sách TEntity.
         /// </summary>
-        /// <returns></returns>
         /// CREATED BY: DVHAI (11/07/2021)
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
             var query = new StringBuilder($"select * from {_tableName}");
             int whereCount = 0;
 
+            // Nếu cấu hình entity có cột IsDeleted, thêm điều kiện lọc
             if (_modelType.GetHasDeletedColumn())
             {
                 whereCount++;
                 query.Append($" where IsDeleted = FALSE");
             }
 
+            // Dapper query để map kết quả sang TEntity
             var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
 
             return entities.ToList();
@@ -95,7 +105,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy bản ghi theo id dùng command text
+        /// Lấy bản ghi theo id dùng command text.
+        /// Sử dụng reflection để lấy tên khóa chính và thêm điều kiện lọc IsDeleted nếu cần.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -104,13 +115,17 @@ namespace FresherMisa2026.Infrastructure.Repositories
             var query = new StringBuilder($"select * from {_tableName}");
             int whereCount = 0;
 
+            // Hàm nội bộ để thêm 'where' lần đầu tiên nếu cần
             Func<StringBuilder, bool> AppendWhere = (query) => { if (whereCount == 0) query.Append(" where "); return true; };
 
+            // Lấy tên khóa chính theo attribute [Key]
             var primaryKey = _modelType.GetKeyName();
 
             if (primaryKey != null)
             {
                 AppendWhere(query);
+                // NOTE: id ở đây được chèn trực tiếp vào query string => chú ý SQL injection nếu giá trị không được kiểm soát.
+                // Trong dự án hiện tại dùng Guid và input từ server nên rủi ro thấp, nhưng tốt hơn là dùng parameterized query.
                 query.Append($"{primaryKey} = '{id}'");
                 whereCount++;
             }
@@ -128,10 +143,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Xóa theo mã
+        /// Xóa theo mã (gọi stored procedure Proc_Delete{TableName}ById)
+        /// Repository mở transaction, gọi SP và commit/rollback.
         /// </summary>
         /// <param name="entityId"></param>
-        /// <returns></returns>
+        /// <returns>số bản ghi bị ảnh hưởng</returns>
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<int> Delete(Guid entityId)
         {
@@ -148,7 +164,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var dynamicParams = new DynamicParameters();
                     dynamicParams.Add($"@v_{keyName}", entityId);
 
-                    //2. Kết nối tới CSDL:
+                    //2. Kết nối tới CSDL: gọi stored procedure theo quy ước tên
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
@@ -162,10 +178,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
 
         /// <summary>
-        /// Thêm bản ghi
+        /// Thêm bản ghi (gọi stored procedure Proc_Insert{TableName}).
+        /// Thực hiện mapping các thuộc tính entity sang DynamicParameters rồi gọi SP.
         /// </summary>
         /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <returns>số bản ghi bị ảnh hưởng</returns>
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<int> Insert(TEntity entity)
         {
@@ -194,11 +211,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Cập nhập bản ghi
+        /// Cập nhập bản ghi (gọi stored procedure Proc_Update{TableName}).
+        /// Gán giá trị id vào property tương ứng trước khi map parameters.
         /// </summary>
         /// <param name="entityId"></param>
         /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <returns>số bản ghi bị ảnh hưởng</returns>
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<int> Update(Guid entityId, TEntity entity)
         {
@@ -211,11 +229,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     //1. Duyệt các thuộc tính trên customer và tạo parameters
                     var parameters = MappingDbType(entity);
 
-                    //2. Ánh xạ giá trị id
+                    //2. Ánh xạ giá trị id vào property tương ứng (theo primary key)
                     var keyName = _modelType.GetKeyName();
                     entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
 
-                    //3. Kết nối tới CSDL:
+                    //3. Kết nối tới CSDL: gọi stored procedure update
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
@@ -230,10 +248,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Ánh xạ các thuộc tính sang kiểu dynamic
+        /// Ánh xạ các thuộc tính sang DynamicParameters của Dapper.
+        /// Quy ước tên tham số: @v_{PropertyName}
+        /// Guid/Guid? được map sang DbType.String để lưu dưới dạng chuỗi.
         /// </summary>
         /// <param name="entity">Thực thể</param>
-        /// <returns>Dan sách các biến động</returns>
+        /// <returns>Danh sách các parameter</returns>
         private DynamicParameters MappingDbType(TEntity entity)
         {
             var parameters = new DynamicParameters();
@@ -248,6 +268,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var propertyValue = property.GetValue(entity);
                     var propertyType = property.PropertyType;
 
+                    // Nếu property là Guid hoặc Guid? thì map kiểu DbType.String (thường dùng trong project lưu Guid dưới dạng chuỗi)
                     if (propertyType == typeof(Guid) || propertyType == typeof(Guid?))
                         parameters.Add($"@v_{propertyName}", propertyValue, DbType.String);
                     else

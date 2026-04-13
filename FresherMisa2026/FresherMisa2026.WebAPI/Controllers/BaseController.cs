@@ -11,6 +11,10 @@ using static Dapper.SqlMapper;
 
 namespace FresherMisa2026.WebAPI.Controllers
 {
+    /// <summary>
+    /// Controller generic dùng chung cho các entity. Cung cấp các endpoint chuẩn: GET list, GET by id, POST, PUT, DELETE.
+    /// Các controller cụ thể sẽ kế thừa BaseController<TEntity> và được inject IBaseService<TEntity>.
+    /// </summary>
     [ApiController]
     [Route("/api/[controller]")]
     public class BaseController<TEntity> : ControllerBase
@@ -26,6 +30,8 @@ namespace FresherMisa2026.WebAPI.Controllers
 
         /// <summary>
         /// Danh sách
+        /// GET /api/{controller}
+        /// Trả về ServiceResponse với Data là danh sách entity
         /// </summary>
         /// <returns></returns>
         [HttpGet()]
@@ -39,6 +45,7 @@ namespace FresherMisa2026.WebAPI.Controllers
 
         /// <summary>
         /// Một phần tử
+        /// GET /api/{controller}/{ID}
         /// </summary>
         /// <param name="ID"></param>
         /// <returns></returns>
@@ -53,6 +60,8 @@ namespace FresherMisa2026.WebAPI.Controllers
 
         /// <summary>
         /// Xóa một phần tử
+        /// DELETE /api/{controller}/{ID}
+        /// Trả về ServiceResponse với IsSuccess=true nếu xóa thành công
         /// </summary>
         /// <param name="ID"></param>
         /// <returns></returns>
@@ -68,6 +77,8 @@ namespace FresherMisa2026.WebAPI.Controllers
 
         /// <summary>
         /// Thêm một thực thể mới
+        /// POST /api/{controller}
+        /// Trả về status code 201 Created nếu thành công, 400 nếu validate lỗi.
         /// </summary>
         /// <param name="entity"></param>
         /// <returns>Sô bản ghi bị ảnh hưởng</returns>
@@ -93,6 +104,8 @@ namespace FresherMisa2026.WebAPI.Controllers
 
         /// <summary>
         /// Sửa một thực thể
+        /// PUT /api/{controller}/{id}
+        /// Trả về 200 OK nếu thành công, 400/404/500 tuỳ trường hợp lỗi.
         /// </summary>
         /// <param name="id">id của bản ghi</param>
         /// <param name="entity">thông tin của bản ghi</param>

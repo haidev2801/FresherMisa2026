@@ -5,26 +5,30 @@ using System.Text;
 
 namespace FresherMisa2026.Application.Interfaces
 {
+    /// <summary>
+    /// Interface định nghĩa các phương thức CRUD chung cho repository.
+    /// Các repository cụ thể có thể implement interface generic này.
+    /// </summary>
     public interface IBaseRepository<TEntity>
     {
-        // <summary>
+        /// <summary>
         ///  Lấy danh sách thực thể
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// <returns>Bản ghi thông tin 1 bản ghi</returns>
         /// CREATED BY: DVHAI (07/07/2026)
         public Task<IEnumerable<BaseModel>> GetEntities();
 
-        // <summary>
+        /// <summary>
         ///  Lấy bản ghi theo id
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// <returns>Bản ghi thông tin 1 bản ghi</returns>
         /// CREATED BY: DVHAI (07/07/2026)
         Task<TEntity> GetEntityByID(Guid entityId);
 
         /// <summary>
-        /// Xóa bản ghi
+        /// Xóa bản ghi theo id
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số bản ghi bị xóa</returns>

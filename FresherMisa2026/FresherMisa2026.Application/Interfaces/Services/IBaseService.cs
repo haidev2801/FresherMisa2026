@@ -5,6 +5,9 @@ using System.Text;
 
 namespace FresherMisa2026.Application.Interfaces.Services
 {
+    /// <summary>
+    /// Interface service chung cho các entity, định nghĩa các phương thức service cơ bản.
+    /// </summary>
     public interface IBaseService<TEntity>
     {
         /// <summary>
@@ -23,7 +26,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         Task<TEntity> GetEntityByID(Guid entityId);
 
         /// <summary>
-        /// Xóa bản ghi
+        /// Xóa bản ghi theo id, trả về true nếu xóa thành công
         /// </summary>
         /// <param name="entityId"></param>
         /// <returns>Số dòng bị xóa</returns>
@@ -31,7 +34,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         Task<bool> DeleteByID(Guid entityId);
 
         /// <summary>
-        /// Thêm một thực thể
+        /// Thêm bản ghi và trả về ServiceResponse
         /// </summary>
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>Số bản ghi bị ảnh hưởng</returns>
@@ -39,7 +42,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         Task<ServiceResponse> Insert(TEntity entity);
 
         /// <summary>
-        /// Cập nhập thông tin bản ghi 
+        /// Cập nhật bản ghi và trả về ServiceResponse
         /// </summary>
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
