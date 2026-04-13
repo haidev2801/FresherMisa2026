@@ -16,4 +16,9 @@
     <ProjectReference Include="..\FresherMisa2026.Infrastructure\FresherMisa2026.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+    <Folder Include="Queries\" />
+  </ItemGroup>
+
 </Project>

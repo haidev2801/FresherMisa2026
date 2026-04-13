@@ -1,0 +1,3 @@
+{
+  "Department.GetByCode": "SELECT * FROM Department WHERE DepartmentCode=@DepartmentCode"
+}
