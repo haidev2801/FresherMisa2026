@@ -12,7 +12,8 @@ namespace FresherMisa2026.WebAPI.Controllers
     {
         private readonly IDepartmentSerice _departmentSerice;
 
-        public DepartmentsController(IDepartmentSerice departmentSerice) : base(departmentSerice)
+        public DepartmentsController(
+            IDepartmentSerice departmentSerice) : base(departmentSerice)
         {
             _departmentSerice = departmentSerice;
         }

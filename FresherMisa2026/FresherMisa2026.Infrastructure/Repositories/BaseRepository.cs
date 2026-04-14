@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
+using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
@@ -8,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -227,6 +230,40 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
             //4. Trả về dữ liệu
             return rowAffects;
+        }
+
+        // <summary>
+        ///  Lấy danh sách thực thể paging
+        /// </summary>
+        /// <param name="entityId">Id của bản ghi</param>
+        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// CREATED BY: DVHAI (07/07/2026)
+        public async Task<(long Total,
+            IEnumerable<TEntity> Data)> GetFilterPaging(
+            int pageSize,
+            int pageIndex,
+            string search,
+            List<string> searchFields,
+            string sort)
+        {
+            long total = 0;
+            var data = Enumerable.Empty<TEntity>();
+
+            string store = string.Format("Proc_{0}_FilterPaging", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("@v_pageIndex", pageIndex);
+            parameters.Add("@v_pageSize", pageSize);
+            parameters.Add("@v_search", search);
+            parameters.Add("@v_sort", sort);
+            parameters.Add("@v_searchFields", JsonSerializer.Serialize(searchFields));
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+                new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            data = (await reader.ReadAsync<TEntity>()).ToList();
+            total = await reader.ReadFirstAsync<long>();
+
+            return (total, data);
         }
 
         /// <summary>

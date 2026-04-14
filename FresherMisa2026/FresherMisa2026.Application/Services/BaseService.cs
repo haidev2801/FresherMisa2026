@@ -223,6 +223,29 @@ namespace FresherMisa2026.Application.Services
             //3. Trả về kế quả
             return _serviceResult;
         }
+
+        // <summary>
+        ///  Lấy danh sách thực thể paging
+        /// </summary>
+        /// <param name="entityId">Id của bản ghi</param>
+        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// CREATED BY: DVHAI (07/07/2026)
+        public async Task<PagingResponse<TEntity>> GetFilterPaging(
+            PagingRequest pagingRequest)
+        {
+            var fields = pagingRequest.SearchFields.Split(";").ToList();
+            var response = new PagingResponse<TEntity>();
+
+            var (total, data) = await _baseRepository.GetFilterPaging(
+                pagingRequest.PageSize, pagingRequest.PageIndex, pagingRequest.Search
+                , fields, pagingRequest.Sort
+                );
+
+            response.Total = total;
+            response.Data = data.ToList();
+
+            return response;
+        }
         #endregion
 
         #region Virtual method

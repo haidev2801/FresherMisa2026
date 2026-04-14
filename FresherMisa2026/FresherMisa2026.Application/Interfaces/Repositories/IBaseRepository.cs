@@ -8,6 +8,20 @@ namespace FresherMisa2026.Application.Interfaces
     public interface IBaseRepository<TEntity>
     {
         // <summary>
+        ///  Lấy danh sách thực thể paging
+        /// </summary>
+        /// <param name="entityId">Id của bản ghi</param>
+        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// CREATED BY: DVHAI (07/07/2026)
+        Task<(long Total, 
+            IEnumerable<TEntity> Data)> GetFilterPaging(
+            int pageSize, 
+            int pageIndex, 
+            string search, 
+            List<string> searchFields, 
+            string sort);
+
+        // <summary>
         ///  Lấy danh sách thực thể
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>

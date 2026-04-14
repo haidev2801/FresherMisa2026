@@ -7,6 +7,14 @@ namespace FresherMisa2026.Application.Interfaces.Services
 {
     public interface IBaseService<TEntity>
     {
+        // <summary>
+        ///  Lấy danh sách thực thể paging
+        /// </summary>
+        /// <param name="entityId">Id của bản ghi</param>
+        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// CREATED BY: DVHAI (07/07/2026)
+        Task<PagingResponse<TEntity>> GetFilterPaging(PagingRequest pagingRequest);
+
         /// <summary>
         /// Lấy tất cả bản ghi
         /// </summary>
