@@ -9,6 +9,10 @@ using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Repository for Department entity
+    /// </summary>
+    /// Created By: dvhai (09/04/2026)
     public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
     {
         public DepartmentRepository(IConfiguration configuration) : base(configuration)
@@ -17,10 +21,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// 
+        /// Lấy department theo code
         /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
+        /// <param name="code">Mã department</param>
+        /// <returns>Department tìm thấy hoặc null</returns>
+        /// CREATED BY: dvhai (09/04/2026)
         public async Task<Department> GetDepartmentByCode(string code)
         {
             string query = SQLExtension.GetQuery("Department.GetByCode");
