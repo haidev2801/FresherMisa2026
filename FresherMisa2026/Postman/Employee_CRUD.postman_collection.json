@@ -1,0 +1,507 @@
+{
+  "info": {
+    "name": "FresherMisa2026 - Employees CRUD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection test CRUD Employee cho FresherMisa2026"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7173"
+    },
+    {
+      "key": "existingEmployeeId",
+      "value": "e0000001-0000-0000-0000-000000000001"
+    },
+    {
+      "key": "updateEmployeeId",
+      "value": "e0000001-0000-0000-0000-000000000015"
+    },
+    {
+      "key": "deleteEmployeeId",
+      "value": "e0000001-0000-0000-0000-000000000010"
+    },
+    {
+      "key": "missingEmployeeId",
+      "value": "99999999-9999-9999-9999-999999999999"
+    },
+    {
+      "key": "emptyGuid",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "duplicateEmployeeCode",
+      "value": "EMP001"
+    },
+    {
+      "key": "departmentId",
+      "value": "550e8400-e29b-41d4-a716-446655440002"
+    },
+    {
+      "key": "positionId",
+      "value": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "key": "newEmployeeCode",
+      "value": ""
+    },
+    {
+      "key": "newEmployeeName",
+      "value": ""
+    },
+    {
+      "key": "newEmployeeEmail",
+      "value": ""
+    },
+    {
+      "key": "updatedEmployeeCode",
+      "value": ""
+    },
+    {
+      "key": "updatedEmployeeName",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01. GET - All Employees",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Success response', function () {",
+              "  pm.expect(json.isSuccess).to.eql(true);",
+              "  pm.expect(json.code).to.eql(200);",
+              "  pm.expect(json.data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. GET - Employee By Existing Id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/Employees/{{existingEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Employee found', function () {",
+              "  pm.expect(json.isSuccess).to.eql(true);",
+              "  pm.expect(json.data.employeeID).to.eql(pm.collectionVariables.get('existingEmployeeId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. GET - Employee By Missing Id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/Employees/{{missingEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });",
+              "const json = pm.response.json();",
+              "pm.test('Not found', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. GET - Employee By Empty Guid",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/Employees/{{emptyGuid}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Invalid id', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. POST - Create Employee Success",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now().toString().slice(-6);",
+              "pm.collectionVariables.set('newEmployeeCode', `EMP${suffix}`);",
+              "pm.collectionVariables.set('newEmployeeName', `Employee ${suffix}`);",
+              "pm.collectionVariables.set('newEmployeeEmail', `employee${suffix}@test.com`);",
+              "pm.collectionVariables.set('updatedEmployeeCode', `UPD${suffix}`);",
+              "pm.collectionVariables.set('updatedEmployeeName', `Updated Employee ${suffix}`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+              "const json = pm.response.json();",
+              "pm.test('Created', function () {",
+              "  pm.expect(json.isSuccess).to.eql(true);",
+              "  pm.expect(json.code).to.eql(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"{{newEmployeeCode}}\",\n  \"employeeName\": \"{{newEmployeeName}}\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"{{newEmployeeEmail}}\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      }
+    },
+    {
+      "name": "06. POST - Create Employee Duplicate Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"{{duplicateEmployeeCode}}\",\n  \"employeeName\": \"Duplicate Employee\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"duplicate@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Duplicate code', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. POST - Create Employee Missing Name",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_MISSING_NAME\",\n  \"employeeName\": \"\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"missingname@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Missing name validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. POST - EmployeeCode Too Long",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMPLOYEE_CODE_IS_MORE_THAN_20_CHARS\",\n  \"employeeName\": \"Too Long Code\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"toolong@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Length validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. PUT - Update Employee Success",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"{{updatedEmployeeCode}}\",\n  \"employeeName\": \"{{updatedEmployeeName}}\",\n  \"gender\": 0,\n  \"dateOfBirth\": \"1997-05-05\",\n  \"phoneNumber\": \"0911002200\",\n  \"email\": \"updated@test.com\",\n  \"address\": \"HCM\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 15000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Updated', function () {",
+              "  pm.expect(json.isSuccess).to.eql(true);",
+              "  pm.expect(json.code).to.eql(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. PUT - Update Employee Missing Id",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_MISSING_ID\",\n  \"employeeName\": \"Missing Id Employee\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"missingid@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{missingEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });",
+              "const json = pm.response.json();",
+              "pm.test('Missing id', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. PUT - Update Employee Duplicate Code",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP001\",\n  \"employeeName\": \"Duplicate Update\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"duplicateupdate@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Duplicate code update', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. PUT - Update Employee Missing Name",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_VALID_NAMELESS\",\n  \"employeeName\": \"\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"nameless@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Missing name update validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. DELETE - Employee Success",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/Employees/{{deleteEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('Deleted', function () {",
+              "  pm.expect(json.isSuccess).to.eql(true);",
+              "  pm.expect(json.code).to.eql(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. DELETE - Employee Missing Id",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/Employees/{{missingEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });",
+              "const json = pm.response.json();",
+              "pm.test('Delete missing id', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. DELETE - Employee Empty Guid",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/Employees/{{emptyGuid}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Delete empty guid', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

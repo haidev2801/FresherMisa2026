@@ -39,6 +39,12 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+        /// <summary>
+        /// override phương thức ValidateCustom để thực hiện các kiểm tra tùy chỉnh cho đối tượng Employee trước khi lưu vào cơ sở dữ liệu.
+        /// </summary>
+        /// <param name="employee"></param>
+        /// <returns></returns>
+
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
