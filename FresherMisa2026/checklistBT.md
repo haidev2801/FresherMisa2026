@@ -78,3 +78,13 @@
 **Kiểm tra:**
 - [X] Gọi API với `departmentId` hợp lệ → trả về danh sách nhân viên trong phòng ban đó
 - [X] Gọi API với nhiều điều kiện lọc → trả về kết quả đúng
+
+### Task 2.3: Thêm Custom Endpoint Cho Department (2 điểm)
+
+**Yêu cầu:**
+- Thêm endpoint `GET /api/Departments/{code}/employees` - Lấy danh sách nhân viên theo mã phòng ban
+- Thêm endpoint `GET /api/Departments/{code}/employee-count` - Đếm số nhân viên trong phòng ban
+
+**Kiểm tra:**
+- [X] `GET /api/Departments/DV/employees` → trả về danh sách nhân viên phòng ban DV
+- [X] `GET /api/Departments/DV/employee-count` → trả về số lượng nhân viên
