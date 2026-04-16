@@ -42,7 +42,7 @@
 - [X] API `DELETE /api/Employees/{id}` xóa employee
 
 
-<!-- ## Bài Tập Cấp Độ 2: Intermediate
+## Bài Tập Cấp Độ 2: Intermediate
 
 ### Task 2.1: Thêm Validation cho Employee (2 điểm)
 
