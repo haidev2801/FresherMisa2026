@@ -5,19 +5,28 @@ using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FresherMisa2026.Application.Services
 {
-    public class EmployeeService : BaseService<Employee>, IEmployeeService
+    public partial class EmployeeService : BaseService<Employee>, IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly IDepartmentRepository _departmentRepository;
+        private readonly IPositionRepository _positionRepository;
+        private static readonly Regex EmailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex PhoneNumberRegex = new(@"^(?:0|\+84)(?:3|5|7|8|9)\d{8}$", RegexOptions.Compiled);
 
         public EmployeeService(
             IBaseRepository<Employee> baseRepository,
-            IEmployeeRepository employeeRepository
+            IEmployeeRepository employeeRepository,
+            IDepartmentRepository departmentRepository,
+            IPositionRepository positionRepository
             ) : base(baseRepository)
         {
             _employeeRepository = employeeRepository;
+            _departmentRepository = departmentRepository;
+            _positionRepository = positionRepository;
         }
 
         public async Task<Employee> GetEmployeeByCodeAsync(string code)
@@ -39,6 +48,16 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+        protected override async Task<List<ValidationError>> ValidateBeforeInsertAsync(Employee employee)
+        {
+            return await ValidateBusinessRulesAsync(employee, null);
+        }
+
+        protected override async Task<List<ValidationError>> ValidateBeforeUpdateAsync(Guid entityId, Employee employee)
+        {
+            return await ValidateBusinessRulesAsync(employee, entityId);
+        }
+
         /// <summary>
         /// override phương thức ValidateCustom để thực hiện các kiểm tra tùy chỉnh cho đối tượng Employee trước khi lưu vào cơ sở dữ liệu.
         /// </summary>
@@ -58,8 +77,78 @@ namespace FresherMisa2026.Application.Services
             {
                 errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
             }
+            // kiểm tra ngày sinh không được lớn hơn ngày hiện tại(nếu có nhập nagyf sinh)
+            if(employee.DateOfBirth.HasValue && employee.DateOfBirth.Value > DateTime.Now)
+            {
+                errors.Add(new ValidationError("DateOfBirth", "Ngày sinh không được lớn hơn ngày hiện tại"));
+            }
+            //kiểm tra email có đúng định dạng hay không (nếu có nhập email)
+            if (!string.IsNullOrWhiteSpace(employee.Email) && !EmailRegex.IsMatch(employee.Email.Trim()))
+            {
+                errors.Add(new ValidationError("Email", "Email không đúng định dạng"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.PhoneNumber) && !PhoneNumberRegex.IsMatch(employee.PhoneNumber.Trim()))
+            {
+                errors.Add(new ValidationError("PhoneNumber", "Số điện thoại không đúng định dạng"));
+            }
 
             return errors;
+        }
+
+        private async Task<List<ValidationError>> ValidateBusinessRulesAsync(Employee employee, Guid? currentEmployeeId)
+        {
+            var errors = new List<ValidationError>();
+
+            var duplicateCodeError = await ValidateDuplicateCodeAsync(employee.EmployeeCode, currentEmployeeId);
+            if (duplicateCodeError != null)
+            {
+                errors.Add(duplicateCodeError);
+            }
+
+            if (employee.DepartmentID == Guid.Empty)
+            {
+                errors.Add(new ValidationError(nameof(Employee.DepartmentID), "Phòng ban không được để trống"));
+            }
+            else
+            {
+                var department = await _departmentRepository.GetEntityByIDAsync(employee.DepartmentID);
+                if (department == null)
+                {
+                    errors.Add(new ValidationError(nameof(Employee.DepartmentID), "Phòng ban không tồn tại"));
+                }
+            }
+
+            if (employee.PositionID == Guid.Empty)
+            {
+                errors.Add(new ValidationError(nameof(Employee.PositionID), "Vị trí không được để trống"));
+            }
+            else
+            {
+                var position = await _positionRepository.GetEntityByIDAsync(employee.PositionID);
+                if (position == null)
+                {
+                    errors.Add(new ValidationError(nameof(Employee.PositionID), "Vị trí không tồn tại"));
+                }
+            }
+
+            return errors;
+        }
+
+        private async Task<ValidationError?> ValidateDuplicateCodeAsync(string? employeeCode, Guid? currentEmployeeId)
+        {
+            if (string.IsNullOrWhiteSpace(employeeCode))
+                return null;
+            var existingEmplyee = await _employeeRepository.GetEmployeeByCode(employeeCode.Trim());
+            if (existingEmplyee == null)
+            {
+                return null;
+            }
+            if (!currentEmployeeId.HasValue || existingEmplyee.EmployeeID != currentEmployeeId.Value)
+            {
+                return new ValidationError(nameof(Employee.EmployeeCode), "Mã nhân viên đã tồn tại");
+            }
+            return null;
         }
     }
 }

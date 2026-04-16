@@ -19,7 +19,7 @@
     },
     {
       "key": "deleteEmployeeId",
-      "value": "e0000001-0000-0000-0000-000000000010"
+      "value": "e0000001-0000-0000-0000-000000000011"
     },
     {
       "key": "missingEmployeeId",
@@ -35,11 +35,19 @@
     },
     {
       "key": "departmentId",
-      "value": "550e8400-e29b-41d4-a716-446655440002"
+      "value": "550e8400-e29b-41d4-a716-446655440010"
     },
     {
       "key": "positionId",
       "value": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "key": "missingDepartmentId",
+      "value": "88888888-8888-8888-8888-888888888888"
+    },
+    {
+      "key": "missingPositionId",
+      "value": "77777777-1111-2222-3333-999999999999"
     },
     {
       "key": "newEmployeeCode",
@@ -435,7 +443,271 @@
       ]
     },
     {
-      "name": "13. DELETE - Employee Success",
+      "name": "13. POST - Create Employee Invalid Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_INVALID_EMAIL\",\n  \"employeeName\": \"Invalid Email Employee\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"invalid-email\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Invalid email validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. POST - Create Employee Invalid Phone Number",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_INVALID_PHONE\",\n  \"employeeName\": \"Invalid Phone Employee\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0123456789\",\n  \"email\": \"invalidphone@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Invalid phone validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. POST - Create Employee Missing Department",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_INVALID_DEPT\",\n  \"employeeName\": \"Invalid Department Employee\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"invaliddept@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{missingDepartmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Missing department validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. POST - Create Employee Missing Position",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_INVALID_POS\",\n  \"employeeName\": \"Invalid Position Employee\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"invalidpos@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{missingPositionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Missing position validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. PUT - Update Employee Invalid Email",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_UPDATE_INVALID_EMAIL\",\n  \"employeeName\": \"Update Invalid Email\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"invalid-email\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Update invalid email validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18. PUT - Update Employee Invalid Phone Number",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_UPDATE_INVALID_PHONE\",\n  \"employeeName\": \"Update Invalid Phone\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0123456789\",\n  \"email\": \"updateinvalidphone@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Update invalid phone validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19. PUT - Update Employee Missing Department",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_UPDATE_INVALID_DEPT\",\n  \"employeeName\": \"Update Invalid Department\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"updateinvaliddept@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{missingDepartmentId}}\",\n  \"positionID\": \"{{positionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Update missing department validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20. PUT - Update Employee Missing Position",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeCode\": \"EMP_UPDATE_INVALID_POS\",\n  \"employeeName\": \"Update Invalid Position\",\n  \"gender\": 1,\n  \"dateOfBirth\": \"1998-01-01\",\n  \"phoneNumber\": \"0901234567\",\n  \"email\": \"updateinvalidpos@test.com\",\n  \"address\": \"Ha Noi\",\n  \"departmentID\": \"{{departmentId}}\",\n  \"positionID\": \"{{missingPositionId}}\",\n  \"salary\": 12000000,\n  \"createdDate\": \"2026-04-16T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/Employees/{{updateEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+              "const json = pm.response.json();",
+              "pm.test('Update missing position validation', function () {",
+              "  pm.expect(json.isSuccess).to.eql(false);",
+              "  pm.expect(json.code).to.eql(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21. DELETE - Employee Success",
       "request": {
         "method": "DELETE",
         "url": "{{baseUrl}}/api/Employees/{{deleteEmployeeId}}"
@@ -458,7 +730,7 @@
       ]
     },
     {
-      "name": "14. DELETE - Employee Missing Id",
+      "name": "22. DELETE - Employee Missing Id",
       "request": {
         "method": "DELETE",
         "url": "{{baseUrl}}/api/Employees/{{missingEmployeeId}}"
@@ -481,7 +753,7 @@
       ]
     },
     {
-      "name": "15. DELETE - Employee Empty Guid",
+      "name": "23. DELETE - Employee Empty Guid",
       "request": {
         "method": "DELETE",
         "url": "{{baseUrl}}/api/Employees/{{emptyGuid}}"

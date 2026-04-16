@@ -205,11 +205,8 @@ namespace FresherMisa2026.Application.Services
             //1. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
 
-            var duplicateInsertError = await ValidateBeforeInsertAsync(entity);
-            if (duplicateInsertError != null)
-            {
-                errors.Add(duplicateInsertError);
-            }
+            var insertValidationErrors = await ValidateBeforeInsertAsync(entity);
+            errors.AddRange(insertValidationErrors);
 
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
@@ -251,11 +248,8 @@ namespace FresherMisa2026.Application.Services
             //2. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
 
-            var duplicateUpdateError = await ValidateBeforeUpdateAsync(entityId, entity);
-            if (duplicateUpdateError != null)
-            {
-                errors.Add(duplicateUpdateError);
-            }
+            var updateValidationErrors = await ValidateBeforeUpdateAsync(entityId, entity);
+            errors.AddRange(updateValidationErrors);
             
             if (errors.Count == 0)
             {
@@ -413,14 +407,14 @@ namespace FresherMisa2026.Application.Services
             return Task.FromResult<string?>(null);
         }
 
-        protected virtual Task<ValidationError?> ValidateBeforeInsertAsync(TEntity entity)
+        protected virtual Task<List<ValidationError>> ValidateBeforeInsertAsync(TEntity entity)
         {
-            return Task.FromResult<ValidationError?>(null);
+            return Task.FromResult(new List<ValidationError>());
         }
 
-        protected virtual Task<ValidationError?> ValidateBeforeUpdateAsync(Guid entityId, TEntity entity)
+        protected virtual Task<List<ValidationError>> ValidateBeforeUpdateAsync(Guid entityId, TEntity entity)
         {
-            return Task.FromResult<ValidationError?>(null);
+            return Task.FromResult(new List<ValidationError>());
         }
         #endregion
     }

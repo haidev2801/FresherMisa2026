@@ -68,14 +68,28 @@ namespace FresherMisa2026.Application.Services
             return Task.FromResult<string?>("Không thể xóa chức vụ vì đang có nhân viên thuộc chức vụ này");
         }
 
-        protected override async Task<ValidationError?> ValidateBeforeInsertAsync(Position position)
+        protected override async Task<List<ValidationError>> ValidateBeforeInsertAsync(Position position)
         {
-            return await ValidateDuplicateCodeAsync(position.PositionCode, null);
+            var errors = new List<ValidationError>();
+            var duplicateError = await ValidateDuplicateCodeAsync(position.PositionCode, null);
+            if (duplicateError != null)
+            {
+                errors.Add(duplicateError);
+            }
+
+            return errors;
         }
 
-        protected override async Task<ValidationError?> ValidateBeforeUpdateAsync(Guid entityId, Position position)
+        protected override async Task<List<ValidationError>> ValidateBeforeUpdateAsync(Guid entityId, Position position)
         {
-            return await ValidateDuplicateCodeAsync(position.PositionCode, entityId);
+            var errors = new List<ValidationError>();
+            var duplicateError = await ValidateDuplicateCodeAsync(position.PositionCode, entityId);
+            if (duplicateError != null)
+            {
+                errors.Add(duplicateError);
+            }
+
+            return errors;
         }
 
         protected override List<ValidationError> ValidateCustom(Position position)
