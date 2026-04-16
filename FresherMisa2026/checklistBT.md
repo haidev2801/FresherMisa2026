@@ -62,3 +62,19 @@
 - [X] POST employee thiếu các trường bắt buộc → trả về lỗi 400 với thông báo rõ ràng
 - [X] POST employee có mã trùng lặp → trả về lỗi "Mã nhân viên đã tồn tại"
 - [X] POST employee có email sai định dạng → trả về lỗi "Email không đúng định dạng" -->
+
+### Task 2.2: Tạo API Lọc Employee Theo Điều Kiện (2 điểm)
+
+**Yêu cầu:**
+- Thêm endpoint `GET /api/Employees/filter` với các tham số:
+  - `departmentId` - Lọc theo phòng ban
+  - `positionId` - Lọc theo vị trí
+  - `salaryFrom` - Lọc lương từ
+  - `salaryTo` - Lọc lương đến
+  - `gender` - Lọc theo giới tính (0: Nam, 1: Nữ, 2: Khác)
+  - `hireDateFrom` - Ngày vào làm từ
+  - `hireDateTo` - Ngày vào làm đến
+
+**Kiểm tra:**
+- [X] Gọi API với `departmentId` hợp lệ → trả về danh sách nhân viên trong phòng ban đó
+- [X] Gọi API với nhiều điều kiện lọc → trả về kết quả đúng

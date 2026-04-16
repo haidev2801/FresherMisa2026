@@ -4,6 +4,8 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
+using System.Data;
+using static Dapper.SqlMapper;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -41,6 +43,33 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {"@PositionID", positionId }
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+        }
+        public async Task<FilterResponse<Employee>> GetFilterAsync(FilterRequest filterRequest)
+        {
+            var filterResponse = new FilterResponse<Employee>();
+            await OpenConnectionAsync();
+
+            string store = string.Format("Proc_Employee_Filter", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("@v_departmentId", filterRequest.DepartmentId);
+            parameters.Add("@v_positionId", filterRequest.PositionId);
+            parameters.Add("@v_salaryFrom", filterRequest.SalaryFrom);
+            parameters.Add("@v_salaryTo", filterRequest.SalaryTo);
+            parameters.Add("@v_gender", filterRequest.Gender);
+            parameters.Add("@v_hireDateFrom", filterRequest.HireDateFrom);
+            parameters.Add("@v_hireDateTo", filterRequest.HireDateTo);
+            parameters.Add("@v_pageIndex", filterRequest.PageIndex);
+            parameters.Add("@v_pageSize", filterRequest.PageSize);
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+               new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            var data = (await reader.ReadAsync<Employee>()).ToList();
+            var total = await reader.ReadFirstAsync<long>();
+            filterResponse.Total = total;
+            filterResponse.Data = data;
+
+            return filterResponse;
         }
     }
 }

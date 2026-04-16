@@ -39,6 +39,26 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+        public async Task<ServiceResponse> GetFilterAsync(FilterRequest filterRequest)
+        {
+            var response = new FilterResponse<Employee>();
+            var rq = new FilterRequest
+            {
+                DepartmentId = filterRequest.DepartmentId == Guid.Empty ? null : filterRequest.DepartmentId,
+                PositionId = filterRequest.PositionId == Guid.Empty ? null : filterRequest.PositionId,
+                SalaryFrom = filterRequest.SalaryFrom,
+                SalaryTo = filterRequest.SalaryTo,
+                Gender = filterRequest.Gender,
+                HireDateFrom = filterRequest.HireDateFrom,
+                HireDateTo = filterRequest.HireDateTo,
+                PageIndex = filterRequest.PageIndex > 0 ? filterRequest.PageIndex : 1,
+                PageSize = filterRequest.PageSize > 0 ? filterRequest.PageSize : 10
+            };
+
+            response = await _employeeRepository.GetFilterAsync(rq);
+
+            return CreateSuccessResponse(response);
+        }
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
