@@ -200,6 +200,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
+                    EnsurePrimaryKeyForInsert(entity);
+
                     //1.Duyệt các thuộc tính trên bản ghi và tạo parameters
                     var parameters = MappingDbType(entity);
 
@@ -235,12 +237,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
-                    //1. Duyệt các thuộc tính trên customer và tạo parameters
-                    var parameters = MappingDbType(entity);
+                    //1. Ánh xạ giá trị id
+                    SetPrimaryKeyValue(entity, entityId);
 
-                    //2. Ánh xạ giá trị id
-                    var keyName = _modelType.GetKeyName();
-                    entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
+                    //2. Duyệt các thuộc tính trên customer và tạo parameters
+                    var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
@@ -295,6 +296,50 @@ namespace FresherMisa2026.Infrastructure.Repositories
             total = await reader.ReadFirstAsync<long>();
 
             return (total, data);
+        }
+
+        private void EnsurePrimaryKeyForInsert(TEntity entity)
+        {
+            var keyName = _modelType.GetKeyName();
+            var keyProperty = entity.GetType().GetProperty(keyName);
+
+            if (keyProperty == null)
+            {
+                return;
+            }
+
+            if (keyProperty.PropertyType == typeof(Guid))
+            {
+                var currentValue = (Guid)(keyProperty.GetValue(entity) ?? Guid.Empty);
+                if (currentValue == Guid.Empty)
+                {
+                    keyProperty.SetValue(entity, Guid.NewGuid());
+                }
+            }
+            else if (keyProperty.PropertyType == typeof(Guid?))
+            {
+                var currentValue = (Guid?)keyProperty.GetValue(entity);
+                if (!currentValue.HasValue || currentValue.Value == Guid.Empty)
+                {
+                    keyProperty.SetValue(entity, Guid.NewGuid());
+                }
+            }
+        }
+
+        private void SetPrimaryKeyValue(TEntity entity, Guid entityId)
+        {
+            var keyName = _modelType.GetKeyName();
+            var keyProperty = entity.GetType().GetProperty(keyName);
+
+            if (keyProperty == null)
+            {
+                return;
+            }
+
+            if (keyProperty.PropertyType == typeof(Guid) || keyProperty.PropertyType == typeof(Guid?))
+            {
+                keyProperty.SetValue(entity, entityId);
+            }
         }
 
         /// <summary>

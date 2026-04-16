@@ -1,4 +1,5 @@
 ﻿using FresherMisa2026.Entities;
+using MySqlConnector;
 using System.Net;
 using System.Text.Json;
 
@@ -17,34 +18,51 @@ namespace FresherMisa2026.WebAPI.Middlewares
         {
             try
             {
-                Console.WriteLine("Before run middleware");
-                // Pass the request to the next middleware/component
                 await _next(context);
-                Console.WriteLine("After run middleware");
             }
             catch (Exception ex)
             {
-                // Handle the exception globally
                 await HandleExceptionAsync(context, ex);
             }
         }
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            // Set status code and content type
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            var statusCode = (int)HttpStatusCode.InternalServerError;
+            var userMessage = "Có lỗi xảy ra vui lòng liên hệ Misa!";
+            var devMessage = exception.Message;
 
-            // Create response payload
+            switch (exception)
+            {
+                case KeyNotFoundException:
+                    statusCode = (int)HttpStatusCode.NotFound;
+                    userMessage = exception.Message;
+                    break;
+                case ArgumentException:
+                case InvalidOperationException:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    userMessage = exception.Message;
+                    break;
+                case MySqlException mySqlException when mySqlException.SqlState == "45000":
+                    statusCode = mySqlException.Message.Contains("không tồn tại", StringComparison.OrdinalIgnoreCase)
+                        ? (int)HttpStatusCode.NotFound
+                        : (int)HttpStatusCode.BadRequest;
+                    userMessage = mySqlException.Message;
+                    devMessage = mySqlException.Message;
+                    break;
+            }
+
+            context.Response.StatusCode = statusCode;
+
             var response = new ServiceResponse
             {
                 IsSuccess = false,
-                Code = context.Response.StatusCode,
-                UserMessage = "Có lỗi xảy ra vui lòng liên hệ Misa!",
-                DevMessage = exception.Message // Optional: include for dev
+                Code = statusCode,
+                UserMessage = userMessage,
+                DevMessage = devMessage
             };
 
-            // Serialize the response to JSON
             var jsonResponse = JsonSerializer.Serialize(response);
 
             return context.Response.WriteAsync(jsonResponse);

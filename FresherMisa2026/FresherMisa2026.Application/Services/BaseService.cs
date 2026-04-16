@@ -96,11 +96,18 @@ namespace FresherMisa2026.Application.Services
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
             }
 
+            var existingEntity = await _baseRepository.GetEntityByIDAsync(entityId);
+            if (existingEntity == null)
+            {
+                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để xóa");
+            }
+
             //1. Validate xóa
             bool canDelete = await ValidateBeforeDeleteAsync(entityId);
             if (!canDelete)
             {
-                return CreateErrorResponse(ResponseCode.BadRequest, "Không thể xóa bản ghi này");
+                var deleteValidationMessage = await GetDeleteValidationMessageAsync(entityId);
+                return CreateErrorResponse(ResponseCode.BadRequest, deleteValidationMessage ?? "Không thể xóa bản ghi này");
             }
             
             //2. Thực hiện xóa
@@ -198,6 +205,12 @@ namespace FresherMisa2026.Application.Services
             //1. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
 
+            var duplicateInsertError = await ValidateBeforeInsertAsync(entity);
+            if (duplicateInsertError != null)
+            {
+                errors.Add(duplicateInsertError);
+            }
+
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
@@ -226,11 +239,23 @@ namespace FresherMisa2026.Application.Services
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
             }
 
+            var existingEntity = await _baseRepository.GetEntityByIDAsync(entityId);
+            if (existingEntity == null)
+            {
+                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+            }
+
             //1. Trạng thái
             entity.State = ModelSate.Update;
 
             //2. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
+
+            var duplicateUpdateError = await ValidateBeforeUpdateAsync(entityId, entity);
+            if (duplicateUpdateError != null)
+            {
+                errors.Add(duplicateUpdateError);
+            }
             
             if (errors.Count == 0)
             {
@@ -381,6 +406,21 @@ namespace FresherMisa2026.Application.Services
         protected virtual Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
             return Task.FromResult(true);
+        }
+
+        protected virtual Task<string?> GetDeleteValidationMessageAsync(Guid entityId)
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        protected virtual Task<ValidationError?> ValidateBeforeInsertAsync(TEntity entity)
+        {
+            return Task.FromResult<ValidationError?>(null);
+        }
+
+        protected virtual Task<ValidationError?> ValidateBeforeUpdateAsync(Guid entityId, TEntity entity)
+        {
+            return Task.FromResult<ValidationError?>(null);
         }
         #endregion
     }

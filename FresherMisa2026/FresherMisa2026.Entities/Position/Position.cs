@@ -10,8 +10,12 @@ namespace FresherMisa2026.Entities.Position
         [Key]
         public Guid PositionID { get; set; }
 
-        public string PositionCode { get; set; }
+        [IRequired]
+        [Display(Name = "Mã chức vụ")]
+        public string PositionCode { get; set; } = string.Empty;
 
-        public string PositionName { get; set; }
+        [IRequired]
+        [Display(Name = "Tên chức vụ")]
+        public string PositionName { get; set; } = string.Empty;
     }
 }
