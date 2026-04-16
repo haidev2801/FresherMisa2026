@@ -3,9 +3,7 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Data;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -18,6 +16,22 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public DepartmentRepository(IConfiguration configuration) : base(configuration)
         {
 
+        }
+
+        public async Task<int> CountEmployeeByDepartmentAsync(string code)
+        {
+            string storedProcedureName = "Proc_CountEmployeeByDepartmentCode";
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@p_DepartmentCode", code);
+
+            var result = await _dbConnection.QuerySingleAsync<int>(
+                storedProcedureName,
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+
+            return result;
         }
 
         /// <summary>
@@ -33,7 +47,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@DepartmentCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+            return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query,
+                @param, commandType: System.Data.CommandType.Text);
         }
     }
 }

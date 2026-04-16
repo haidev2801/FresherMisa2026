@@ -1,3 +1,4 @@
+using FresherMisa2026.Application.Dtos.Position;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Position;
@@ -24,6 +25,22 @@ namespace FresherMisa2026.WebAPI.Controllers
             response.IsSuccess = true;
 
             return response;
+        }
+
+        [HttpPost("create-dto")]
+        public async Task<IActionResult> CreateDto(CreatePositionDto dto)
+        {
+            var response = await _positionService.CreatePositionDtoAsync(dto);
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [HttpPost("{id}/update-dto")]
+        public async Task<IActionResult> UpdateDto(Guid id, UpdatePositionDto dto)
+        {
+            var response = await _positionService.UpdatePositionDtoAsync(id, dto);
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
     }
 }

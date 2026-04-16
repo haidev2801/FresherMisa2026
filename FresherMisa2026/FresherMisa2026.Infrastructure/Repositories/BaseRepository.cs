@@ -1,16 +1,12 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -195,7 +191,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
             var rowAffects = 0;
             await OpenConnectionAsync();
-            
+
             using (var transaction = _dbConnection.BeginTransaction())
             {
                 try
@@ -204,7 +200,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var parameters = MappingDbType(entity);
 
                     //2.Thực hiện thêm bản ghi
-                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
+                    rowAffects = await _dbConnection.ExecuteAsync(
+                        $"Proc_Insert{_tableName}",
+                        param: parameters,
+                        transaction: transaction,
+                        commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
                 }
@@ -230,17 +230,17 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
             var rowAffects = 0;
             await OpenConnectionAsync();
-            
+
             using (var transaction = _dbConnection.BeginTransaction())
             {
                 try
                 {
-                    //1. Duyệt các thuộc tính trên customer và tạo parameters
-                    var parameters = MappingDbType(entity);
-
-                    //2. Ánh xạ giá trị id
+                    //1. Ánh xạ giá trị id
                     var keyName = _modelType.GetKeyName();
                     entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
+
+                    //2. Duyệt các thuộc tính trên customer và tạo parameters
+                    var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
@@ -302,7 +302,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Dan sách các biến động</returns>
-            private DynamicParameters MappingDbType(TEntity entity)
+        private DynamicParameters MappingDbType(TEntity entity)
         {
             var parameters = new DynamicParameters();
             try

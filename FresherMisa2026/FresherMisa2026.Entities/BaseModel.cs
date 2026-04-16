@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FresherMisa2026.Entities
+﻿namespace FresherMisa2026.Entities
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class IRequired : Attribute
@@ -21,7 +17,7 @@ namespace FresherMisa2026.Entities
         /// Ngày tạo
         /// </summary>
         public DateTime? CreateDate { get; set; }
-        
+
         /// <summary>
         /// Người sửa
         /// </summary>

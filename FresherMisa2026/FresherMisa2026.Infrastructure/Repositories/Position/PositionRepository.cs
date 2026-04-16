@@ -3,7 +3,7 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Position;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
+using System.Data;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -20,7 +20,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@PositionCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Position>(query, param, commandType: System.Data.CommandType.Text);
+            return await _dbConnection.QueryFirstOrDefaultAsync<Position>(query, param,
+                commandType: CommandType.Text);
         }
     }
 }

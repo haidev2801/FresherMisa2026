@@ -1,10 +1,9 @@
+using FresherMisa2026.Application.Dtos.Employee;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
-using System;
-using System.Collections.Generic;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -37,6 +36,19 @@ namespace FresherMisa2026.Application.Services
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId)
         {
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
+        }
+
+        public async Task<ServiceResponse> GetEmployeeFilterAsync(GetEmployeeFilterDto dto)
+        {
+            var (total, data) = await _employeeRepository.GetEmployeesFilter(dto);
+
+            var response = new PagingResponse<EmployeeDto>
+            {
+                Total = total,
+                Data = data.ToList()
+            };
+
+            return CreateSuccessResponse(response);
         }
 
         protected override List<ValidationError> ValidateCustom(Employee employee)
