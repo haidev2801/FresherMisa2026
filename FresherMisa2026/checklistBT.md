@@ -41,3 +41,24 @@
 - [X] API `PUT /api/Employees/{id}` cập nhật employee
 - [X] API `DELETE /api/Employees/{id}` xóa employee
 
+
+## Bài Tập Cấp Độ 2: Intermediate
+
+### Task 2.1: Thêm Validation cho Employee (2 điểm)
+
+**Yêu cầu:**
+- Thêm `[IRequired]` attribute cho các trường bắt buộc:
+  - `EmployeeCode` - Mã nhân viên - DONE
+  - `EmployeeName` - Tên nhân viên - DONE
+  - `DepartmentID` - Phòng ban - DONE
+  - `PositionID` - Vị trí - DONE
+- Override method `ValidateCustom()` trong `EmployeeService` để thêm các validation tùy chỉnh:
+  - Mã nhân viên không được trùng lặp - DONE
+  - Email phải đúng định dạng (nếu có) - DONE
+  - Số điện thoại phải đúng định dạng (nếu có) - DONE
+  - Ngày sinh phải nhỏ hơn ngày hiện tại - DONE
+
+**Kiểm tra:**
+- [X] POST employee thiếu các trường bắt buộc → trả về lỗi 400 với thông báo rõ ràng
+- [X] POST employee có mã trùng lặp → trả về lỗi "Mã nhân viên đã tồn tại"
+- [X] POST employee có email sai định dạng → trả về lỗi "Email không đúng định dạng" -->

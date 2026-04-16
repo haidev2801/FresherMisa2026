@@ -42,15 +42,48 @@ namespace FresherMisa2026.Application.Services
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
-
-            if (!string.IsNullOrEmpty(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
+            //-Mã nhân viên không được trùng lặp
+            var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+            if(existingEmployee != null && existingEmployee.EmployeeID != employee.EmployeeID)
             {
-                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
+                errors.Add(new ValidationError(
+                    "EmployeeCode",
+                    "Mã nhân viên đã tồn tại"
+                ));
             }
-
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            //-Email phải đúng định dạng(nếu có)
+            if (!string.IsNullOrEmpty(employee.Email))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                try
+                {
+                    var addr = new System.Net.Mail.MailAddress(employee.Email);
+                }
+                catch
+                {
+                    errors.Add(new ValidationError(
+                        "Email",
+                        "Email không đúng định dạng"
+                    ));
+                }
+            }
+            //-Số điện thoại phải đúng định dạng(nếu có)
+            if (!string.IsNullOrEmpty(employee.PhoneNumber))
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(employee.PhoneNumber, @"^0\d{9,10}$"))
+                {
+                    errors.Add(new ValidationError(
+                        "PhoneNumber",
+                        "Số điện thoại không đúng định dạng"
+                    ));
+                }
+            }
+            //-Ngày sinh phải nhỏ hơn ngày hiện tại
+            if (employee.DateOfBirth >= DateTime.Today)
+            {
+                errors.Add(new ValidationError(
+                    "DateOfBirth",
+                    "Ngày sinh phải nhỏ hơn ngày hiện tại"
+                ));
             }
 
             return errors;
