@@ -42,7 +42,7 @@
 - [X] API `DELETE /api/Employees/{id}` xóa employee
 
 
-## Bài Tập Cấp Độ 2: Intermediate
+<!-- ## Bài Tập Cấp Độ 2: Intermediate
 
 ### Task 2.1: Thêm Validation cho Employee (2 điểm)
 
@@ -61,4 +61,4 @@
 **Kiểm tra:**
 - [ ] POST employee thiếu các trường bắt buộc → trả về lỗi 400 với thông báo rõ ràng
 - [ ] POST employee có mã trùng lặp → trả về lỗi "Mã nhân viên đã tồn tại"
-- [ ] POST employee có email sai định dạng → trả về lỗi "Email không đúng định dạng"
+- [ ] POST employee có email sai định dạng → trả về lỗi "Email không đúng định dạng" -->
