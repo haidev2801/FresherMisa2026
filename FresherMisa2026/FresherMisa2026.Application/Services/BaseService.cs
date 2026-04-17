@@ -193,7 +193,7 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
-            entity.State = ModelSate.Add;
+            entity.State = ModelState.Add;
 
             //1. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
@@ -227,7 +227,7 @@ namespace FresherMisa2026.Application.Services
             }
 
             //1. Trạng thái
-            entity.State = ModelSate.Update;
+            entity.State = ModelState.Update;
 
             //2. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);

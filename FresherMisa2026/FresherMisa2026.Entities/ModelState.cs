@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FresherMisa2026.Entities
 {
-    public enum ModelSate
+    public enum ModelState
     {
         Add = 1,
         Update = 2,

@@ -35,7 +35,7 @@ namespace FresherMisa2026.Entities
         /// <summary>
         /// Trạng thái thêm sửa xóa, không lưu database
         /// </summary>
-        public ModelSate State { get; set; }
+        public ModelState State { get; set; }
 
         /// <summary>
         /// Có xóa mềm hay không
