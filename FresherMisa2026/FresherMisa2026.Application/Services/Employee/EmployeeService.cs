@@ -68,14 +68,14 @@ namespace FresherMisa2026.Application.Services
             }
 
             // 1. EmployeeCode không được trùng
-            if (!string.IsNullOrEmpty(employee.EmployeeCode))
-            {
-                var existing = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).GetAwaiter().GetResult();
-                if (existing != null && (employee.State == ModelSate.Add || existing.EmployeeID != employee.EmployeeID))
-                {
-                    errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
-                }
-            }
+            //if (!string.IsNullOrEmpty(employee.EmployeeCode))
+            //{
+            //    var existing = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).GetAwaiter().GetResult();
+            //    if (existing != null && (employee.State == ModelSate.Add || existing.EmployeeID != employee.EmployeeID))
+            //    {
+            //        errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+            //    }
+            //}
 
             // 2. Email đúng định dạng (nếu có)
             if (!string.IsNullOrEmpty(employee.Email))

@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Extensions;
+using MySqlConnector;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -201,13 +202,52 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    return CreateSuccessResponse(result);
+                }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // MySQL duplicate key error
+                    return CreateErrorResponse(
+                        ResponseCode.BadRequest,
+                        "Database constraint violation",
+                        "Mã nhân viên đã tồn tại"
+                    );
+                }
+                catch (MySqlException ex) when (ex.Number == 1644 || (ex.Message != null && (ex.Message.Contains("EmployeeCode") || ex.Message.Contains("Mã nhân viên"))))
+                {
+                    // User-defined SQL SIGNAL or stored-proc thrown error referencing EmployeeCode
+                    return CreateErrorResponse(
+                        ResponseCode.BadRequest,
+                        "Database constraint violation",
+                        "Mã nhân viên đã tồn tại"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // Inspect exception messages for known duplicate indicators (covers other exception types)
+                    var msg = ex.Message ?? string.Empty;
+                    var innerMsg = ex.InnerException?.Message ?? string.Empty;
+
+                    if (msg.Contains("EmployeeCode") || msg.Contains("Mã nhân viên") || msg.Contains("duplicate", StringComparison.OrdinalIgnoreCase) || innerMsg.Contains("EmployeeCode") || innerMsg.Contains("Mã nhân viên"))
+                    {
+                        return CreateErrorResponse(
+                            ResponseCode.BadRequest,
+                            "Database constraint violation",
+                            "Mã nhân viên đã tồn tại"
+                        );
+                    }
+
+                    // Let other exceptions bubble up to be handled by global exception handler
+                    throw;
+                }
             }
 
             return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
+                ResponseCode.BadRequest,
+                "Validate thất bại",
                 string.Join("; ", errors.Select(e => e.Message))
             );
         }
