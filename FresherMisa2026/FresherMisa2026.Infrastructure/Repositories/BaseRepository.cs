@@ -3,11 +3,14 @@ using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -19,67 +22,65 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
-    public class BaseRepository<TEntity> : IBaseRepository<TEntity>, IDisposable where TEntity : BaseModel
+    public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : BaseModel
     {
         //Properties
         string _connectionString = string.Empty;
         IConfiguration _configuration;
-        protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
 
+        /// <summary>
+        /// khai báo cache để lưu trữ dữ liệu tạm thời, 
+        /// giảm tải cho database và cải thiện hiệu suất truy xuất dữ liệu. 
+        /// Cache có thể được sử dụng để lưu trữ kết quả của các truy vấn phổ biến hoặc dữ liệu không thay đổi thường xuyên, 
+        /// giúp giảm thời gian phản hồi và tăng tốc độ truy cập dữ liệu.
+        /// </summary>
+        protected IMemoryCache _cache;
+        protected ILogger<BaseRepository<TEntity>> _logger;
 
         //Constructor
-        public BaseRepository(IConfiguration configuration)
+        public BaseRepository(IConfiguration configuration, IMemoryCache cache, ILogger<BaseRepository<TEntity>> logger)
         {
             _configuration = configuration;
+            _cache = cache;
+            _logger = logger;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
-            _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
             _tableName = _modelType.GetTableName();
         }
-
-
-        /// <summary>
-        /// Dispose connection
-        /// </summary>
-        /// Created By: dvhai (09/04/2026)
-        public void Dispose()
+        protected MySqlConnection CreateConnection()
         {
-            if (_dbConnection != null && _dbConnection.State == ConnectionState.Open)
-            {
-                _dbConnection.Close();
-                _dbConnection.Dispose();
-            }
+            return new MySqlConnection(_connectionString);
         }
 
-        /// <summary>
-        /// Mở kết nối database
-        /// </summary>
-        private async Task OpenConnectionAsync()
-        {
-            if (_dbConnection.State != ConnectionState.Open)
-            {
-                if (_dbConnection is MySqlConnection mySqlConnection)
-                {
-                    await mySqlConnection.OpenAsync();
-                }
-                else
-                {
-                    _dbConnection.Open();
-                }
-            }
-        }
+
 
         #region Method Get
         /// <summary>
-        /// Lấy danh sách entity
+        /// Lấy danh sách entity từ cache nếu có, nếu không có thì lấy từ database và lưu vào cache trong 5 phút
         /// </summary>
         /// <returns>Danh sách tất cả bản ghi</returns>
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            var cacheKey = $"{_tableName}_all";
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity> cached))
+            {
+                _logger.LogInformation("[CACHE TRÚNG] GetEntitiesAsync - Bảng: {Table} | Khóa: {Key} | Trả về {Count} bản ghi từ cache (bỏ qua truy vấn DB)",
+                    _tableName, cacheKey, cached.Count());
+                return cached;
+            }
+
+            _logger.LogInformation("[CACHE TRƯỢT] GetEntitiesAsync - Bảng: {Table} | Khóa: {Key} | Đang truy vấn cơ sở dữ liệu...", _tableName, cacheKey);
+            var sw = Stopwatch.StartNew();
+            var result = await GetEntitiesUsingCommandTextAsync();
+            sw.Stop();
+
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(5));
+            _logger.LogInformation("[TRUY VẤN DB] GetEntitiesAsync - Bảng: {Table} | Lấy được {Count} bản ghi trong {ElapsedMs}ms | Đã lưu cache 5 phút",
+                _tableName, result.Count(), sw.ElapsedMilliseconds);
+            return result;
         }
 
         /// <summary>
@@ -97,21 +98,58 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 whereCount++;
                 query.Append($" where IsDeleted = FALSE");
             }
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
 
-            var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
+            var entities = await connection.QueryAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
 
             return entities.ToList();
         }
 
         /// <summary>
-        /// Lấy bản ghi theo id
+        /// Lấy bản ghi theo id từ cache nếu có, nếu không có thì lấy từ database và lưu vào cache trong 5 phút
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi tìm thấy hoặc null</returns>
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            var cacheKey = $"{_tableName}_{entityId}";
+
+            // 1. Tìm trong cache riêng lẻ theo ID
+            if (_cache.TryGetValue(cacheKey, out TEntity cached))
+            {
+                _logger.LogInformation("[CACHE TRÚNG] GetEntityByIDAsync - Bảng: {Table} | ID: {Id} | Trả về từ cache ID (bỏ qua truy vấn DB)",
+                    _tableName, entityId);
+                return cached;
+            }
+
+            // 2. Tìm trong cache danh sách toàn bộ nếu có
+            var allCacheKey = $"{_tableName}_all";
+            if (_cache.TryGetValue(allCacheKey, out IEnumerable<TEntity> allCached))
+            {
+                var keyName = _modelType.GetKeyName();
+                var keyProp = typeof(TEntity).GetProperty(keyName);
+                var found = allCached.FirstOrDefault(e => keyProp?.GetValue(e) is Guid id && id == entityId);
+                if (found != null)
+                {
+                    _cache.Set(cacheKey, found, TimeSpan.FromMinutes(5));
+                    _logger.LogInformation("[CACHE TRÚNG - DANH SÁCH] GetEntityByIDAsync - Bảng: {Table} | ID: {Id} | Tìm thấy trong cache danh sách, không cần query DB",
+                        _tableName, entityId);
+                    return found;
+                }
+            }
+
+            // 3. Không có trong cache → query DB
+            _logger.LogInformation("[CACHE TRƯỢT] GetEntityByIDAsync - Bảng: {Table} | ID: {Id} | Không có trong cache, đang truy vấn cơ sở dữ liệu...", _tableName, entityId);
+            var sw = Stopwatch.StartNew();
+            var result = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            sw.Stop();
+
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(5));
+            _logger.LogInformation("[TRUY VẤN DB] GetEntityByIDAsync - Bảng: {Table} | ID: {Id} | Lấy dữ liệu trong {ElapsedMs}ms | Đã lưu cache 5 phút",
+                _tableName, entityId, sw.ElapsedMilliseconds);
+            return result;
         }
 
         /// <summary>
@@ -141,8 +179,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 query.Append("IsDeleted = FALSE");
                 whereCount++;
             }
-
-            var entities = await _dbConnection.QueryFirstOrDefaultAsync<TEntity>(query.ToString(), new { Id = id }, commandType: CommandType.Text);
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var entities = await connection.QueryFirstOrDefaultAsync<TEntity>(query.ToString(), new { Id = id }, commandType: CommandType.Text);
 
             return entities;
         }
@@ -156,9 +195,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> DeleteAsync(Guid entityId)
         {
             var rowAffects = 0;
-            await OpenConnectionAsync();
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
 
-            using (var transaction = _dbConnection.BeginTransaction())
+            using (var transaction = connection.BeginTransaction())
             {
                 try
                 {
@@ -169,9 +209,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     dynamicParams.Add($"@v_{keyName}", entityId);
 
                     //2. Kết nối tới CSDL:
-                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
+                    rowAffects = await connection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                    _cache.Remove($"{_tableName}_all");
+                    _cache.Remove($"{_tableName}_{entityId}");
+                    _logger.LogInformation("[XÓA CACHE] DeleteAsync - Bảng: {Table} | ID: {Id} | Đã xóa cache: {Key1}, {Key2}",
+                        _tableName, entityId, $"{_tableName}_all", $"{_tableName}_{entityId}");
                 }
                 catch
                 {
@@ -194,9 +238,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> InsertAsync(TEntity entity)
         {
             var rowAffects = 0;
-            await OpenConnectionAsync();
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
             
-            using (var transaction = _dbConnection.BeginTransaction())
+            using (var transaction = connection.BeginTransaction())
             {
                 try
                 {
@@ -206,9 +251,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var parameters = MappingDbType(entity);
 
                     //2.Thực hiện thêm bản ghi
-                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
+                    rowAffects = await connection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                    _cache.Remove($"{_tableName}_all");
+                    _logger.LogInformation("[XÓA CACHE] InsertAsync - Bảng: {Table} | Đã xóa cache: {Key}",
+                        _tableName, $"{_tableName}_all");
                 }
                 catch
                 {
@@ -231,9 +279,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
             var rowAffects = 0;
-            await OpenConnectionAsync();
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
             
-            using (var transaction = _dbConnection.BeginTransaction())
+            using (var transaction = connection.BeginTransaction())
             {
                 try
                 {
@@ -244,9 +293,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
-                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
+                    rowAffects = await connection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                    _cache.Remove($"{_tableName}_all");
+                    _cache.Remove($"{_tableName}_{entityId}");
+                    _logger.LogInformation("[XÓA CACHE] UpdateAsync - Bảng: {Table} | ID: {Id} | Đã xóa cache: {Key1}, {Key2}",
+                        _tableName, entityId, $"{_tableName}_all", $"{_tableName}_{entityId}");
                 }
                 catch
                 {
@@ -279,7 +332,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
             long total = 0;
             var data = Enumerable.Empty<TEntity>();
 
-            await OpenConnectionAsync();
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
 
             string store = string.Format("Proc_{0}_FilterPaging", _tableName);
             var parameters = new DynamicParameters();
@@ -289,7 +343,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             parameters.Add("@v_sort", sort);
             parameters.Add("@v_searchFields", JsonSerializer.Serialize(searchFields));
 
-            using var reader = await _dbConnection.QueryMultipleAsync(
+            using var reader = await connection.QueryMultipleAsync(
                 new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
 
             data = (await reader.ReadAsync<TEntity>()).ToList();
