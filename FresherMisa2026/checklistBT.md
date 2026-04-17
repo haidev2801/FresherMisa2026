@@ -142,5 +142,56 @@
 - Response trả về `PagingResponse<Employee>`
 
 **Kiểm tra:**
-- [ ] `GET /api/Employees/filter?departmentId=xxx&pageSize=10&pageIndex=1` → trả về 10 bản ghi đầu tiên
-- [ ] Response chứa thông tin `Total`, `PageSize`, `PageIndex`, `Data`
+- [X] `GET /api/Employees/filter?departmentId=xxx&pageSize=10&pageIndex=1` → trả về 10 bản ghi đầu tiên
+- [X] Response chứa thông tin `Total`, `PageSize`, `PageIndex`, `Data`
+
+
+### Task 3.4: Tối Ưu SQL Query với Index (3 điểm)
+
+**Yêu cầu:**
+- Phân tích các truy vấn trong codebase
+- Đề xuất và tạo các index cần thiết cho bảng Employee:
+  - Index trên `DepartmentID` (cho filter theo phòng ban)
+  - Index trên `PositionID` (cho filter theo vị trí)
+  - Index trên `EmployeeCode` (cho tìm kiếm theo mã)
+  - Composite index cho các truy vấn thường dùng
+
+**Deliverable:**
+- File SQL tạo index
+- Giải thích tại sao cần các index này
+
+    ALTER TABLE Employee
+    ADD CONSTRAINT uq_employee_code
+    UNIQUE (EmployeeCode);
+    => Tạo Constraint phục vụ Race Condition tránh trùng EmployeeCode ở Task 3.2 chính là tạo Index cho EmployeeCode rồi
+    -> Kiểm tra trùng mã nhân viên
+
+    CREATE INDEX idx_employee_department
+    ON Employee (DepartmentID);
+    => Tạo Index cho DepartmentID
+    ->  Giảm:
+            Số dòng cần đọc
+            Thời gian query
+   
+    CREATE INDEX idx_employee_position
+    ON Employee (PositionID);
+    => Tạo Index cho PositionID
+    -> Tìm nhanh nhân viên theo PositionID
+
+    CREATE INDEX idx_employee_filter
+    ON Employee (
+        DepartmentID,
+        PositionID,
+        CreatedDate
+    );
+    => Tạo Composite index cho truy vấn chung của proc_employee_filter
+    -> Tìm trực tiếp đúng dữ liệu Đã sắp xếp sẵn theo CreatedDate Không cần sort lại.
+
+    Check: 
+        EXPLAIN
+        SELECT *
+        FROM Employee
+        WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002'
+        AND PositionID = '11111111-1111-1111-1111-111111111111'
+        ORDER BY CreatedDate DESC;
+
