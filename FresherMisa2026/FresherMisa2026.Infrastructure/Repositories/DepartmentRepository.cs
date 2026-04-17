@@ -3,6 +3,9 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
+using System.Threading.Tasks;
+using System;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,7 +18,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Created By: dvhai (09/04/2026)
     public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
     {
-        public DepartmentRepository(IConfiguration configuration) : base(configuration)
+        public DepartmentRepository(IConfiguration configuration, IMemoryCache memoryCache = null) : base(configuration, memoryCache)
         {
 
         }
@@ -33,7 +36,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@DepartmentCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+
+            using var connection = await OpenConnectionAsync();
+            return await connection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
         }
     }
 }
