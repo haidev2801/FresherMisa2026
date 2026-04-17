@@ -60,11 +60,11 @@ Bài tập được chia thành **3 cấp độ**, từ cơ bản đến nâng c
 - Đăng ký DI trong `ServiceExtensions.cs`
 
 **Kiểm tra:**
-- [ ] API `GET /api/Positions` trả về danh sách position
-- [ ] API `GET /api/Positions/{id}` trả về position theo id
-- [ ] API `POST /api/Positions` thêm mới position
-- [ ] API `PUT /api/Positions/{id}` cập nhật position
-- [ ] API `DELETE /api/Positions/{id}` xóa position
+- [x] API `GET /api/Positions` trả về danh sách position
+- [x] API `GET /api/Positions/{id}` trả về position theo id
+- [x] API `POST /api/Positions` thêm mới position
+- [x] API `PUT /api/Positions/{id}` cập nhật position
+- [x] API `DELETE /api/Positions/{id}` xóa position
 
 **Tham khảo:** Xem cách implement Department để làm theo pattern tương tự.
 
