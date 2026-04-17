@@ -61,5 +61,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 parameters,
                 commandType: CommandType.StoredProcedure);
         }
+
+        public async Task<int> CountEmployeesByDepartmentIdAsync(Guid departmentId)
+        {
+            const string sql = "SELECT COUNT(*) FROM Employee WHERE DepartmentID = @DepartmentID";
+            return await _dbConnection.ExecuteScalarAsync<int>(sql, new { DepartmentID = departmentId });
+        }
     }
 }

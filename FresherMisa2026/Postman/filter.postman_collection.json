@@ -1,0 +1,389 @@
+{
+  "info": {
+    "_postman_id": "3d96ca2e-4da9-49fe-b541-8c4d7f4a73f3",
+    "name": "filter",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection test cho Task 2.1, 2.2, 2.3. Base URL mặc định lấy theo launchSettings: http://localhost:5237. Dữ liệu assert bám theo file misaemployee_development.sql hiện tại."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7173"
+    },
+    {
+      "key": "rndDepartmentId",
+      "value": "550e8400-e29b-41d4-a716-446655440010"
+    },
+    {
+      "key": "developerPositionId",
+      "value": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "key": "existingEmployeeCode",
+      "value": "EMP001"
+    },
+    {
+      "key": "expectedRndEmployeeCount",
+      "value": "9"
+    }
+  ],
+  "item": [
+    {
+      "name": "Task 2.1 - Employee Validation",
+      "item": [
+        {
+          "name": "POST Employees - thiếu trường bắt buộc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Code là 400', function () { pm.expect(json.code).to.eql(400); });",
+                  "pm.test('Có lỗi cho EmployeeCode', function () { pm.expect(message).to.include('Trường Mã nhân viên bắt buộc nhập'); });",
+                  "pm.test('Có lỗi cho EmployeeName', function () { pm.expect(message).to.satisfy(m => m.includes('Trường Tên nhân viên bắt buộc nhập') || m.includes('Tên nhân viên không được để trống')); });",
+                  "pm.test('Có lỗi cho DepartmentID', function () { pm.expect(message).to.include('Phòng ban không được để trống'); });",
+                  "pm.test('Có lỗi cho PositionID', function () { pm.expect(message).to.include('Vị trí không được để trống'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Gender\": 1,\n  \"DateOfBirth\": \"1998-01-01\",\n  \"PhoneNumber\": \"0901234567\",\n  \"Email\": \"missing.required@test.com\",\n  \"Address\": \"Ha Noi\",\n  \"Salary\": 12000000,\n  \"CreatedDate\": \"2026-04-16T09:00:00\"\n}"
+            },
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Employees - mã nhân viên trùng lặp",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo mã nhân viên đã tồn tại', function () { pm.expect(message).to.include('Mã nhân viên đã tồn tại'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"EmployeeCode\": \"{{existingEmployeeCode}}\",\n  \"EmployeeName\": \"Duplicate Employee Code\",\n  \"Gender\": 1,\n  \"DateOfBirth\": \"1998-01-01\",\n  \"PhoneNumber\": \"0901234567\",\n  \"Email\": \"duplicate.employee@test.com\",\n  \"Address\": \"Ha Noi\",\n  \"DepartmentID\": \"{{rndDepartmentId}}\",\n  \"PositionID\": \"{{developerPositionId}}\",\n  \"Salary\": 12000000,\n  \"CreatedDate\": \"2026-04-16T09:00:00\"\n}"
+            },
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Employees - email sai định dạng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo email không đúng định dạng', function () { pm.expect(message).to.include('Email không đúng định dạng'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"EmployeeCode\": \"E{{$timestamp}}\",\n  \"EmployeeName\": \"Invalid Email Employee\",\n  \"Gender\": 1,\n  \"DateOfBirth\": \"1998-01-01\",\n  \"PhoneNumber\": \"0901234567\",\n  \"Email\": \"invalid-email\",\n  \"Address\": \"Ha Noi\",\n  \"DepartmentID\": \"{{rndDepartmentId}}\",\n  \"PositionID\": \"{{developerPositionId}}\",\n  \"Salary\": 12000000,\n  \"CreatedDate\": \"2026-04-16T09:00:00\"\n}"
+            },
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Employees - số điện thoại sai định dạng",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo số điện thoại không đúng định dạng', function () { pm.expect(message).to.include('Số điện thoại không đúng định dạng'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"EmployeeCode\": \"P{{$timestamp}}\",\n  \"EmployeeName\": \"Invalid Phone Employee\",\n  \"Gender\": 1,\n  \"DateOfBirth\": \"1998-01-01\",\n  \"PhoneNumber\": \"12345\",\n  \"Email\": \"valid.phone@test.com\",\n  \"Address\": \"Ha Noi\",\n  \"DepartmentID\": \"{{rndDepartmentId}}\",\n  \"PositionID\": \"{{developerPositionId}}\",\n  \"Salary\": 12000000,\n  \"CreatedDate\": \"2026-04-16T09:00:00\"\n}"
+            },
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Employees - ngày sinh lớn hơn hiện tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo ngày sinh không hợp lệ', function () { pm.expect(message).to.include('Ngày sinh không được lớn hơn ngày hiện tại'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"EmployeeCode\": \"D{{$timestamp}}\",\n  \"EmployeeName\": \"Future Birth Date Employee\",\n  \"Gender\": 1,\n  \"DateOfBirth\": \"2099-01-01\",\n  \"PhoneNumber\": \"0901234567\",\n  \"Email\": \"future.birth@test.com\",\n  \"Address\": \"Ha Noi\",\n  \"DepartmentID\": \"{{rndDepartmentId}}\",\n  \"PositionID\": \"{{developerPositionId}}\",\n  \"Salary\": 12000000,\n  \"CreatedDate\": \"2026-04-16T09:00:00\"\n}"
+            },
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Task 2.2 - Employee Filter",
+      "item": [
+        {
+          "name": "GET Employees/filter - lọc theo departmentId RND",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const expectedCount = Number(pm.collectionVariables.get('expectedRndEmployeeCount'));",
+                  "const expectedDepartmentId = pm.collectionVariables.get('rndDepartmentId');",
+                  "const getValue = (obj, keys) => { for (const key of keys) { if (obj && Object.prototype.hasOwnProperty.call(obj, key)) return obj[key]; } return undefined; };",
+                  "pm.test('Status code là 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response thành công', function () { pm.expect(json.isSuccess).to.eql(true); });",
+                  "pm.test('Data là mảng', function () { pm.expect(Array.isArray(json.data)).to.eql(true); });",
+                  "pm.test('Số lượng nhân viên phòng RND đúng theo seed data', function () { pm.expect(json.data.length).to.eql(expectedCount); });",
+                  "pm.test('Tất cả nhân viên thuộc phòng RND', function () { json.data.forEach(item => pm.expect(getValue(item, ['departmentID', 'DepartmentID', 'departmentId', 'DepartmentId'])).to.eql(expectedDepartmentId)); });",
+                  "pm.test('Có chứa một số mã nhân viên mẫu', function () { const codes = json.data.map(item => getValue(item, ['employeeCode', 'EmployeeCode'])); pm.expect(codes).to.include('EMP001'); pm.expect(codes).to.include('EMP014'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Employees/filter?departmentId={{rndDepartmentId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Employees/filter - lọc nhiều điều kiện",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const getValue = (obj, keys) => { for (const key of keys) { if (obj && Object.prototype.hasOwnProperty.call(obj, key)) return obj[key]; } return undefined; };",
+                  "const expectedCodes = ['EMP001', 'EMP012', 'EMP014'];",
+                  "pm.test('Status code là 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response thành công', function () { pm.expect(json.isSuccess).to.eql(true); });",
+                  "pm.test('Data là mảng', function () { pm.expect(Array.isArray(json.data)).to.eql(true); });",
+                  "pm.test('Trả về đúng 3 nhân viên theo điều kiện lọc', function () { pm.expect(json.data.length).to.eql(3); });",
+                  "pm.test('Danh sách mã nhân viên đúng', function () { const actualCodes = json.data.map(item => getValue(item, ['employeeCode', 'EmployeeCode'])).sort(); pm.expect(actualCodes).to.eql(expectedCodes.sort()); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Employees/filter?departmentId={{rndDepartmentId}}&positionId={{developerPositionId}}&salaryFrom=17000000&salaryTo=20000000&gender=1&hireDateFrom=2026-04-15T00:00:00&hireDateTo=2026-04-16T23:59:59"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Employees/filter - salaryFrom lớn hơn salaryTo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo salary range hợp lệ', function () { pm.expect(message).to.include('salaryFrom không được lớn hơn salaryTo'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Employees/filter?salaryFrom=20000000&salaryTo=10000000"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Employees/filter - gender không hợp lệ",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo gender hợp lệ', function () { pm.expect(message).to.include('gender chỉ nhận các giá trị 0, 1, 2'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Employees/filter?gender=3"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Task 2.3 - Department Custom Endpoints",
+      "item": [
+        {
+          "name": "GET Departments/RND/employees",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const expectedCount = Number(pm.collectionVariables.get('expectedRndEmployeeCount'));",
+                  "const expectedDepartmentId = pm.collectionVariables.get('rndDepartmentId');",
+                  "const getValue = (obj, keys) => { for (const key of keys) { if (obj && Object.prototype.hasOwnProperty.call(obj, key)) return obj[key]; } return undefined; };",
+                  "pm.test('Status code là 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response thành công', function () { pm.expect(json.isSuccess).to.eql(true); });",
+                  "pm.test('Data là mảng', function () { pm.expect(Array.isArray(json.data)).to.eql(true); });",
+                  "pm.test('Số lượng nhân viên phòng RND đúng', function () { pm.expect(json.data.length).to.eql(expectedCount); });",
+                  "pm.test('Tất cả nhân viên thuộc phòng RND', function () { json.data.forEach(item => pm.expect(getValue(item, ['departmentID', 'DepartmentID', 'departmentId', 'DepartmentId'])).to.eql(expectedDepartmentId)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Departments/RND/employees"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Departments/RND/employee-count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const expectedCount = Number(pm.collectionVariables.get('expectedRndEmployeeCount'));",
+                  "pm.test('Status code là 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response thành công', function () { pm.expect(json.isSuccess).to.eql(true); });",
+                  "pm.test('Số lượng nhân viên đúng', function () { pm.expect(Number(json.data)).to.eql(expectedCount); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Departments/RND/employee-count"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Departments/UNKNOWN/employees - không tìm thấy phòng ban",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const message = `${json.data ?? ''} ${json.userMessage ?? ''} ${json.devMessage ?? ''}`;",
+                  "pm.test('Status code là 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response báo thất bại', function () { pm.expect(json.isSuccess).to.eql(false); });",
+                  "pm.test('Thông báo không tìm thấy phòng ban', function () { pm.expect(message).to.include('Không tìm thấy phòng ban'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Departments/UNKNOWN/employees"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -97,6 +97,15 @@ namespace FresherMisa2026.Application.Services
 
             return errors;
         }
+        /// <summary>
+        /// validateBusinessRulesAsync để thực hiện các kiểm tra liên quan đến nghiệp vụ
+        /// kiểm tra mã nhân viên trùng lặp, 
+        /// kiểm tra sự tồn tại của phòng ban và vị trí liên quan đến nhân viên.
+        /// </summary>
+        /// <param name="employee"></param>
+        /// <param name="currentEmployeeId"></param>
+        /// <returns></returns>
+        /// Created By: ntdo (17/04/2026)
 
         private async Task<List<ValidationError>> ValidateBusinessRulesAsync(Employee employee, Guid? currentEmployeeId)
         {
@@ -136,7 +145,14 @@ namespace FresherMisa2026.Application.Services
 
             return errors;
         }
-
+        /// <summary>
+        /// kiểm tra xem mã nhân viên đã tồn tại trong hệ thống hay chưa  
+        /// Nếu mã nhân viên đã tồn tại và không phải là mã của nhân viên hiện tại (trong trường hợp cập nhật), 
+        /// hàm sẽ trả về một lỗi xác thực cho biết rằng mã nhân viên đã tồn tại.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// Created By: ntdo (17/04/2026)
         private async Task<ValidationError?> ValidateDuplicateCodeAsync(string? employeeCode, Guid? currentEmployeeId)
         {
             if (string.IsNullOrWhiteSpace(employeeCode))
@@ -152,7 +168,12 @@ namespace FresherMisa2026.Application.Services
             }
             return null;
         }
-
+        /// <summary>
+        /// lọc nhân viên theo các tiêu chí như phòng ban, vị trí, mức lương, giới tính và ngày tuyển dụng.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// Created By: ntdo (17/04/2026)
         public async Task<ServiceResponse> FilterEmployeesAsync(EmployeeFilterRequest request)
         {
             if (request.SalaryFrom.HasValue && request.SalaryTo.HasValue && request.SalaryFrom > request.SalaryTo)
