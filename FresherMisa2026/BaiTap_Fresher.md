@@ -1,4 +1,6 @@
-# Bài Tập Fresher - Dự Án FresherMisa2026
+# Bài Tập Fresher - Dự Án FresherMisa2026 
+
+**YÊU CẦU FORK TRÊN DỰ ÁN NÀY**
 
 **Mục tiêu:** Review và phân hóa trình độ fresher thông qua các bài tập thực hành trên codebase có sẵn.
 
