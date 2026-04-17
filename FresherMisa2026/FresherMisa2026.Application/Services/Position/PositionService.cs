@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Position;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 
@@ -14,8 +15,9 @@ namespace FresherMisa2026.Application.Services
 
         public PositionService(
             IBaseRepository<Position> baseRepository,
-            IPositionRepository positionRepository
-            ) : base(baseRepository)
+            IPositionRepository positionRepository,
+            IMemoryCache cache
+            ) : base(baseRepository, cache)
         {
             _positionRepository = positionRepository;
         }

@@ -88,3 +88,26 @@
 **Kiểm tra:**
 - [X] `GET /api/Departments/DV/employees` → trả về danh sách nhân viên phòng ban DV
 - [X] `GET /api/Departments/DV/employee-count` → trả về số lượng nhân viên
+
+
+## Bài Tập Cấp Độ 3: Advanced
+
+### Task 3.1: Refactor BaseRepository - Tối Ưu Performance (3 điểm)
+
+**Vấn đề:** BaseRepository hiện tại mở connection mỗi lần gọi method, có thể gây performance issues.
+
+**Yêu cầu:**
+- Refactor để sử dụng connection pooling hiệu quả hơn - DONE
+    Test cho API GetEntitiesUsingCommandTextAsync dùng using tạo connection để hết hàm sẽ tự dipose, không giữ lại như tạo trong constructor
+- Thêm caching cho các truy vấn `GetEntities`, `GetEntityByID` với thời gian cache 5 phút - DONE
+    Hiện đang để cache sống 5 phút và gia hạn thêm 2 phút mỗi khi request
+    Dùng ImemoryCache cho GetEntities, GetEntityByID trong BaseService
+    Thêm RemoveCache để clear cache khi data change
+    delete thì truyền thêm id để xóa cache ở GetEntityByID nữa
+- Đánh giá: Sử dụng `IMemoryCache` hoặc `IDistributedCache` - Dùng IMemoryCache 
+
+**Kiểm tra:**
+- [ ] Review code để đảm bảo không có breaking changes
+- [ ] Test performance trước và sau khi refactor
+- [ ] Đảm bảo cache được clear khi có thay đổi dữ liệu
+
