@@ -3,7 +3,10 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -41,6 +44,59 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {"@PositionID", positionId }
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+        }
+
+        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
+        {
+            var query = new StringBuilder("SELECT * FROM Employee WHERE 1 = 1");
+            var parameters = new DynamicParameters();
+
+            if (filterRequest.DepartmentId.HasValue)
+            {
+                query.Append(" AND DepartmentID = @DepartmentId");
+                parameters.Add("@DepartmentId", filterRequest.DepartmentId.Value);
+            }
+
+            if (filterRequest.PositionId.HasValue)
+            {
+                query.Append(" AND PositionID = @PositionId");
+                parameters.Add("@PositionId", filterRequest.PositionId.Value);
+            }
+
+            if (filterRequest.SalaryFrom.HasValue)
+            {
+                query.Append(" AND Salary >= @SalaryFrom");
+                parameters.Add("@SalaryFrom", filterRequest.SalaryFrom.Value);
+            }
+
+            if (filterRequest.SalaryTo.HasValue)
+            {
+                query.Append(" AND Salary <= @SalaryTo");
+                parameters.Add("@SalaryTo", filterRequest.SalaryTo.Value);
+            }
+
+            if (filterRequest.Gender.HasValue)
+            {
+                query.Append(" AND Gender = @Gender");
+                parameters.Add("@Gender", filterRequest.Gender.Value);
+            }
+
+            if (filterRequest.HireDateFrom.HasValue)
+            {
+                query.Append(" AND CreatedDate >= @HireDateFrom");
+                parameters.Add("@HireDateFrom", filterRequest.HireDateFrom.Value.Date);
+            }
+
+            if (filterRequest.HireDateTo.HasValue)
+            {
+                query.Append(" AND CreatedDate < @HireDateTo");
+                parameters.Add("@HireDateTo", filterRequest.HireDateTo.Value.Date.AddDays(1));
+            }
+
+            return await _dbConnection.QueryAsync<Employee>(
+                query.ToString(),
+                parameters,
+                commandType: CommandType.Text);
         }
     }
 }
