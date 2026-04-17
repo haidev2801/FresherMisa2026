@@ -11,7 +11,7 @@
  Target Server Version : 80406 (8.4.6)
  File Encoding         : 65001
 
- Date: 17/04/2026 00:09:06
+ Date: 17/04/2026 08:53:20
 */
 
 SET NAMES utf8mb4;
@@ -73,12 +73,12 @@ INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000006', 'EMP006',
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000007', 'EMP007', 'Hoàng Văn Sơn', 1, '1990-01-30', '0944556677', 'son.hoang@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440011', '55555555-5555-5555-5555-555555555555', 22000000.0000, '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000008', 'EMP008', 'Vũ Thị Thu', 0, '1997-06-12', '0966889900', 'thu.vu@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440012', '66666666-6666-6666-6666-666666666666', 17000000.0000, '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000009', 'EMP009', 'Phan Anh Tú', 1, '1999-12-01', '0922113344', 'tu.phan@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440012', '66666666-6666-6666-6666-666666666666', 16500000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000011', 'EMP011', 'Lý Thị Mỹ', 0, '1996-10-10', '0988112233', 'my.ly@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440017', '77777777-7777-7777-7777-777777777777', 19500000.0000, '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000012', 'EMP012', 'Nguyễn Trung Kiên', 1, '1998-05-05', '0912000001', 'kien.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 17500000.0000, '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000013', 'EMP013', 'Trịnh Hà My', 0, '1997-09-09', '0912000002', 'my.trinh@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '22222222-2222-2222-2222-222222222222', 15500000.0000, '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000014', 'EMP014', 'Đỗ Minh Tuấn', 1, '1994-07-07', '0912000003', 'tuan.do@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 19000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000015', 'UPD655882', 'Updated Employee 655882', 0, '1997-05-05', '0911002200', 'updated@test.com', 'HCM', '550e8400-e29b-41d4-a716-446655440011', '11111111-1111-1111-1111-111111111111', 15000000.0000, '2026-04-16 09:00:00');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000015', 'UPD713713', 'Updated Employee 713713', 0, '1997-05-05', '0911002200', 'updated@test.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 15000000.0000, '2026-04-16 09:00:00');
 INSERT INTO `employee` VALUES ('e67efcdf-2bf6-41d3-a7d3-fa823f2181c2', 'EMP655882', 'Employee 655882', 1, '1998-01-01', '0901234567', 'employee655882@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00');
+INSERT INTO `employee` VALUES ('94aac558-0d77-4ba5-a481-d5dde96e1882', 'EMP713713', 'Employee 713713', 1, '1998-01-01', '0901234567', 'employee713713@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00');
 
 -- ----------------------------
 -- Table structure for position
@@ -270,6 +270,34 @@ BEGIN
   DEALLOCATE PREPARE stmt;
 
 
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for Proc_Employee_Filter
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `Proc_Employee_Filter`;
+delimiter ;;
+CREATE PROCEDURE `Proc_Employee_Filter`(IN v_DepartmentID char(36),
+  IN v_PositionID char(36),
+  IN v_SalaryFrom decimal(18,4),
+  IN v_SalaryTo decimal(18,4),
+  IN v_Gender int,
+  IN v_HireDateFrom datetime,
+  IN v_HireDateTo datetime)
+BEGIN
+  SELECT *
+  FROM employee
+  WHERE 1 = 1
+    AND (v_DepartmentID IS NULL OR DepartmentID = v_DepartmentID)
+    AND (v_PositionID IS NULL OR PositionID = v_PositionID)
+    AND (v_SalaryFrom IS NULL OR Salary >= v_SalaryFrom)
+    AND (v_SalaryTo IS NULL OR Salary <= v_SalaryTo)
+    AND (v_Gender IS NULL OR Gender = v_Gender)
+    AND (v_HireDateFrom IS NULL OR CreatedDate >= v_HireDateFrom)
+    AND (v_HireDateTo IS NULL OR CreatedDate <= v_HireDateTo)
+  ORDER BY EmployeeID DESC;
 END
 ;;
 delimiter ;

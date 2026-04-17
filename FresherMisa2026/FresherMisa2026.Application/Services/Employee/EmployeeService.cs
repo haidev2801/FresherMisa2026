@@ -3,6 +3,8 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Employee.DTO;
+using FresherMisa2026.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -78,7 +80,7 @@ namespace FresherMisa2026.Application.Services
                 errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
             }
             // kiểm tra ngày sinh không được lớn hơn ngày hiện tại(nếu có nhập nagyf sinh)
-            if(employee.DateOfBirth.HasValue && employee.DateOfBirth.Value > DateTime.Now)
+            if (employee.DateOfBirth.HasValue && employee.DateOfBirth.Value > DateTime.Now)
             {
                 errors.Add(new ValidationError("DateOfBirth", "Ngày sinh không được lớn hơn ngày hiện tại"));
             }
@@ -149,6 +151,36 @@ namespace FresherMisa2026.Application.Services
                 return new ValidationError(nameof(Employee.EmployeeCode), "Mã nhân viên đã tồn tại");
             }
             return null;
+        }
+
+        public async Task<ServiceResponse> FilterEmployeesAsync(EmployeeFilterRequest request)
+        {
+            if (request.SalaryFrom.HasValue && request.SalaryTo.HasValue && request.SalaryFrom > request.SalaryTo)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest,
+                        "salaryFrom không được lớn hơn salaryTo",
+                        "salaryFrom không được lớn hơn salaryTo");
+            }
+
+            if (request.HireDateFrom.HasValue && request.HireDateTo.HasValue && request.HireDateFrom > request.HireDateTo)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest,
+                        "hireDateFrom không được lớn hơn hireDateTo",
+                        "hireDateFrom không được lớn hơn hireDateTo");
+                
+            }
+
+            if (request.Gender.HasValue && request.Gender is < 0 or > 2)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest,
+                        "gender chỉ nhận các giá trị 0, 1, 2",
+                        "gender chỉ nhận các giá trị 0, 1, 2");
+                
+            }
+
+            var data = await _employeeRepository.FilterEmployeesAsync(request);
+
+            return CreateSuccessResponse(data);
         }
     }
 }
