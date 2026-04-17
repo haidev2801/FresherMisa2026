@@ -1,4 +1,5 @@
 ﻿using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
@@ -9,7 +10,7 @@ using System.Collections.Generic;
 
 namespace FresherMisa2026.Application.Services
 {
-    public class EmployeeService : BaseService<Employee>, IEmployeeService
+    public class EmployeeService : BaseService<Employee>, IEmployeeService, IUniqueMessage
     {
         private readonly IEmployeeRepository _employeeRepository;
         public EmployeeService(
@@ -20,6 +21,11 @@ namespace FresherMisa2026.Application.Services
         {
             _employeeRepository = employeeRepository;
         }
+
+        public Dictionary<string, string> UniqueMessages => new()
+        {
+            { "uq_employee_code", "Mã nhân viên đã tồn tại" }
+        };
 
         public async Task<Employee> GetEmployeeByCodeAsync(string code)
         {
@@ -64,14 +70,21 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
             //-Mã nhân viên không được trùng lặp
-            var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
-            if(existingEmployee != null && existingEmployee.EmployeeID != employee.EmployeeID)
-            {
-                errors.Add(new ValidationError(
-                    "EmployeeCode",
-                    "Mã nhân viên đã tồn tại"
-                ));
-            }
+
+            //cach thong thuong - check bảng
+            //var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+            //if(existingEmployee != null && existingEmployee.EmployeeID != employee.EmployeeID)
+            //{
+            //errors.Add(new ValidationError(
+            //"EmployeeCode",
+            //"Mã nhân viên đã tồn tại"
+            //));
+            //}
+
+            //cach 2 (database-level constraint) - (unique index) - xử lý lỗi khi lưu vào database -> chống race condition
+            //=> Xử lý trong insertAsync BaseService
+
+
             //-Email phải đúng định dạng(nếu có)
             if (!string.IsNullOrEmpty(employee.Email))
             {

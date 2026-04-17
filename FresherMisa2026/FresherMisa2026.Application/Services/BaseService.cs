@@ -1,9 +1,11 @@
 ﻿using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces.Extensions;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Caching.Memory;
+using MySqlConnector;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -218,6 +220,22 @@ namespace FresherMisa2026.Application.Services
             return null;
         }
 
+        //private string GetDuplicateMessage(MySqlException ex, TEntity entity)
+        //{
+        //    if (entity is IUniqueMessage uniqueEntity)
+        //    {
+        //        foreach (var kv in uniqueEntity.UniqueMessages)
+        //        {
+        //            if (ex.Message.Contains(kv.Key))
+        //            {
+        //                return kv.Value;
+        //            }
+        //        }
+        //    }
+
+        //    return "Dữ liệu bị trùng";
+        //}
+
         /// <summary>
         /// Validate từng màn hình
         /// </summary>
@@ -246,9 +264,28 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                RemoveEntityCache();
-                return CreateSuccessResponse(result);
+                //test duplicate employeecode by unique index in database, nếu có lỗi sẽ ném ra MySqlException với mã lỗi 1062
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    RemoveEntityCache();
+                    return CreateSuccessResponse(result);
+                }
+                catch (MySqlException ex)
+                {
+
+                    /// Do trong Proc Insert đã có check unique và tự throw message
+                    /// custom rồi nên trường hợp bên dưới đang bị thừa, chỉ cần show luôn lỗi
+                    //if (ex.Number == 1062)
+                    //{
+                    //    var message = GetDuplicateMessage(ex, entity);
+                    //    return CreateErrorResponse(ResponseCode.BadRequest, message);
+                    //}
+                    
+
+                    return CreateErrorResponse(ResponseCode.InternalServerError, ex.Message);
+                }
+
             }
 
             return CreateErrorResponse(

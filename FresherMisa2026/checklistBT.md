@@ -92,7 +92,7 @@
 
 ## Bài Tập Cấp Độ 3: Advanced
 
-### Task 3.1: Refactor BaseRepository - Tối Ưu Performance (3 điểm)
+### Task 3.1:   - Tối Ưu Performance (3 điểm)
 
 **Vấn đề:** BaseRepository hiện tại mở connection mỗi lần gọi method, có thể gây performance issues.
 
@@ -110,4 +110,25 @@
 - [ ] Review code để đảm bảo không có breaking changes
 - [ ] Test performance trước và sau khi refactor
 - [ ] Đảm bảo cache được clear khi có thay đổi dữ liệu
+
+### Task 3.2: Xử Lý Race Condition trong Validate (3 điểm)
+
+**Vấn đề:** Khi nhiều request thêm mới cùng lúc, validation mã trùng có thể bị race condition.
+
+**Yêu cầu:**
+- Sử dụng database-level constraint (unique index) cho `EmployeeCode`
+    thêm constraint UNIQUE cho employeecode trong DTB:
+        ALTER TABLE Employee
+        ADD CONSTRAINT uq_employee_code
+        UNIQUE (EmployeeCode);
+- Xử lý exception khi duplicate xảy ra và trả về message phù hợp
+    Đã có tự viết Interfaces/Extensions/IUniqueMessages để custom message hợp lý dựa vào tên contraint
+    Tuy nhiên proc insert đã có custom signal message nên Interface này không cần nữa
+- Đảm bảo transaction được handle đúng cách
+    Chỉ có 1 INSERT, không multi-table nên transaction không thực sự cần thiết
+
+**Kiểm tra:**
+- [ ] Test gọi API POST 2 request cùng lúc với cùng EmployeeCode
+- [ ] Chỉ 1 request thành công, 1 request trả về lỗi "Mã nhân viên đã tồn tại"
+
 
