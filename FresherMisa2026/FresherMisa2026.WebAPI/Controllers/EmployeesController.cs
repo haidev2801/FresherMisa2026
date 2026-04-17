@@ -52,5 +52,21 @@ namespace FresherMisa2026.WebAPI.Controllers
         {
             return Ok(await _employeeService.GetEmployeeFilterAsync(dto));
         }
+
+        [HttpPut("update-dto")]
+        public async Task<IActionResult> UpdateDto(Guid id, UpdateEmployeeDto dto)
+        {
+            var response = await _employeeService.UpdateDtoAsync(id, dto);
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [HttpPost("create-dto")]
+        public async Task<IActionResult> CreateDto(CreateEmployeeDto dto)
+        {
+            var response = await _employeeService.CreateDtoAsync(dto);
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
     }
 }

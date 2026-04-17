@@ -9,13 +9,15 @@ namespace FresherMisa2026.Application.Services
     public class DepartmentService : BaseService<Department>, IDepartmentSerice
     {
         private readonly IDepartmentRepository _deptRepository;
+        private readonly ICacheService _cacheService;
 
         public DepartmentService(
             IBaseRepository<Department> baseRepository,
-            IDepartmentRepository departmentRepository
-            ) : base(baseRepository)
+            IDepartmentRepository departmentRepository,
+            ICacheService cacheService) : base(baseRepository, cacheService)
         {
             _deptRepository = departmentRepository;
+            _cacheService = cacheService;
         }
 
         public async Task<ServiceResponse> CountByDepartmentAsync(string code)

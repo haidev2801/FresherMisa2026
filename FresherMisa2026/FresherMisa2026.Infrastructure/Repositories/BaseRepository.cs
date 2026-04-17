@@ -94,7 +94,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 query.Append($" where IsDeleted = FALSE");
             }
 
-            var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
+            var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(),
+                commandType: CommandType.Text);
 
             return entities.ToList();
         }

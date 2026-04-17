@@ -1,6 +1,7 @@
 using FresherMisa2026.Application.Dtos.Position;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
+using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Position;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,17 +31,39 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpPost("create-dto")]
         public async Task<IActionResult> CreateDto(CreatePositionDto dto)
         {
-            var response = await _positionService.CreatePositionDtoAsync(dto);
+            try
+            {
+                var response = await _positionService.CreatePositionDtoAsync(dto);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+                if (!response.IsSuccess)
+                    return BadRequest(response);
+
+                return StatusCode((int)ResponseCode.Created, response);
+            }
+
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
-        [HttpPost("{id}/update-dto")]
+        [HttpPut("{id}/update-dto")]
         public async Task<IActionResult> UpdateDto(Guid id, UpdatePositionDto dto)
         {
-            var response = await _positionService.UpdatePositionDtoAsync(id, dto);
+            try
+            {
+                var response = await _positionService.UpdatePositionDtoAsync(id, dto);
 
-            return response.IsSuccess ? Ok(response) : BadRequest(response);
+                if (!response.IsSuccess)
+                    return BadRequest(response);
+
+                return StatusCode((int)ResponseCode.Success, response);
+            }
+
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

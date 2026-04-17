@@ -22,21 +22,5 @@ namespace FresherMisa2026.Application.Mappers.Employees
                 Salary = dto.Salary,
             };
         }
-
-        public static Employee ToEmployeeFromUpdateDto(this UpdateEmployeeDto dto, Employee employee)
-        {
-            employee.EmployeeCode = dto.EmployeeCode;
-            employee.EmployeeName = dto.EmployeeName;
-            employee.Gender = dto.Gender;
-            employee.DateOfBirth = dto.DateOfBirth;
-            employee.PhoneNumber = dto.PhoneNumber;
-            employee.Email = dto.Email;
-            employee.Address = dto.Address;
-            employee.DepartmentID = dto.DepartmentID;
-            employee.PositionID = dto.PositionID;
-            employee.Salary = dto.Salary;
-
-            return employee;
-        }
     }
 }

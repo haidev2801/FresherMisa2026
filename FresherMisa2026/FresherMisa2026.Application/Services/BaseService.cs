@@ -20,13 +20,16 @@ namespace FresherMisa2026.Application.Services
         private readonly string _tableName;
         private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _cachedProperties = new();
         private const string SearchFieldSeparator = ";";
+        private readonly ICacheService _cacheService;
+        private const int CACHE_DURATION_IN_MINUTES = 5;
         #endregion
 
         #region Constructer
-        public BaseService(IBaseRepository<TEntity> baseRepository)
+        public BaseService(IBaseRepository<TEntity> baseRepository, ICacheService cacheService)
         {
             _baseRepository = baseRepository;
             _tableName = typeof(TEntity).GetTableName().ToLowerInvariant();
+            _cacheService = cacheService;
         }
         #endregion
 
@@ -60,7 +63,15 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI 11/07/2026
         public async Task<ServiceResponse> GetEntitiesAsync()
         {
+            string cacheKey = $"{_tableName}: all";
+            var cached = await _cacheService.GetAsync<IEnumerable<BaseModel>>(cacheKey);
+            if (cached != null)
+            {
+                return CreateSuccessResponse(cached.Cast<TEntity>().ToList());
+            }
+
             var entities = await _baseRepository.GetEntitiesAsync();
+            await _cacheService.SetAsync(cacheKey, entities, TimeSpan.FromMinutes(CACHE_DURATION_IN_MINUTES));
             return CreateSuccessResponse(entities.Cast<TEntity>().ToList());
         }
 
@@ -72,14 +83,30 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (11/07/2026)
         public async Task<ServiceResponse> GetEntityByIDAsync(Guid entityId)
         {
+            string cacheKey = $"{_tableName}: {entityId}";
+
+            var cached = await _cacheService.GetAsync<TEntity>(cacheKey);
+
+            if (cached != null)
+            {
+                return CreateSuccessResponse(cached);
+            }
+
             if (entityId == Guid.Empty)
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
             }
 
             var entity = await _baseRepository.GetEntityByIDAsync(entityId);
-            return entity != null 
-                ? CreateSuccessResponse(entity) 
+
+            if (entity != null)
+            {
+                await _cacheService.SetAsync(cacheKey, entity,
+                    TimeSpan.FromMinutes(CACHE_DURATION_IN_MINUTES));
+            }
+
+            return entity != null
+                ? CreateSuccessResponse(entity)
                 : CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi");
         }
 
@@ -102,13 +129,15 @@ namespace FresherMisa2026.Application.Services
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Không thể xóa bản ghi này");
             }
-            
+
             //2. Thực hiện xóa
             int rowAffects = await _baseRepository.DeleteAsync(entityId);
-            
+
             if (rowAffects > 0)
             {
                 //3. Xóa thành công thì làm gì
+                string cacheKey = $"{_tableName}: {entityId}";
+                _cacheService.Remove(cacheKey);
                 AfterDelete();
                 return CreateSuccessResponse(rowAffects);
             }
@@ -184,7 +213,6 @@ namespace FresherMisa2026.Application.Services
             return new List<ValidationError>();
         }
 
-
         /// <summary>
         /// Thêm một thực thể
         /// </summary>
@@ -206,8 +234,8 @@ namespace FresherMisa2026.Application.Services
             }
 
             return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
+                ResponseCode.BadRequest,
+                "Validate thất bại",
                 string.Join("; ", errors.Select(e => e.Message))
             );
         }
@@ -231,12 +259,14 @@ namespace FresherMisa2026.Application.Services
 
             //2. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
-            
+
             if (errors.Count == 0)
             {
                 int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
                 if (rowAffects > 0)
                 {
+                    string cacheKey = $"{_tableName}: {entityId}";
+                    _cacheService.Remove(cacheKey);
                     return CreateSuccessResponse(rowAffects);
                 }
                 return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
@@ -263,10 +293,10 @@ namespace FresherMisa2026.Application.Services
                 : pagingRequest.SearchFields.Split(SearchFieldSeparator, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             var (total, data) = await _baseRepository.GetFilterPagingAsync(
-                pagingRequest.PageSize, 
-                pagingRequest.PageIndex, 
+                pagingRequest.PageSize,
+                pagingRequest.PageIndex,
                 pagingRequest.Search,
-                fields, 
+                fields,
                 pagingRequest.Sort
             );
 

@@ -11,13 +11,15 @@ namespace FresherMisa2026.Application.Services
     public class PositionService : BaseService<Position>, IPositionService
     {
         private readonly IPositionRepository _positionRepository;
+        private readonly ICacheService _cacheService;
 
         public PositionService(
             IBaseRepository<Position> baseRepository,
-            IPositionRepository positionRepository
-            ) : base(baseRepository)
+            IPositionRepository positionRepository,
+            ICacheService cacheService) : base(baseRepository, cacheService)
         {
             _positionRepository = positionRepository;
+            _cacheService = cacheService;
         }
 
         public async Task<ServiceResponse> CreatePositionDtoAsync(CreatePositionDto dto)

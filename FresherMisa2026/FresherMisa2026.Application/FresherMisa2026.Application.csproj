@@ -14,4 +14,8 @@
     <ProjectReference Include="..\FresherMisa2026.Entities\FresherMisa2026.Entities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Cache\" />
+  </ItemGroup>
+
 </Project>

@@ -2,6 +2,7 @@ using FresherMisa2026.Application.Dtos.Employee;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
+using FresherMisa2026.Application.Mappers.Employees;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 
@@ -10,13 +11,15 @@ namespace FresherMisa2026.Application.Services
     public class EmployeeService : BaseService<Employee>, IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly ICacheService _cacheService;
 
         public EmployeeService(
             IBaseRepository<Employee> baseRepository,
-            IEmployeeRepository employeeRepository
-            ) : base(baseRepository)
+            IEmployeeRepository employeeRepository,
+            ICacheService cacheService) : base(baseRepository, cacheService)
         {
             _employeeRepository = employeeRepository;
+            _cacheService = cacheService;
         }
 
         public async Task<Employee> GetEmployeeByCodeAsync(string code)
@@ -66,6 +69,23 @@ namespace FresherMisa2026.Application.Services
             }
 
             return errors;
+        }
+
+        public async Task<ServiceResponse> UpdateDtoAsync(Guid id, UpdateEmployeeDto dto)
+        {
+            var employee = await _employeeRepository.GetEntityByIDAsync(id);
+
+            if (employee == null)
+                throw new Exception("Employee not found");
+
+            return await UpdateAsync(id, employee);
+        }
+
+        public async Task<ServiceResponse> CreateDtoAsync(CreateEmployeeDto dto)
+        {
+            var newEmployee = dto.ToEmployeeFromCreateDto();
+
+            return await InsertAsync(newEmployee);
         }
     }
 }
