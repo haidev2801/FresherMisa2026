@@ -20,6 +20,13 @@ namespace FresherMisa2026.Application.Services
             _positionRepository = positionRepository;
         }
 
+        /// <summary>
+        /// Lấy position theo code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// Created by: Phuong (17/04/2026)
         public async Task<Position> GetPositionByCodeAsync(string code)
         {
             var position = await _positionRepository.GetPositionByCode(code);

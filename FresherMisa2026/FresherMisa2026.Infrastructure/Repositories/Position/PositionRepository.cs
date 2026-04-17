@@ -7,12 +7,22 @@ using System.Collections.Generic;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Repository cho Position
+    /// </summary>
+    /// Created by: Phuong (17/04/2026)
     public class PositionRepository : BaseRepository<Position>, IPositionRepository
     {
         public PositionRepository(IConfiguration configuration) : base(configuration)
         {
         }
 
+        /// <summary>
+        /// Lấy position theo code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created by: Phuong (17/04/2026)
         public async Task<Position> GetPositionByCode(string code)
         {
             string query = SQLExtension.GetQuery("Position.GetByCode");
