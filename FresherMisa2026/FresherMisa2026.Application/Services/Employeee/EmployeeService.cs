@@ -48,7 +48,7 @@ namespace FresherMisa2026.Application.Services
 
         public async Task<ServiceResponse> GetFilterAsync(FilterRequest filterRequest)
         {
-            var response = new FilterResponse<Employee>();
+            var response = new PagingResponse<Employee>();
             var rq = new FilterRequest
             {
                 DepartmentId = filterRequest.DepartmentId == Guid.Empty ? null : filterRequest.DepartmentId,

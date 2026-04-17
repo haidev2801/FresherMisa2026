@@ -132,3 +132,15 @@
 - [ ] Chỉ 1 request thành công, 1 request trả về lỗi "Mã nhân viên đã tồn tại"
 
 
+### Task 3.3: Thêm Paging Cho Employee Filter (3 điểm)
+
+**Vấn đề:** Task 2.2 trả về tất cả kết quả, không có phân trang. 
+    
+**Yêu cầu:**
+- Refactor endpoint filter để hỗ trợ paging
+- Thêm parameters: `pageSize`, `pageIndex`
+- Response trả về `PagingResponse<Employee>`
+
+**Kiểm tra:**
+- [ ] `GET /api/Employees/filter?departmentId=xxx&pageSize=10&pageIndex=1` → trả về 10 bản ghi đầu tiên
+- [ ] Response chứa thông tin `Total`, `PageSize`, `PageIndex`, `Data`

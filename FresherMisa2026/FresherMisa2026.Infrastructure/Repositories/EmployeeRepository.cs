@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
+using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
@@ -44,9 +45,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
-        public async Task<FilterResponse<Employee>> GetFilterAsync(FilterRequest filterRequest)
+        public async Task<PagingResponse<Employee>> GetFilterAsync(FilterRequest filterRequest)
         {
-            var filterResponse = new FilterResponse<Employee>();
+            var filterResponse = new PagingResponse<Employee>();
             await OpenConnectionAsync();
 
             string store = string.Format("Proc_Employee_Filter", _tableName);
