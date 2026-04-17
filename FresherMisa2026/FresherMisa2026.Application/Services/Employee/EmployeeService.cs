@@ -20,6 +20,13 @@ namespace FresherMisa2026.Application.Services
             _employeeRepository = employeeRepository;
         }
 
+        /// <summary>
+        /// Lấy employee bằng code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// Created by: Phuong (17/04/2026)
         public async Task<Employee> GetEmployeeByCodeAsync(string code)
         {
             var employee = await _employeeRepository.GetEmployeeByCode(code);

@@ -13,6 +13,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
         }
 
+        /// <summary>
+        /// Lấy employee bằng code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created by: Phuong (17/04/2026)
         public async Task<Employee> GetEmployeeByCode(string code)
         {
             string query = SQLExtension.GetQuery("Employee.GetByCode");

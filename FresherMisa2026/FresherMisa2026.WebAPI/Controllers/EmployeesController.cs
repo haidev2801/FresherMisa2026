@@ -16,6 +16,12 @@ namespace FresherMisa2026.WebAPI.Controllers
             _employeeService = employeeService;
         }
 
+        /// <summary>
+        /// Lấy employee bằng code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created by: Phuong (17/04/2026)
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {

@@ -6,6 +6,12 @@ namespace FresherMisa2026.Application.Interfaces.Services
 {
     public interface IEmployeeService : IBaseService<Employee>
     {
+        /// <summary>
+        /// Lấy employee bằng code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created by: Phuong (17/04/2026)
         Task<Employee> GetEmployeeByCodeAsync(string code);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentIdAsync(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId);
