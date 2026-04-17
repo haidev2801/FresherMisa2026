@@ -200,10 +200,14 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
-                    //1.Duyệt các thuộc tính trên bản ghi và tạo parameters
+                    //1. Ánh xạ giá trị id
+                    var keyName = _modelType.GetKeyName();
+                    entity.GetType().GetProperty(keyName).SetValue(entity, Guid.NewGuid());
+
+                    //2.Duyệt các thuộc tính trên bản ghi và tạo parameters
                     var parameters = MappingDbType(entity);
 
-                    //2.Thực hiện thêm bản ghi
+                    //3.Thực hiện thêm bản ghi
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
@@ -235,12 +239,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
-                    //1. Duyệt các thuộc tính trên customer và tạo parameters
-                    var parameters = MappingDbType(entity);
-
-                    //2. Ánh xạ giá trị id
+                    //1. Ánh xạ giá trị id
                     var keyName = _modelType.GetKeyName();
                     entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
+
+                    //2. Duyệt các thuộc tính trên customer và tạo parameters
+                    var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
