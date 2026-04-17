@@ -4,6 +4,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
+using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -41,6 +42,61 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {"@PositionID", positionId }
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+        }
+
+        public async Task<IEnumerable<Employee>> FilterEmployees(Guid? departmentId, Guid? positionId, decimal? salaryFrom, decimal? salaryTo, int? gender, DateTime? hireDateFrom, DateTime? hireDateTo)
+        {
+            // Build dynamic query
+            var sql = new StringBuilder(SQLExtension.GetQuery("Employee.FilterBase"));
+
+            var parameters = new DynamicParameters();
+
+            if (departmentId.HasValue && departmentId != Guid.Empty)
+            {
+                sql.Append(" AND DepartmentID = @DepartmentID");
+                parameters.Add("@DepartmentID", departmentId.Value);
+            }
+
+            if (positionId.HasValue && positionId != Guid.Empty)
+            {
+                sql.Append(" AND PositionID = @PositionID");
+                parameters.Add("@PositionID", positionId.Value);
+            }
+
+            if (salaryFrom.HasValue)
+            {
+                sql.Append(" AND Salary >= @SalaryFrom");
+                parameters.Add("@SalaryFrom", salaryFrom.Value);
+            }
+
+            if (salaryTo.HasValue)
+            {
+                sql.Append(" AND Salary <= @SalaryTo");
+                parameters.Add("@SalaryTo", salaryTo.Value);
+            }
+
+            if (gender.HasValue)
+            {
+                sql.Append(" AND Gender = @Gender");
+                parameters.Add("@Gender", gender.Value);
+            }
+
+            // Use CreatedDate as hire date if provided
+            if (hireDateFrom.HasValue)
+            {
+                sql.Append(" AND CreatedDate >= @HireDateFrom");
+                parameters.Add("@HireDateFrom", hireDateFrom.Value.Date);
+            }
+
+            if (hireDateTo.HasValue)
+            {
+                sql.Append(" AND CreatedDate <= @HireDateTo");
+                parameters.Add("@HireDateTo", hireDateTo.Value.Date);
+            }
+
+            var finalSql = sql.ToString();
+
+            return await _dbConnection.QueryAsync<Employee>(finalSql, parameters, commandType: System.Data.CommandType.Text);
         }
     }
 }
