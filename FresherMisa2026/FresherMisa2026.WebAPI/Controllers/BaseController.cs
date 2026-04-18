@@ -60,7 +60,7 @@ namespace FresherMisa2026.WebAPI.Controllers
             var response = await _baseService.GetEntityByIDAsync(ID);
 
             if (!response.IsSuccess && response.Code == (int)ResponseCode.NotFound)
-                return NotFound(response);
+                return StatusCode(response.Code, response);
             
             return Ok(response);
         }
@@ -78,6 +78,7 @@ namespace FresherMisa2026.WebAPI.Controllers
             
             if (!response.IsSuccess && response.Code == (int)ResponseCode.BadRequest)
                 return BadRequest(response);
+            response.UserMessage = "Xóa thành công";
                 
             return Ok(response);
         }
@@ -94,6 +95,7 @@ namespace FresherMisa2026.WebAPI.Controllers
                 
                 if (!response.IsSuccess)
                     return BadRequest(response);
+                response.UserMessage = "Thêm thành công";
 
                 return StatusCode((int)ResponseCode.Created, response);
             }
@@ -117,6 +119,8 @@ namespace FresherMisa2026.WebAPI.Controllers
                     return NotFound(response);
                 return BadRequest(response);
             }
+
+            response.UserMessage = "Cập nhật thành công";
 
             return Ok(response);
         }

@@ -13,7 +13,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// </summary>
         /// <returns></returns>
         /// Created By: dvhai (10/04/2026)
-        Task<Department> GetDepartmentByCodeAsync(string code);
+        Task<ServiceResponse> GetDepartmentByCodeAsync(string code);
         Task<ServiceResponse> GetEmployeesByDepartmentCode(string code);
         Task<ServiceResponse> GetEmployeeCountByDepartmentCode(string code);
     }

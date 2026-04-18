@@ -4,6 +4,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using FresherMisa2026.Entities.Employee.DTO;
+using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ namespace FresherMisa2026.Application.Services
         {
             var employee = await _employeeRepository.GetEmployeeByEmployeeCodeAsync(code);
             if (employee == null)
-                throw new Exception("Employee not found");
+                throw new Exception("Không tìm thấy employee");
 
             return employee;
         }
@@ -71,7 +72,7 @@ namespace FresherMisa2026.Application.Services
                     Data = employees.employees.ToList()
                 };
 
-                return CreateSuccessResponse(pagingResponse);
+                return CreateSuccessResponse(ResponseCode.Success, pagingResponse);
             }
             catch (DatabaseException ex)
             {

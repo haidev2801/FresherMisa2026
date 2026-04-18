@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,25 +30,41 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <returns></returns>
         /// Created By: dvhai (10/04/2026)
-        public async Task<Department> GetDepartmentByCodeAsync(string code)
+        public async Task<ServiceResponse> GetDepartmentByCodeAsync(string code)
         {
+            // kiểm tra xem code có null hay rỗng không 
+            if (string.IsNullOrEmpty(code)){
+                return CreateErrorResponse(ResponseCode.BadRequest, "DepartmentCode không được trống", "Mã phòng ban không được để trống");
+            }
             var department = await _deptRepository.GetDepartmentByCodeAsync(code);
             if (department == null)
-                throw new Exception("department is null");
+                return CreateErrorResponse(ResponseCode.NotFound, "DepartmentCode không tồn tại", "Không tìm thấy phòng ban");
 
-            return department;
+            return CreateSuccessResponse(ResponseCode.Success, department);
         }
 
         public async Task<ServiceResponse> GetEmployeeCountByDepartmentCode(string code)
         {
+            if (string.IsNullOrEmpty(code))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "DepartmentCode không được trống", "Mã phòng ban không được để trống");
+            }
             var employees = await _employeeRepository.GetEmployeesByDepartmentCodeAsync(code);
-            return CreateSuccessResponse(employees.Count());
+            return CreateSuccessResponse(ResponseCode.Success, employees.Count());
         }
 
         public async Task<ServiceResponse> GetEmployeesByDepartmentCode(string code)
         {
+            if (string.IsNullOrEmpty(code))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "DepartmentCode không được trống", "Mã phòng ban không được để trống");
+            }
             var employees = await _employeeRepository.GetEmployeesByDepartmentCodeAsync(code);
-            return CreateSuccessResponse(employees);
+            if (employees.Count() <= 0)
+            {
+                return CreateErrorResponse(ResponseCode.NotFound, "", "Không tìm thấy nhân viên nào");
+            }
+            return CreateSuccessResponse(ResponseCode.Success, employees);
         }
 
         #region OVERRIDE METHODS

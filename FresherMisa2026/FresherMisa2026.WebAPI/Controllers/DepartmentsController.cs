@@ -25,24 +25,21 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <returns></returns>
         /// Created By: dvhai (10/04/2026)
         [HttpGet("Code/{code}")]
-        public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
+        public async Task<ActionResult<ServiceResponse>> GetByCode(string? code)
         {
-            var response = new ServiceResponse();
-            response.Data = await _departmentService.GetDepartmentByCodeAsync(code);
-            response.IsSuccess = true;
-
-            return response;
+            var response = await _departmentService.GetDepartmentByCodeAsync(code);
+            return Ok(response);
         }
 
         [HttpGet("{code}/employees")]
-        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string? code)
         {
             var response = await _departmentService.GetEmployeesByDepartmentCode(code);
             return Ok(response);
         }
 
         [HttpGet("{code}/employee-count")]
-        public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string code)
+        public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string? code)
         {
             var response = await _departmentService.GetEmployeeCountByDepartmentCode(code);
             return Ok(response);

@@ -33,10 +33,10 @@ namespace FresherMisa2026.Application.Services
         #endregion
 
         #region Protected Helpers - có thể override trong derived class
-        protected static ServiceResponse CreateSuccessResponse(object? data = null) => new()
+        protected static ServiceResponse CreateSuccessResponse(ResponseCode? code = null, object? data = null) => new()
         {
             IsSuccess = true,
-            Code = (int)ResponseCode.Success,
+            Code = code != null ? (int)code : (int)ResponseCode.Success,
             Data = data
         };
 
@@ -63,7 +63,7 @@ namespace FresherMisa2026.Application.Services
         public async Task<ServiceResponse> GetEntitiesAsync()
         {
             var entities = await _baseRepository.GetEntitiesAsync();
-            return CreateSuccessResponse(entities.Cast<TEntity>().ToList());
+            return CreateSuccessResponse(ResponseCode.Success, entities.Cast<TEntity>().ToList());
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace FresherMisa2026.Application.Services
 
             var entity = await _baseRepository.GetEntityByIDAsync(entityId);
             return entity != null 
-                ? CreateSuccessResponse(entity) 
+                ? CreateSuccessResponse(ResponseCode.Success, entity) 
                 : CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi");
         }
 
@@ -124,7 +124,7 @@ namespace FresherMisa2026.Application.Services
             {
                 //3. Xóa thành công thì làm gì
                 AfterDelete();
-                return CreateSuccessResponse(rowAffects);
+                return CreateSuccessResponse(ResponseCode.Success, rowAffects);
             }
 
             return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để xóa");
@@ -240,7 +240,7 @@ namespace FresherMisa2026.Application.Services
                 try
                 {
                     var result = await _baseRepository.InsertAsync(entity);
-                    return CreateSuccessResponse(result);
+                    return CreateSuccessResponse(ResponseCode.Created, result);
 
                 }
                 catch (DatabaseException ex)
@@ -286,7 +286,7 @@ namespace FresherMisa2026.Application.Services
                     int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
                     if (rowAffects > 0)
                     {
-                        return CreateSuccessResponse(rowAffects);
+                        return CreateSuccessResponse(ResponseCode.Success, rowAffects);
                     }
                     return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
                 }
@@ -323,7 +323,7 @@ namespace FresherMisa2026.Application.Services
                 Data = records.ToList()
             };
 
-            return CreateSuccessResponse(pagingResponse);
+            return CreateSuccessResponse(ResponseCode.Success, pagingResponse);
         }
         #endregion
 
