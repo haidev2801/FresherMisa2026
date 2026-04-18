@@ -9,9 +9,9 @@ namespace FresherMisa2026.Entities.Position
     {
         [Key]
         public Guid PositionID { get; set; }
-
-        public string PositionCode { get; set; }
-
-        public string PositionName { get; set; }
+        [IRequired]
+        public string? PositionCode { get; set; }
+        [IRequired]
+        public string? PositionName { get; set; }
     }
 }

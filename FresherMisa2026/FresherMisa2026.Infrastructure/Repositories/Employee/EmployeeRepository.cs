@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Employee;
 using FresherMisa2026.Entities.Exceptions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Data;
@@ -11,7 +12,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
 {
     public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
     {
-        public EmployeeRepository(IConfiguration configuration) : base(configuration)
+        public EmployeeRepository(IConfiguration configuration, IMemoryCache memoryCache) : base(configuration, memoryCache)
         {
         }
 

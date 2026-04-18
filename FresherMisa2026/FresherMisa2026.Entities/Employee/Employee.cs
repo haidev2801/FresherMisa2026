@@ -26,5 +26,6 @@ namespace FresherMisa2026.Entities.Employee
         [IRequired]
         public Guid? PositionID { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public DateTime HireDate { get; set; }
     }
 }
