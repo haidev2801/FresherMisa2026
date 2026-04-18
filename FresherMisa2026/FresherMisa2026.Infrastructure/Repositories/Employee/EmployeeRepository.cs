@@ -64,37 +64,48 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="hireDateTo"></param>
         /// <returns></returns>
         /// Created by: Phuong (18/04/2026)
-        public async Task<IEnumerable<Employee>> GetEmployeesFilterAsync(
+        public async Task<(long Total, IEnumerable<Employee> Data)> GetEmployeesFilterAsync(
             Guid? departmentId, 
             Guid? positionId, 
             decimal? salaryFrom, 
             decimal? salaryTo, 
             int? gender, 
             DateTime? hireDateFrom, 
-            DateTime? hireDateTo)
+            DateTime? hireDateTo,
+            int pageSize,
+            int pageIndex)
         {
-            var sql = new StringBuilder($"SELECT * FROM {_tableName} WHERE 1=1 ");
+            var whereClause = new StringBuilder(" WHERE 1=1 ");
             var parameters = new DynamicParameters();
 
-            if (departmentId.HasValue) { sql.Append(" AND DepartmentID = @DepartmentID"); parameters.Add("DepartmentID", departmentId); }
-            if (positionId.HasValue) { sql.Append(" AND PositionID = @PositionID"); parameters.Add("PositionID", positionId); }
-            if (gender.HasValue) { sql.Append(" AND Gender = @Gender"); parameters.Add("Gender", gender); }
+            if (departmentId.HasValue) { whereClause.Append(" AND DepartmentID = @DepartmentID"); parameters.Add("DepartmentID", departmentId); }
+            if (positionId.HasValue) { whereClause.Append(" AND PositionID = @PositionID"); parameters.Add("PositionID", positionId); }
+            if (gender.HasValue) { whereClause.Append(" AND Gender = @Gender"); parameters.Add("Gender", gender); }
             
-            if (salaryFrom.HasValue) { sql.Append(" AND Salary >= @SalaryFrom"); parameters.Add("SalaryFrom", salaryFrom); }
-            if (salaryTo.HasValue) { sql.Append(" AND Salary <= @SalaryTo"); parameters.Add("SalaryTo", salaryTo); }
+            if (salaryFrom.HasValue) { whereClause.Append(" AND Salary >= @SalaryFrom"); parameters.Add("SalaryFrom", salaryFrom); }
+            if (salaryTo.HasValue) { whereClause.Append(" AND Salary <= @SalaryTo"); parameters.Add("SalaryTo", salaryTo); }
 
-            if (hireDateFrom.HasValue) { sql.Append(" AND HireDate >= @HireDateFrom"); parameters.Add("HireDateFrom", hireDateFrom); }
-            if (hireDateTo.HasValue) { sql.Append(" AND HireDate <= @HireDateTo"); parameters.Add("HireDateTo", hireDateTo); }
+            if (hireDateFrom.HasValue) { whereClause.Append(" AND HireDate >= @HireDateFrom"); parameters.Add("HireDateFrom", hireDateFrom); }
+            if (hireDateTo.HasValue) { whereClause.Append(" AND HireDate <= @HireDateTo"); parameters.Add("HireDateTo", hireDateTo); }
 
             // Đảm bảo không lấy các bản ghi đã xóa nếu có cột IsDeleted
             if (typeof(Employee).GetProperty("IsDeleted") != null)
             {
-                sql.Append(" AND IsDeleted = FALSE");
+                whereClause.Append(" AND IsDeleted = FALSE");
             }
 
-            sql.Append(" ORDER BY CreatedDate DESC");
+            // 1. Đếm tổng số bản ghi
+            var countSql = $"SELECT COUNT(*) FROM {_tableName} {whereClause}";
+            var total = await _dbConnection.ExecuteScalarAsync<long>(countSql, parameters);
 
-            return await _dbConnection.QueryAsync<Employee>(sql.ToString(), parameters, commandType: System.Data.CommandType.Text);
+            // 2. Lấy dữ liệu phân trang
+            var dataSql = $"SELECT * FROM {_tableName} {whereClause} ORDER BY CreatedDate DESC LIMIT @Limit OFFSET @Offset";
+            parameters.Add("Limit", pageSize);
+            parameters.Add("Offset", (pageIndex - 1) * pageSize);
+
+            var data = await _dbConnection.QueryAsync<Employee>(dataSql, parameters);
+
+            return (total, data);
         }
 
         public override async Task<int> InsertAsync(Employee entity)

@@ -4,6 +4,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using FresherMisa2026.Entities.Enums;
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -67,18 +68,30 @@ namespace FresherMisa2026.Application.Services
             decimal? salaryTo, 
             int? gender, 
             DateTime? hireDateFrom, 
-            DateTime? hireDateTo)
+            DateTime? hireDateTo,
+            int pageSize,
+            int pageIndex)
         {
-            var employees = await _employeeRepository.GetEmployeesFilterAsync(
+            var (total, data) = await _employeeRepository.GetEmployeesFilterAsync(
                 departmentId, 
                 positionId, 
                 salaryFrom, 
                 salaryTo, 
                 gender, 
                 hireDateFrom, 
-                hireDateTo);
+                hireDateTo,
+                pageSize,
+                pageIndex);
 
-            return CreateSuccessResponse(employees);
+            var response = new PagingResponse<Employee>
+            {
+                Total = total,
+                Data = data.ToList(),
+                PageSize = pageSize,
+                PageIndex = pageIndex
+            };
+
+            return CreateSuccessResponse(response);
         }
 
         public override async Task<ServiceResponse> InsertAsync(Employee entity)

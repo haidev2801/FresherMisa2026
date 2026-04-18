@@ -17,10 +17,8 @@ namespace FresherMisa2026.WebAPI.Middlewares
         {
             try
             {
-                Console.WriteLine("Before run middleware");
                 // Pass the request to the next middleware/component
                 await _next(context);
-                Console.WriteLine("After run middleware");
             }
             catch (Exception ex)
             {

@@ -20,13 +20,15 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         /// Lọc danh sách nhân viên theo nhiều điều kiện
         /// </summary>
         /// Created by: Phuong (18/04/2026)
-        Task<IEnumerable<Employee>> GetEmployeesFilterAsync(
+        Task<(long Total, IEnumerable<Employee> Data)> GetEmployeesFilterAsync(
             Guid? departmentId, 
             Guid? positionId, 
             decimal? salaryFrom, 
             decimal? salaryTo, 
             int? gender, 
             DateTime? hireDateFrom, 
-            DateTime? hireDateTo);
+            DateTime? hireDateTo,
+            int pageSize,
+            int pageIndex);
     }
 }

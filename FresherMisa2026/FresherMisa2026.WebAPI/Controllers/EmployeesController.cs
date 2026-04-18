@@ -64,10 +64,13 @@ namespace FresherMisa2026.WebAPI.Controllers
             [FromQuery] decimal? salaryTo,
             [FromQuery] int? gender,
             [FromQuery] DateTime? hireDateFrom,
-            [FromQuery] DateTime? hireDateTo)
+            [FromQuery] DateTime? hireDateTo,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int pageIndex = 1)
         {
             var response = await _employeeService.GetEmployeesFilterAsync(
-                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo);
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo, 
+                pageSize, pageIndex);
             return Ok(response);
         }
     }
