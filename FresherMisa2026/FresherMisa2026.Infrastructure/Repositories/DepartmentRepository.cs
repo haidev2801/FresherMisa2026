@@ -3,9 +3,11 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Employee;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -15,7 +17,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Created By: dvhai (09/04/2026)
     public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
     {
-        public DepartmentRepository(IConfiguration configuration) : base(configuration)
+        public DepartmentRepository(IConfiguration configuration, IMemoryCache memoryCache) : base(configuration, memoryCache)
         {
 
         }
@@ -33,7 +35,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@DepartmentCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                return await dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: CommandType.Text);
+            }
         }
 
         /// <summary>
@@ -49,7 +54,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@DepartmentCode", departmentCode }
             };
-            return await _dbConnection.QueryAsync<Employee>(query, @param, commandType: System.Data.CommandType.Text);
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                return await dbConnection.QueryAsync<Employee>(query, @param, commandType: CommandType.Text);
+            }
         }
 
         /// <summary>
@@ -65,7 +73,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@DepartmentCode", departmentCode }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<int>(query, @param, commandType: System.Data.CommandType.Text);
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                return await dbConnection.QueryFirstOrDefaultAsync<int>(query, @param, commandType: CommandType.Text);
+            }
         }
     }
 }

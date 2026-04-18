@@ -2,16 +2,18 @@
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Employee;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
     public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
     {
-        public EmployeeRepository(IConfiguration configuration) : base(configuration)
+        public EmployeeRepository(IConfiguration configuration, IMemoryCache memoryCache) : base(configuration, memoryCache)
         {
         }
 
@@ -22,7 +24,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@EmployeeCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                return await dbConnection.QueryFirstOrDefaultAsync<Employee>(query, param, commandType: CommandType.Text);
+            }
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId)
@@ -32,7 +37,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@DepartmentID", departmentId }
             };
-            return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                return await dbConnection.QueryAsync<Employee>(query, param, commandType: CommandType.Text);
+            }
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId)
@@ -42,7 +50,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@PositionID", positionId }
             };
-            return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                return await dbConnection.QueryAsync<Employee>(query, param, commandType: CommandType.Text);
+            }
         }
 
         /// <summary>
@@ -83,16 +94,19 @@ namespace FresherMisa2026.Infrastructure.Repositories
             param.Add("p_PageSize", pageSize);
             param.Add("p_PageIndex", pageIndex);
 
-            using var multi = await _dbConnection.QueryMultipleAsync(
-                "Proc_FilterEmployees",
-                param,
-                commandType: System.Data.CommandType.StoredProcedure
-            );
+            using (var dbConnection = await OpenConnectionAsync())
+            {
+                using var multi = await dbConnection.QueryMultipleAsync(
+                    "Proc_FilterEmployees",
+                    param,
+                    commandType: CommandType.StoredProcedure
+                );
 
-            var total = await multi.ReadFirstAsync<long>();
-            var employees = await multi.ReadAsync<Employee>();
+                var total = await multi.ReadFirstAsync<long>();
+                var employees = await multi.ReadAsync<Employee>();
 
-            return (total, employees);
+                return (total, employees);
+            }
         }
     }
 }
