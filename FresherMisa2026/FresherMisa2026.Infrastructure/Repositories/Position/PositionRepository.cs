@@ -3,13 +3,17 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Position;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
+using System.Threading.Tasks;
+using System;
+using Dapper;
 using System.Collections.Generic;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
     public class PositionRepository : BaseRepository<Position>, IPositionRepository
     {
-        public PositionRepository(IConfiguration configuration) : base(configuration)
+        public PositionRepository(IConfiguration configuration, IMemoryCache memoryCache = null) : base(configuration, memoryCache)
         {
         }
 
@@ -20,7 +24,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 {"@PositionCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Position>(query, param, commandType: System.Data.CommandType.Text);
+
+            using var connection = await OpenConnectionAsync();
+            return await connection.QueryFirstOrDefaultAsync<Position>(query, param, commandType: System.Data.CommandType.Text);
         }
     }
 }

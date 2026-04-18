@@ -14,6 +14,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//khai báo cache
+builder.Services.AddMemoryCache();
+
 //DI
 builder.Services.AddApplicationDI();
 builder.Services.AddInfrastructure();

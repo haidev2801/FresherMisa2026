@@ -8,6 +8,12 @@ namespace FresherMisa2026.Entities
     {
         public long Total { get; set; }
 
+        // Current page size
+        public int PageSize { get; set; }
+
+        // Current page index (1-based)
+        public int PageIndex { get; set; }
+
         public List<T> Data { get; set; }
     }
 }
