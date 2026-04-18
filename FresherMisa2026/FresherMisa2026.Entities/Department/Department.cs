@@ -13,6 +13,7 @@ namespace FresherMisa2026.Entities.Department
         /// ID phòng ban
         /// </summary>
         [Key]
+        [IRequired]
         public Guid DepartmentID { get; set; }
 
         /// <summary>

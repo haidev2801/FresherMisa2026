@@ -1,8 +1,11 @@
 ﻿using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces.Extensions;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Extensions;
+using Microsoft.Extensions.Caching.Memory;
+using MySqlConnector;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -20,13 +23,15 @@ namespace FresherMisa2026.Application.Services
         private readonly string _tableName;
         private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _cachedProperties = new();
         private const string SearchFieldSeparator = ";";
+        private readonly IMemoryCache _cache;
         #endregion
 
         #region Constructer
-        public BaseService(IBaseRepository<TEntity> baseRepository)
+        public BaseService(IBaseRepository<TEntity> baseRepository, IMemoryCache cache)
         {
             _baseRepository = baseRepository;
             _tableName = typeof(TEntity).GetTableName().ToLowerInvariant();
+            _cache = cache;
         }
         #endregion
 
@@ -46,6 +51,19 @@ namespace FresherMisa2026.Application.Services
             Data = userMessage
         };
 
+        /// <summary>
+        /// func to clear cache when data changes (insert/update/delete)
+        /// </summary>
+        protected void RemoveEntityCache(Guid? entityId = null)
+        {
+            var cacheKey = $"dept_{_tableName}_entities";
+            var cacheKeyByIdPrefix = $"dept_{_tableName}_entitiesByID_{entityId}";
+            _cache.Remove(cacheKey);
+            if(entityId.HasValue)
+            {
+                _cache.Remove(cacheKeyByIdPrefix);
+            }
+        }
         private static PropertyInfo[] GetCachedProperties(Type entityType)
         {
             return _cachedProperties.GetOrAdd(entityType, type => type.GetProperties());
@@ -60,8 +78,21 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI 11/07/2026
         public async Task<ServiceResponse> GetEntitiesAsync()
         {
-            var entities = await _baseRepository.GetEntitiesAsync();
-            return CreateSuccessResponse(entities.Cast<TEntity>().ToList());
+            var cacheKey = $"dept_{_tableName}_entities";
+            if (_cache.TryGetValue(cacheKey, out List<TEntity> entities))
+            {
+                return CreateSuccessResponse(entities);
+            }
+            //chua co trong cache thi moi truy van database
+            entities = (await _baseRepository.GetEntitiesAsync()).Cast<TEntity>().ToList();
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration = TimeSpan.FromMinutes(2)
+            };  
+            _cache.Set(cacheKey, entities, cacheOptions);
+
+            return CreateSuccessResponse(entities);
         }
 
         /// <summary>
@@ -76,8 +107,24 @@ namespace FresherMisa2026.Application.Services
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
             }
-
-            var entity = await _baseRepository.GetEntityByIDAsync(entityId);
+            var cacheKey = $"dept_{_tableName}_entitiesByID_{entityId}";
+            if (_cache.TryGetValue(cacheKey, out TEntity entity))
+            {
+                return CreateSuccessResponse(entity);
+            }
+            //chua co trong cache thi moi truy van database
+            entity = await _baseRepository.GetEntityByIDAsync(entityId);
+            if(entity == null)
+            {
+                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi");
+            }
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration = TimeSpan.FromMinutes(2)
+            };
+            _cache.Set(cacheKey, entity, cacheOptions);
+            
             return entity != null 
                 ? CreateSuccessResponse(entity) 
                 : CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi");
@@ -109,7 +156,7 @@ namespace FresherMisa2026.Application.Services
             if (rowAffects > 0)
             {
                 //3. Xóa thành công thì làm gì
-                AfterDelete();
+                AfterDelete(entityId);
                 return CreateSuccessResponse(rowAffects);
             }
 
@@ -173,6 +220,22 @@ namespace FresherMisa2026.Application.Services
             return null;
         }
 
+        //private string GetDuplicateMessage(MySqlException ex, TEntity entity)
+        //{
+        //    if (entity is IUniqueMessage uniqueEntity)
+        //    {
+        //        foreach (var kv in uniqueEntity.UniqueMessages)
+        //        {
+        //            if (ex.Message.Contains(kv.Key))
+        //            {
+        //                return kv.Value;
+        //            }
+        //        }
+        //    }
+
+        //    return "Dữ liệu bị trùng";
+        //}
+
         /// <summary>
         /// Validate từng màn hình
         /// </summary>
@@ -201,8 +264,28 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
+                //test duplicate employeecode by unique index in database, nếu có lỗi sẽ ném ra MySqlException với mã lỗi 1062
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    RemoveEntityCache();
+                    return CreateSuccessResponse(result);
+                }
+                catch (MySqlException ex)
+                {
+
+                    /// Do trong Proc Insert đã có check unique và tự throw message
+                    /// custom rồi nên trường hợp bên dưới đang bị thừa, chỉ cần show luôn lỗi
+                    //if (ex.Number == 1062)
+                    //{
+                    //    var message = GetDuplicateMessage(ex, entity);
+                    //    return CreateErrorResponse(ResponseCode.BadRequest, message);
+                    //}
+                    
+
+                    return CreateErrorResponse(ResponseCode.InternalServerError, ex.Message);
+                }
+
             }
 
             return CreateErrorResponse(
@@ -237,6 +320,7 @@ namespace FresherMisa2026.Application.Services
                 int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
                 if (rowAffects > 0)
                 {
+                    RemoveEntityCache();
                     return CreateSuccessResponse(rowAffects);
                 }
                 return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
@@ -369,8 +453,9 @@ namespace FresherMisa2026.Application.Services
         /// <summary>
         /// Xóa thành công
         /// </summary>
-        protected virtual void AfterDelete()
+        protected virtual void AfterDelete(Guid entityId)
         {
+            RemoveEntityCache(entityId);
         }
 
         /// <summary>
