@@ -46,57 +46,75 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
+        public async Task<(long Total, IEnumerable<Employee> Data)> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
         {
-            var query = new StringBuilder("SELECT * FROM Employee WHERE 1 = 1");
+            var pageSize = filterRequest.PageSize < 1 ? 10 : filterRequest.PageSize;
+            var pageIndex = filterRequest.PageIndex < 1 ? 1 : filterRequest.PageIndex;
+            var offset = (pageIndex - 1) * pageSize;
+
+            var whereClause = new StringBuilder(" WHERE 1 = 1");
             var parameters = new DynamicParameters();
 
             if (filterRequest.DepartmentId.HasValue)
             {
-                query.Append(" AND DepartmentID = @DepartmentId");
+                whereClause.Append(" AND DepartmentID = @DepartmentId");
                 parameters.Add("@DepartmentId", filterRequest.DepartmentId.Value);
             }
 
             if (filterRequest.PositionId.HasValue)
             {
-                query.Append(" AND PositionID = @PositionId");
+                whereClause.Append(" AND PositionID = @PositionId");
                 parameters.Add("@PositionId", filterRequest.PositionId.Value);
             }
 
             if (filterRequest.SalaryFrom.HasValue)
             {
-                query.Append(" AND Salary >= @SalaryFrom");
+                whereClause.Append(" AND Salary >= @SalaryFrom");
                 parameters.Add("@SalaryFrom", filterRequest.SalaryFrom.Value);
             }
 
             if (filterRequest.SalaryTo.HasValue)
             {
-                query.Append(" AND Salary <= @SalaryTo");
+                whereClause.Append(" AND Salary <= @SalaryTo");
                 parameters.Add("@SalaryTo", filterRequest.SalaryTo.Value);
             }
 
             if (filterRequest.Gender.HasValue)
             {
-                query.Append(" AND Gender = @Gender");
+                whereClause.Append(" AND Gender = @Gender");
                 parameters.Add("@Gender", filterRequest.Gender.Value);
             }
 
             if (filterRequest.HireDateFrom.HasValue)
             {
-                query.Append(" AND CreatedDate >= @HireDateFrom");
+                whereClause.Append(" AND CreatedDate >= @HireDateFrom");
                 parameters.Add("@HireDateFrom", filterRequest.HireDateFrom.Value.Date);
             }
 
             if (filterRequest.HireDateTo.HasValue)
             {
-                query.Append(" AND CreatedDate < @HireDateTo");
+                whereClause.Append(" AND CreatedDate < @HireDateTo");
                 parameters.Add("@HireDateTo", filterRequest.HireDateTo.Value.Date.AddDays(1));
             }
 
-            return await _dbConnection.QueryAsync<Employee>(
-                query.ToString(),
+            parameters.Add("@Offset", offset);
+            parameters.Add("@PageSize", pageSize);
+
+            var query = $@"
+SELECT COUNT(*) FROM Employee{whereClause};
+SELECT * FROM Employee{whereClause}
+ORDER BY EmployeeID DESC
+LIMIT @Offset, @PageSize;";
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+                query,
                 parameters,
                 commandType: CommandType.Text);
+
+            var total = await reader.ReadFirstAsync<long>();
+            var data = (await reader.ReadAsync<Employee>()).ToList();
+
+            return (total, data);
         }
     }
 }

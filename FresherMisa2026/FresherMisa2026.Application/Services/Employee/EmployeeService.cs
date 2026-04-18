@@ -67,9 +67,19 @@ namespace FresherMisa2026.Application.Services
             }
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
+        public async Task<FresherMisa2026.Entities.PagingResponse<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
         {
-            return await _employeeRepository.FilterEmployeesAsync(filterRequest);
+            var pageSize = filterRequest.PageSize < 1 ? 10 : filterRequest.PageSize;
+            var pageIndex = filterRequest.PageIndex < 1 ? 1 : filterRequest.PageIndex;
+            var (total, data) = await _employeeRepository.FilterEmployeesAsync(filterRequest);
+
+            return new FresherMisa2026.Entities.PagingResponse<Employee>
+            {
+                Total = total,
+                PageSize = pageSize,
+                PageIndex = pageIndex,
+                Data = data.ToList()
+            };
         }
 
         protected override List<ValidationError> ValidateCustom(Employee employee)

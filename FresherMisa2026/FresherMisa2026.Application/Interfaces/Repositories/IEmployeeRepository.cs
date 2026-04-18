@@ -1,6 +1,7 @@
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FresherMisa2026.Application.Interfaces.Repositories
 {
@@ -9,6 +10,6 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         Task<Employee> GetEmployeeByCode(string code);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
-        Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest);
+        Task<(long Total, IEnumerable<Employee> Data)> FilterEmployeesAsync(EmployeeFilterRequest filterRequest);
     }
 }
