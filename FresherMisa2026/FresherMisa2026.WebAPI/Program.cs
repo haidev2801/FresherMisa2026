@@ -18,6 +18,7 @@ builder.Services.AddSwaggerGen();
 //DI
 builder.Services.AddApplicationDI();
 builder.Services.AddInfrastructure();
+builder.Services.AddMemoryCache();
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;

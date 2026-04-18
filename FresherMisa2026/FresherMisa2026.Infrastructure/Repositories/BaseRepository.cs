@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
 using System;
@@ -24,15 +25,18 @@ namespace FresherMisa2026.Infrastructure.Repositories
         //Properties
         string _connectionString = string.Empty;
         IConfiguration _configuration;
+        private readonly IMemoryCache _memoryCache;
         protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
+        private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
 
         //Constructor
-        public BaseRepository(IConfiguration configuration)
+        public BaseRepository(IConfiguration configuration, IMemoryCache memoryCache)
         {
             _configuration = configuration;
+            _memoryCache = memoryCache;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
@@ -79,7 +83,15 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            if (_memoryCache.TryGetValue(GetListCacheKey(), out List<TEntity>? cachedEntities) && cachedEntities != null)
+            {
+                return cachedEntities.Cast<BaseModel>().ToList();
+            }
+
+            var entities = (await GetEntitiesUsingCommandTextAsync()).ToList();
+            _memoryCache.Set(GetListCacheKey(), entities, CacheTtl);
+
+            return entities.Cast<BaseModel>().ToList();
         }
 
         /// <summary>
@@ -111,7 +123,19 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            var cacheKey = GetEntityCacheKey(entityId);
+            if (_memoryCache.TryGetValue(cacheKey, out TEntity? cachedEntity))
+            {
+                return cachedEntity;
+            }
+
+            var entity = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            if (entity != null)
+            {
+                _memoryCache.Set(cacheKey, entity, CacheTtl);
+            }
+
+            return entity;
         }
 
         /// <summary>
@@ -181,6 +205,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
 
             //3. Trả về số bản ghi bị ảnh hưởng
+            ClearCaches(entityId);
             return rowAffects;
         }
 
@@ -195,6 +220,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
             var rowAffects = 0;
             await OpenConnectionAsync();
+            var entityId = EnsureEntityId(entity);
             
             using (var transaction = _dbConnection.BeginTransaction())
             {
@@ -216,6 +242,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
 
             //3.Trả về số bản ghi thêm mới
+            ClearCaches(entityId);
             return rowAffects;
         }
 
@@ -230,6 +257,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
             var rowAffects = 0;
             await OpenConnectionAsync();
+            var keyName = _modelType.GetKeyName();
+            entity.GetType().GetProperty(keyName)?.SetValue(entity, entityId);
             
             using (var transaction = _dbConnection.BeginTransaction())
             {
@@ -237,10 +266,6 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {
                     //1. Duyệt các thuộc tính trên customer và tạo parameters
                     var parameters = MappingDbType(entity);
-
-                    //2. Ánh xạ giá trị id
-                    var keyName = _modelType.GetKeyName();
-                    entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
 
                     //3. Kết nối tới CSDL:
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
@@ -254,6 +279,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 }
             }
             //4. Trả về dữ liệu
+            ClearCaches(entityId);
             return rowAffects;
         }
 
@@ -329,6 +355,51 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
             //2. Trả về danh sách các parameter
             return parameters;
+        }
+
+        private string GetListCacheKey()
+        {
+            return $"BaseRepository:{_tableName}:List";
+        }
+
+        private string GetEntityCacheKey(Guid entityId)
+        {
+            return $"BaseRepository:{_tableName}:Entity:{entityId}";
+        }
+
+        private void ClearListCache()
+        {
+            _memoryCache.Remove(GetListCacheKey());
+        }
+
+        private void ClearEntityCache(Guid entityId)
+        {
+            _memoryCache.Remove(GetEntityCacheKey(entityId));
+        }
+
+        private void ClearCaches(Guid? entityId = null)
+        {
+            ClearListCache();
+            if (entityId.HasValue && entityId.Value != Guid.Empty)
+            {
+                ClearEntityCache(entityId.Value);
+            }
+        }
+
+        private Guid EnsureEntityId(TEntity entity)
+        {
+            var keyName = _modelType.GetKeyName();
+            var keyProperty = entity.GetType().GetProperty(keyName);
+            var keyValue = keyProperty?.GetValue(entity);
+
+            if (keyValue is Guid entityId && entityId != Guid.Empty)
+            {
+                return entityId;
+            }
+
+            var newEntityId = Guid.NewGuid();
+            keyProperty?.SetValue(entity, newEntityId);
+            return newEntityId;
         }
 
         #endregion
