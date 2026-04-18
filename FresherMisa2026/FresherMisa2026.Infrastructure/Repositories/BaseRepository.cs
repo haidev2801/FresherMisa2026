@@ -208,10 +208,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
                     transaction.Commit();
                 }
-                catch
+                catch(Exception ex)
                 {
                     transaction.Rollback();
-                    throw;
+                    throw ex;
                 }
             }
 
@@ -235,12 +235,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
-                    //1. Duyệt các thuộc tính trên customer và tạo parameters
-                    var parameters = MappingDbType(entity);
-
                     //2. Ánh xạ giá trị id
                     var keyName = _modelType.GetKeyName();
                     entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
+
+                    //1. Duyệt các thuộc tính trên customer và tạo parameters
+                    var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
@@ -267,15 +267,14 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="sort">Sắp xếp theo</param>
         /// <returns>Tổng số bản ghi và danh sách dữ liệu</returns>
         /// CREATED BY: DVHAI (07/07/2026)
-        public async Task<(long Total,
-            IEnumerable<TEntity> Data)> GetFilterPagingAsync(
+        public async Task<(IEnumerable<TEntity> Data, int Total)> GetPaging(
             int pageSize,
             int pageIndex,
             string search,
             List<string> searchFields,
             string sort)
         {
-            long total = 0;
+            int total = 0;
             var data = Enumerable.Empty<TEntity>();
 
             await OpenConnectionAsync();
@@ -292,9 +291,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
 
             data = (await reader.ReadAsync<TEntity>()).ToList();
-            total = await reader.ReadFirstAsync<long>();
+            total = await reader.ReadFirstAsync<int>();
 
-            return (total, data);
+            return (data, total);
         }
 
         /// <summary>

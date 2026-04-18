@@ -2,6 +2,7 @@
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
+using FresherMisa2026.Entities.Exceptions;
 using FresherMisa2026.Entities.Extensions;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -201,13 +202,24 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
-            }
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    return CreateSuccessResponse(result);
 
+                }
+                catch (DatabaseException ex)
+                {
+                    if (ex.ErrorCode == "1062")
+                    {
+                        return CreateErrorResponse(ResponseCode.Conflict, "Lỗi Insert dữ liệu vào database", ex.Message);
+                    }
+                    return CreateErrorResponse(ResponseCode.InternalServerError, "Lỗi Insert dữ liệu vào database", ex.Message);
+                }
+            }
             return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
+                ResponseCode.BadRequest,
+                "Validate thất bại",
                 string.Join("; ", errors.Select(e => e.Message))
             );
         }
@@ -256,27 +268,16 @@ namespace FresherMisa2026.Application.Services
         /// <param name="pagingRequest">Thông tin phân trang</param>
         /// <returns>Danh sách thực thể phân trang</returns>
         /// CREATED BY: DVHAI (07/07/2026)
-        public async Task<ServiceResponse> GetFilterPagingAsync(PagingRequest pagingRequest)
+        public async Task<ServiceResponse> GetPaging(PagingRequest pagingRequest)
         {
-            var fields = string.IsNullOrEmpty(pagingRequest.SearchFields)
-                ? new List<string>()
-                : pagingRequest.SearchFields.Split(SearchFieldSeparator, StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            var (total, data) = await _baseRepository.GetFilterPagingAsync(
-                pagingRequest.PageSize, 
-                pagingRequest.PageIndex, 
-                pagingRequest.Search,
-                fields, 
-                pagingRequest.Sort
-            );
-
-            var response = new PagingResponse<TEntity>
+            var (records, total) = await _baseRepository.GetPaging(pagingRequest.PageSize, pagingRequest.PageIndex, pagingRequest.Search, pagingRequest.SearchFields, pagingRequest.Sort);
+            var pagingResponse = new PagingResponse<TEntity>
             {
-                Total = total,
-                Data = data.ToList()
+                Total = (int)total,
+                Data = records.ToList()
             };
 
-            return CreateSuccessResponse(response);
+            return CreateSuccessResponse(pagingResponse);
         }
         #endregion
 

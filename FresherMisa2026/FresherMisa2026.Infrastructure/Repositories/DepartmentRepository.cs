@@ -26,7 +26,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="code">Mã department</param>
         /// <returns>Department tìm thấy hoặc null</returns>
         /// CREATED BY: dvhai (09/04/2026)
-        public async Task<Department> GetDepartmentByCode(string code)
+        public async Task<Department> GetDepartmentByCodeAsync(string code)
         {
             string query = SQLExtension.GetQuery("Department.GetByCode");
             var @param = new Dictionary<string, object>

@@ -34,10 +34,10 @@ namespace FresherMisa2026.WebAPI.Controllers
                 PageSize = pageSize,
                 Search = search ?? string.Empty,
                 Sort = sort ?? string.Empty,
-                SearchFields = searchFields ?? string.Empty
+                SearchFields = searchFields.Split(";").ToList()
             };
             
-            var response = await _baseService.GetFilterPagingAsync(pagingRequest);
+            var response = await _baseService.GetPaging(pagingRequest);
             return Ok(response);
         }
 

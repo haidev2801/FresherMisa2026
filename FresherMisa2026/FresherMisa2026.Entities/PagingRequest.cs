@@ -17,7 +17,7 @@ namespace FresherMisa2026.Entities
         /// <summary>
         /// DepartmentCode;DepartmentName
         /// </summary>
-        public string SearchFields { get; set; }
+        public List<string> SearchFields { get; set; }
     }
 
 }

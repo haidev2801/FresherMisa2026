@@ -52,6 +52,6 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// <param name="pagingRequest">Thông tin phân trang</param>
         /// <returns>Danh sách thực thể phân trang</returns>
         /// CREATED BY: DVHAI (07/07/2026)
-        Task<ServiceResponse> GetFilterPagingAsync(PagingRequest pagingRequest);
+        Task<ServiceResponse> GetPaging(PagingRequest pagingRequest);
     }
 }

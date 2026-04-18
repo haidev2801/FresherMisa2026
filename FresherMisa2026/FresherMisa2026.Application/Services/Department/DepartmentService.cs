@@ -12,13 +12,16 @@ namespace FresherMisa2026.Application.Services
     public class DepartmentService : BaseService<Department>, IDepartmentSerice
     {
         private readonly IDepartmentRepository _deptRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
         public DepartmentService(
             IBaseRepository<Department> baseRepository,
-            IDepartmentRepository departmentRepository
+            IDepartmentRepository departmentRepository,
+            IEmployeeRepository employeeRepository
             ) : base(baseRepository)
         {
             _deptRepository = departmentRepository;
+            _employeeRepository = employeeRepository;
         }
 
         /// <summary>
@@ -28,7 +31,7 @@ namespace FresherMisa2026.Application.Services
         /// Created By: dvhai (10/04/2026)
         public async Task<Department> GetDepartmentByCodeAsync(string code)
         {
-            var department = await _deptRepository.GetDepartmentByCode(code);
+            var department = await _deptRepository.GetDepartmentByCodeAsync(code);
             if (department == null)
                 throw new Exception("department is null");
 
@@ -39,9 +42,9 @@ namespace FresherMisa2026.Application.Services
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
             //1. Validate còn nhân viên trong phòng ban không
-            bool hasEmployee = true;
-
-            return !hasEmployee;
+            var hasEmployee = await _employeeRepository.GetEmployeesByDepartmentId(entityId);
+            
+            return !(hasEmployee.Count() > 0);
         }
 
         /// <summary>
