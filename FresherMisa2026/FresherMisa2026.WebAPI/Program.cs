@@ -2,6 +2,7 @@ using FresherMisa2026.Application;
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Infrastructure;
 using FresherMisa2026.WebAPI.Middlewares;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,11 @@ builder.Services.AddSwaggerGen();
 //DI
 builder.Services.AddApplicationDI();
 builder.Services.AddInfrastructure();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 var app = builder.Build();
 

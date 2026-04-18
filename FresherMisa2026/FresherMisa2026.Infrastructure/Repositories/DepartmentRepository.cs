@@ -1,10 +1,13 @@
-﻿using Dapper;
+using Dapper;
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
@@ -15,7 +18,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Created By: dvhai (09/04/2026)
     public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
     {
-        public DepartmentRepository(IConfiguration configuration) : base(configuration)
+        public DepartmentRepository(IConfiguration configuration, IMemoryCache memoryCache) : base(configuration, memoryCache)
         {
 
         }
@@ -34,6 +37,34 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {"@DepartmentCode", code }
             };
             return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+        }
+
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            const string query = @"
+                SELECT e.*
+                FROM Employee e
+                INNER JOIN Department d ON e.DepartmentID = d.DepartmentID
+                WHERE d.DepartmentCode = @DepartmentCode";
+
+            return await _dbConnection.QueryAsync<Employee>(
+                query,
+                new { DepartmentCode = code },
+                commandType: CommandType.Text);
+        }
+
+        public async Task<int> GetEmployeeCountByDepartmentCodeAsync(string code)
+        {
+            const string query = @"
+                SELECT COUNT(*)
+                FROM Employee e
+                INNER JOIN Department d ON e.DepartmentID = d.DepartmentID
+                WHERE d.DepartmentCode = @DepartmentCode";
+
+            return await _dbConnection.ExecuteScalarAsync<int>(
+                query,
+                new { DepartmentCode = code },
+                commandType: CommandType.Text);
         }
     }
 }
