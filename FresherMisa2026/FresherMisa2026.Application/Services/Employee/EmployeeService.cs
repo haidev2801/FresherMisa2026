@@ -5,6 +5,7 @@ using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -43,14 +44,26 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
 
-            if (!string.IsNullOrEmpty(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
+            if (!string.IsNullOrEmpty(employee.EmployeeCode) && _employeeRepository.GetEmployeeByCode(employee.EmployeeCode) != null)
             {
-                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
+                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
             }
 
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+            if (!string.IsNullOrEmpty(employee.Email) && !Regex.IsMatch(employee.Email, emailPattern))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                errors.Add(new ValidationError("Email", "Email không hợp lệ"));
+            }
+
+            string phonePattern = @"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$";
+            if (!string.IsNullOrEmpty(employee.PhoneNumber) && !Regex.IsMatch(employee.PhoneNumber, phonePattern))
+            {
+                errors.Add(new ValidationError("Phone", "Số điện thoại không hợp lệ"));
+            }
+
+            if (employee.DateOfBirth != null && employee.DateOfBirth > DateTime.Now)
+            {
+                errors.Add(new ValidationError("DateOfBirth", "Ngày sinh không được lớn hơn ngày hiện tại"));
             }
 
             return errors;
