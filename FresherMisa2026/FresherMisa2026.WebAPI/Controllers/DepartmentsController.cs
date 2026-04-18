@@ -1,8 +1,7 @@
-using FresherMisa2026.Application.Interfaces;
-using FresherMisa2026.Application.Interfaces.Services;
-using FresherMisa2026.Application.Services;
+﻿using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -32,6 +31,34 @@ namespace FresherMisa2026.WebAPI.Controllers
             response.IsSuccess = true;
 
             return response;
+        }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên theo department code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created By: tannn (18/04/2026)
+        [HttpGet("{code}/employees")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByCode(string code)
+        {
+            var response = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Lấy số lượng nhân viên theo department code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created By: tannn (18/04/2026)
+        [HttpGet("{code}/employee-count")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeeCount(string code)
+        {
+            var response = await _departmentSerice.CountEmployeesByDepartmentCodeAsync(code);
+
+            return Ok(response);
         }
     }
 }
