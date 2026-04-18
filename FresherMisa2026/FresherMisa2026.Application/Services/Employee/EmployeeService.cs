@@ -41,7 +41,7 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
+        public async Task<PagingResponse<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
         {
             return await _employeeRepository.FilterEmployeesAsync(filterRequest);
         }

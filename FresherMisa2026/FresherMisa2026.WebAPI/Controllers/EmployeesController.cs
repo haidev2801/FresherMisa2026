@@ -74,19 +74,14 @@ namespace FresherMisa2026.WebAPI.Controllers
         }
 
         /// <summary>
-        /// Lọc danh sách nhân viên theo nhiều điều kiện.
+        /// Lọc danh sách nhân viên theo nhiều điều kiện có phân trang.
         /// </summary>
         /// <param name="filterRequest">Thông tin điều kiện lọc</param>
-        /// <returns>Danh sách nhân viên phù hợp điều kiện</returns>
+        /// <returns>Kết quả phân trang gồm Total, PageSize, PageIndex, Data</returns>
         [HttpGet("filter")]
-        public async Task<ActionResult<ServiceResponse>> Filter([FromQuery] EmployeeFilterRequest filterRequest)
+        public async Task<ActionResult<PagingResponse<Employee>>> Filter([FromQuery] EmployeeFilterRequest filterRequest)
         {
-            var response = new ServiceResponse
-            {
-                Data = await _employeeService.FilterEmployeesAsync(filterRequest),
-                IsSuccess = true
-            };
-
+            var response = await _employeeService.FilterEmployeesAsync(filterRequest);
             return Ok(response);
         }
 

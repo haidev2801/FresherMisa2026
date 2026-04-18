@@ -4,6 +4,10 @@ namespace FresherMisa2026.Entities.Employee.DTO
 {
     public class EmployeeFilterRequest
     {
+        public int PageSize { get; set; } = 10;
+
+        public int PageIndex { get; set; } = 1;
+
         public Guid? DepartmentId { get; set; }
 
         public Guid? PositionId { get; set; }
