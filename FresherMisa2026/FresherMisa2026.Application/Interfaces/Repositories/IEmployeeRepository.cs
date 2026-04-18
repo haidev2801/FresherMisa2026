@@ -15,5 +15,18 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         Task<Employee> GetEmployeeByCode(string code);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
+
+        /// <summary>
+        /// Lọc danh sách nhân viên theo nhiều điều kiện
+        /// </summary>
+        /// Created by: Phuong (18/04/2026)
+        Task<IEnumerable<Employee>> GetEmployeesFilterAsync(
+            Guid? departmentId, 
+            Guid? positionId, 
+            decimal? salaryFrom, 
+            decimal? salaryTo, 
+            int? gender, 
+            DateTime? hireDateFrom, 
+            DateTime? hireDateTo);
     }
 }

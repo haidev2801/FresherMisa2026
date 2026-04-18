@@ -49,6 +49,39 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
+        /// Lọc nhân viên theo nhiều điều kiện
+        /// </summary>
+        /// <param name="departmentId"></param>
+        /// <param name="positionId"></param>
+        /// <param name="salaryFrom"></param>
+        /// <param name="salaryTo"></param>
+        /// <param name="gender"></param>
+        /// <param name="hireDateFrom"></param>
+        /// <param name="hireDateTo"></param>
+        /// <returns></returns>
+        /// Created by: Phuong (18/04/2026)
+        public async Task<ServiceResponse> GetEmployeesFilterAsync(
+            Guid? departmentId, 
+            Guid? positionId, 
+            decimal? salaryFrom, 
+            decimal? salaryTo, 
+            int? gender, 
+            DateTime? hireDateFrom, 
+            DateTime? hireDateTo)
+        {
+            var employees = await _employeeRepository.GetEmployeesFilterAsync(
+                departmentId, 
+                positionId, 
+                salaryFrom, 
+                salaryTo, 
+                gender, 
+                hireDateFrom, 
+                hireDateTo);
+
+            return CreateSuccessResponse(employees);
+        }
+
+        /// <summary>
         /// Validate employee
         /// </summary>
         /// <param name="employee"></param>

@@ -51,5 +51,24 @@ namespace FresherMisa2026.WebAPI.Controllers
 
             return response;
         }
+
+        /// <summary>
+        /// API Lọc nhân viên theo nhiều điều kiện
+        /// </summary>
+        /// Created by: Phuong (18/04/2026)
+        [HttpGet("filter")]
+        public async Task<ActionResult<ServiceResponse>> GetFilter(
+            [FromQuery] Guid? departmentId,
+            [FromQuery] Guid? positionId,
+            [FromQuery] decimal? salaryFrom,
+            [FromQuery] decimal? salaryTo,
+            [FromQuery] int? gender,
+            [FromQuery] DateTime? hireDateFrom,
+            [FromQuery] DateTime? hireDateTo)
+        {
+            var response = await _employeeService.GetEmployeesFilterAsync(
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo);
+            return Ok(response);
+        }
     }
 }
