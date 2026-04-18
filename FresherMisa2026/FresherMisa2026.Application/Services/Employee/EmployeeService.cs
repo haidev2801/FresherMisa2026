@@ -3,6 +3,8 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Employee.DTO;
+using FresherMisa2026.Entities.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -28,6 +30,53 @@ namespace FresherMisa2026.Application.Services
                 throw new Exception("Employee not found");
 
             return employee;
+        }
+
+        public async Task<ServiceResponse> GetFilter(FilterRequest request)
+        {
+            try
+            {
+                var employees = await _employeeRepository.GetFilter(request.DepartmentId, request.PositionId, request.SalaryFrom, request.SalaryTo, request.Gender, request.HireDateFrom, request.HireDateTo, request.PageSize ?? 20, request.PageIndex ?? 1);
+                ////Xử lý paging
+                //if (request.PageSize.HasValue && request.PageIndex.HasValue && request.PageSize.Value > 0 && request.PageIndex.Value > 0)
+                //{
+                //    var employeeList = employees.ToList();
+                //    var totalRecords = employeeList.Count;
+                //    var pageSize = request.PageSize.Value;
+                //    var pageIndex = request.PageIndex.Value;
+                //    var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling((double)totalRecords / pageSize);
+
+                //    var pagedData = employeeList
+                //        .Skip((pageIndex - 1) * pageSize)
+                //        .Take(pageSize)
+                //        .ToList();
+
+                //    var pagingResponse = new PagingResponse<Entities.Employee.Employee>
+                //    {
+                //        TotalRecords = totalRecords,
+                //        TotalPages = totalPages,
+                //        PageNumber = pageIndex,
+                //        PageSize = pageSize,
+                //        Data = pagedData
+                //    };
+
+                //    return CreateSuccessResponse(pagingResponse);
+                //}
+                var pagingResponse = new PagingResponse<Employee>
+                {
+                    Total = employees.TotalRecords,
+                    TotalPages = employees.TotalRecords == 0 ? 0 : (int)Math.Ceiling((double)employees.TotalRecords / (request.PageSize ?? 20)),
+                    PageNumber = request.PageIndex ?? 1,
+                    PageSize = request.PageSize ?? 20,
+                    Data = employees.employees.ToList()
+                };
+
+                return CreateSuccessResponse(pagingResponse);
+            }
+            catch (DatabaseException ex)
+            {
+                return CreateErrorResponse(Entities.Enums.ResponseCode.InternalServerError, "Lỗi lấy dữ liệu lọc nhân viên", ex.Message);
+            }
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentIdAsync(Guid departmentId)
