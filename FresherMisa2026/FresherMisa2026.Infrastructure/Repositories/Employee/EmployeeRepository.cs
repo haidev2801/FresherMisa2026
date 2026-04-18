@@ -88,13 +88,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
             if (hireDateFrom.HasValue)
             {
-                query.Append(" AND HireDateFrom >= @HireDateFrom");
+                query.Append(" AND HireDate >= @HireDateFrom");
                 parameters.Add("@HireDateFrom", hireDateFrom.Value.Date);
             }
 
             if (hireDateTo.HasValue)
             {
-                query.Append(" AND HireDateTo <= @HireDateTo");
+                query.Append(" AND HireDate <= @HireDateTo");
                 parameters.Add("@HireDateTo", hireDateTo.Value.Date);
             }
 

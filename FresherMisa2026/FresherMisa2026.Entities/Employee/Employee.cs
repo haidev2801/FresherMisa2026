@@ -40,7 +40,6 @@ namespace FresherMisa2026.Entities.Employee
 
         public DateTime? CreatedDate { get; set; }
 
-        public DateTime? HireDateFrom { get; set; }
-        public DateTime? HireDateTo { get; set; }
+        public DateTime? HireDate { get; set; }
     }
 }
