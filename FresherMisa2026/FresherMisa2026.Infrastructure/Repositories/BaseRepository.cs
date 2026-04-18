@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
+using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
@@ -8,13 +9,13 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
     /// <summary>
-    /// BaseRepository cung cấp các phương thức CRUD chung sử dụng Dapper và MySqlConnector.
-    /// TEntity phải kế thừa BaseModel để có các thuộc tính chung.
-    /// Repository dùng reflection (MethodExtensions) để lấy tên bảng, tên primary key và cờ IsDeleted.
+    /// Base repository
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
@@ -57,14 +58,31 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
         }
 
+        /// <summary>
+        /// Mở kết nối database
+        /// </summary>
+        private async Task OpenConnectionAsync()
+        {
+            if (_dbConnection.State != ConnectionState.Open)
+            {
+                if (_dbConnection is MySqlConnection mySqlConnection)
+                {
+                    await mySqlConnection.OpenAsync();
+                }
+                else
+                {
+                    _dbConnection.Open();
+                }
+            }
+        }
+
         #region Method Get
         /// <summary>
         /// Lấy danh sách entity (gọi hàm private để build command text)
         /// </summary>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <returns>Danh sách tất cả bản ghi</returns>
         /// Created By: dvhai (09/04/2026)
-        public async Task<IEnumerable<BaseModel>> GetEntities()
+        public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
             return await GetEntitiesUsingCommandTextAsync();
         }
@@ -93,13 +111,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return entities.ToList();
         }
 
-        // <summary>
-        ///  Lấy bản ghi theo id
+        /// <summary>
+        /// Lấy bản ghi theo id
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// <returns>Bản ghi tìm thấy hoặc null</returns>
         /// CREATED BY: DVHAI (07/07/2021)
-        public async Task<TEntity> GetEntityByID(Guid entityId)
+        public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
             return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
         }
@@ -124,35 +142,32 @@ namespace FresherMisa2026.Infrastructure.Repositories
             if (primaryKey != null)
             {
                 AppendWhere(query);
-                // NOTE: id ở đây được chèn trực tiếp vào query string => chú ý SQL injection nếu giá trị không được kiểm soát.
-                // Trong dự án hiện tại dùng Guid và input từ server nên rủi ro thấp, nhưng tốt hơn là dùng parameterized query.
-                query.Append($"{primaryKey} = '{id}'");
+                query.Append($"{primaryKey} = @Id");
                 whereCount++;
             }
 
             if (_modelType.GetHasDeletedColumn())
             {
                 AppendWhere(query);
-                query.Append($"IsDeleted = FALSE");
+                query.Append("IsDeleted = FALSE");
                 whereCount++;
             }
 
-            var entities = await _dbConnection.QueryFirstOrDefaultAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
+            var entities = await _dbConnection.QueryFirstOrDefaultAsync<TEntity>(query.ToString(), new { Id = id }, commandType: CommandType.Text);
 
             return entities;
         }
 
         /// <summary>
-        /// Xóa theo mã (gọi stored procedure Proc_Delete{TableName}ById)
-        /// Repository mở transaction, gọi SP và commit/rollback.
+        /// Xóa bản ghi theo id
         /// </summary>
-        /// <param name="entityId"></param>
-        /// <returns>số bản ghi bị ảnh hưởng</returns>
+        /// <param name="entityId">Id của bản ghi</param>
+        /// <returns>Số bản ghi bị xóa</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<int> Delete(Guid entityId)
+        public async Task<int> DeleteAsync(Guid entityId)
         {
             var rowAffects = 0;
-            _dbConnection.Open();
+            await OpenConnectionAsync();
 
             using (var transaction = _dbConnection.BeginTransaction())
             {
@@ -169,7 +184,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
                     transaction.Commit();
                 }
-                catch { transaction.Rollback(); }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
 
             //3. Trả về số bản ghi bị ảnh hưởng
@@ -178,16 +197,16 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
 
         /// <summary>
-        /// Thêm bản ghi (gọi stored procedure Proc_Insert{TableName}).
-        /// Thực hiện mapping các thuộc tính entity sang DynamicParameters rồi gọi SP.
+        /// Thêm bản ghi mới
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns>số bản ghi bị ảnh hưởng</returns>
+        /// <param name="entity">Thông tin bản ghi</param>
+        /// <returns>Số bản ghi thêm mới</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<int> Insert(TEntity entity)
+        public async Task<int> InsertAsync(TEntity entity)
         {
             var rowAffects = 0;
-            _dbConnection.Open();
+            await OpenConnectionAsync();
+            
             using (var transaction = _dbConnection.BeginTransaction())
             {
                 try
@@ -203,6 +222,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 catch
                 {
                     transaction.Rollback();
+                    throw;
                 }
             }
 
@@ -211,17 +231,17 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Cập nhập bản ghi (gọi stored procedure Proc_Update{TableName}).
-        /// Gán giá trị id vào property tương ứng trước khi map parameters.
+        /// Cập nhật thông tin bản ghi
         /// </summary>
-        /// <param name="entityId"></param>
-        /// <param name="entity"></param>
-        /// <returns>số bản ghi bị ảnh hưởng</returns>
+        /// <param name="entityId">Id bản ghi</param>
+        /// <param name="entity">Thông tin bản ghi</param>
+        /// <returns>Số bản ghi bị ảnh hưởng</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<int> Update(Guid entityId, TEntity entity)
+        public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
             var rowAffects = 0;
-            _dbConnection.Open();
+            await OpenConnectionAsync();
+            
             using (var transaction = _dbConnection.BeginTransaction())
             {
                 try
@@ -238,9 +258,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
                     transaction.Commit();
                 }
-                catch (Exception ex)
+                catch
                 {
                     transaction.Rollback();
+                    throw;
                 }
             }
             //4. Trả về dữ liệu
@@ -248,13 +269,51 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Ánh xạ các thuộc tính sang DynamicParameters của Dapper.
-        /// Quy ước tên tham số: @v_{PropertyName}
-        /// Guid/Guid? được map sang DbType.String để lưu dưới dạng chuỗi.
+        /// Lấy danh sách thực thể paging
+        /// </summary>
+        /// <param name="pageSize">Số bản ghi mỗi trang</param>
+        /// <param name="pageIndex">Chỉ số trang</param>
+        /// <param name="search">Từ khóa tìm kiếm</param>
+        /// <param name="searchFields">Danh sách trường tìm kiếm</param>
+        /// <param name="sort">Sắp xếp theo</param>
+        /// <returns>Tổng số bản ghi và danh sách dữ liệu</returns>
+        /// CREATED BY: DVHAI (07/07/2026)
+        public async Task<(long Total,
+            IEnumerable<TEntity> Data)> GetFilterPagingAsync(
+            int pageSize,
+            int pageIndex,
+            string search,
+            List<string> searchFields,
+            string sort)
+        {
+            long total = 0;
+            var data = Enumerable.Empty<TEntity>();
+
+            await OpenConnectionAsync();
+
+            string store = string.Format("Proc_{0}_FilterPaging", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("@v_pageIndex", pageIndex);
+            parameters.Add("@v_pageSize", pageSize);
+            parameters.Add("@v_search", search);
+            parameters.Add("@v_sort", sort);
+            parameters.Add("@v_searchFields", JsonSerializer.Serialize(searchFields));
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+                new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            data = (await reader.ReadAsync<TEntity>()).ToList();
+            total = await reader.ReadFirstAsync<long>();
+
+            return (total, data);
+        }
+
+        /// <summary>
+        /// Ánh xạ các thuộc tính sang kiểu dynamic
         /// </summary>
         /// <param name="entity">Thực thể</param>
-        /// <returns>Danh sách các parameter</returns>
-        private DynamicParameters MappingDbType(TEntity entity)
+        /// <returns>Dan sách các biến động</returns>
+            private DynamicParameters MappingDbType(TEntity entity)
         {
             var parameters = new DynamicParameters();
             try
@@ -275,7 +334,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
                         parameters.Add($"@v_{propertyName}", propertyValue);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Log error but continue with empty parameters
+                Console.WriteLine($"Error mapping entity properties: {ex.Message}");
+            }
             //2. Trả về danh sách các parameter
             return parameters;
         }

@@ -13,6 +13,11 @@ namespace FresherMisa2026.Entities
         public string Search { get; set; }
 
         public string Sort { get; set; } //vd: +ModifiedDate
+
+        /// <summary>
+        /// DepartmentCode;DepartmentName
+        /// </summary>
+        public string SearchFields { get; set; }
     }
 
 }
