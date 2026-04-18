@@ -83,7 +83,26 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
 
-            // Ví dụ: Kiểm tra mã phòng ban không được vượt quá 20 ký tự
+            var existedDepartment = string.IsNullOrWhiteSpace(department.DepartmentCode)
+                ? null
+                : _deptRepository.GetDepartmentByCodeAsync(department.DepartmentCode).Result;
+
+            if (existedDepartment != null
+                && (department.State == ModelSate.Add || existedDepartment.DepartmentID != department.DepartmentID))
+            {
+                errors.Add(new ValidationError("DepartmentCode", "Mã phòng ban đã tồn tại"));
+            }
+
+            if (string.IsNullOrWhiteSpace(department.DepartmentCode))
+            {
+                errors.Add(new ValidationError("DepartmentCode", "Mã phòng ban không được để trống"));
+            }
+
+            if (string.IsNullOrWhiteSpace(department.DepartmentName))
+            {
+                errors.Add(new ValidationError("DepartmentName", "Tên phòng ban không được để trống"));
+            }
+
             if (!string.IsNullOrEmpty(department.DepartmentCode) && department.DepartmentCode.Length > 20)
             {
                 errors.Add(new ValidationError("DepartmentCode", "Mã phòng ban không được vượt quá 20 ký tự"));

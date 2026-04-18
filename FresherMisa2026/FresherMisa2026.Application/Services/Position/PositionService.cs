@@ -33,6 +33,26 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
 
+            var existedPosition = string.IsNullOrWhiteSpace(position.PositionCode)
+                ? null
+                : _positionRepository.GetPositionByCode(position.PositionCode).Result;
+
+            if (existedPosition != null
+                && (position.State == ModelSate.Add || existedPosition.PositionID != position.PositionID))
+            {
+                errors.Add(new ValidationError("PositionCode", "Mã vị trí đã tồn tại"));
+            }
+
+            if (string.IsNullOrWhiteSpace(position.PositionCode))
+            {
+                errors.Add(new ValidationError("PositionCode", "Mã vị trí không được để trống"));
+            }
+
+            if (string.IsNullOrWhiteSpace(position.PositionName))
+            {
+                errors.Add(new ValidationError("PositionName", "Tên vị trí không được để trống"));
+            }
+
             if (!string.IsNullOrEmpty(position.PositionCode) && position.PositionCode.Length > 20)
             {
                 errors.Add(new ValidationError("PositionCode", "Mã vị trí không được vượt quá 20 ký tự"));
