@@ -81,6 +81,30 @@ namespace FresherMisa2026.Application.Services
             return CreateSuccessResponse(employees);
         }
 
+        public override async Task<ServiceResponse> InsertAsync(Employee entity)
+        {
+            try
+            {
+                return await base.InsertAsync(entity);
+            }
+            catch (Exception ex) when (ex.Message.Contains("tồn tại"))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Mã nhân viên đã tồn tại", ex.Message);
+            }
+        }
+
+        public override async Task<ServiceResponse> UpdateAsync(Guid entityId, Employee entity)
+        {
+            try
+            {
+                return await base.UpdateAsync(entityId, entity);
+            }
+            catch (Exception ex) when (ex.Message.Contains("tồn tại"))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Mã nhân viên đã tồn tại", ex.Message);
+            }
+        }
+
         /// <summary>
         /// Validate employee
         /// </summary>

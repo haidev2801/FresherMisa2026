@@ -5,6 +5,7 @@ using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
+using MySqlConnector;
 using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
@@ -94,6 +95,30 @@ namespace FresherMisa2026.Infrastructure.Repositories
             sql.Append(" ORDER BY CreatedDate DESC");
 
             return await _dbConnection.QueryAsync<Employee>(sql.ToString(), parameters, commandType: System.Data.CommandType.Text);
+        }
+
+        public override async Task<int> InsertAsync(Employee entity)
+        {
+            try
+            {
+                return await base.InsertAsync(entity);
+            }
+            catch (MySqlException ex) when (ex.Number == 1062)
+            {
+                throw new Exception("Mã nhân viên đã tồn tại trong hệ thống");
+            }
+        }
+
+        public override async Task<int> UpdateAsync(Guid entityId, Employee entity)
+        {
+            try
+            {
+                return await base.UpdateAsync(entityId, entity);
+            }
+            catch (MySqlException ex) when (ex.Number == 1062)
+            {
+                throw new Exception("Mã nhân viên đã tồn tại trong hệ thống");
+            }
         }
     }
 }

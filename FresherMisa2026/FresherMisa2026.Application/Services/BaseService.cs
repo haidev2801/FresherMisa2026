@@ -1,4 +1,4 @@
-﻿using FresherMisa2026.Application.Interfaces;
+﻿﻿using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
@@ -191,7 +191,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<ServiceResponse> InsertAsync(TEntity entity)
+        public virtual async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
             entity.State = ModelState.Add;
 
@@ -219,7 +219,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity)
+        public virtual async Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity)
         {
             if (entityId == Guid.Empty)
             {
