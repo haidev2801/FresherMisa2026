@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Application.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -27,11 +28,57 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
-            var response = new ServiceResponse();
-            response.Data = await _departmentSerice.GetDepartmentByCodeAsync(code);
-            response.IsSuccess = true;
+            var response = await _departmentSerice.GetDepartmentByCodeAsync(code);
 
-            return response;
+            if (!response.IsSuccess)
+            {
+                if (response.Code == (int)ResponseCode.NotFound)
+                    return NotFound(response);
+
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// lấy nhân viên theo mã phòng ban
+        /// </summary>
+        /// <returns></returns>
+        /// Created By: ntdo (17/04/2026)
+        [HttpGet("{code}/employees")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
+        {
+            var response = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+            if (!response.IsSuccess)
+            {
+                if (response.Code == (int)ResponseCode.NotFound)
+                    return NotFound(response);
+
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// lấy số lượng nhân viên theo từng phòng ban
+        /// </summary>  
+        /// <returns></returns>
+        /// Created By: ntdo (17/04/2026) 
+        [HttpGet("{code}/employee-count")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string code)
+        {
+            var response = await _departmentSerice.GetEmployeeCountByDepartmentCodeAsync(code);
+            if (!response.IsSuccess)
+            {
+                if (response.Code == (int)ResponseCode.NotFound)
+                    return NotFound(response);
+
+                return BadRequest(response);
+            }
+
+            return Ok(response);
         }
     }
 }

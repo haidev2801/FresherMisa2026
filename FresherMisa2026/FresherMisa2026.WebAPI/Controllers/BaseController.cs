@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FresherMisa2026.WebAPI.Controllers
 {
     [ApiController]
-    [Route("/api/[controller]")]
+    [Route("api/[controller]")]
     public class BaseController<TEntity> : ControllerBase
     {
         private readonly IBaseService<TEntity> _baseService;
@@ -54,13 +54,16 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <summary>
         /// Một phần tử
         /// </summary>
-        [HttpGet("{ID}")]
-        public async Task<ActionResult<ServiceResponse>> GetByID(Guid ID)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<ServiceResponse>> GetByID(Guid id)
         {
-            var response = await _baseService.GetEntityByIDAsync(ID);
+            var response = await _baseService.GetEntityByIDAsync(id);
 
             if (!response.IsSuccess && response.Code == (int)ResponseCode.NotFound)
                 return NotFound(response);
+
+            if (!response.IsSuccess && response.Code == (int)ResponseCode.BadRequest)
+                return BadRequest(response);
             
             return Ok(response);
         }
@@ -68,10 +71,10 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <summary>
         /// Xóa một phần tử
         /// </summary>
-        [HttpDelete("{ID}")]
-        public async Task<ActionResult<ServiceResponse>> DeleteByID(Guid ID)
+        [HttpDelete("{id:guid}")]
+        public async Task<ActionResult<ServiceResponse>> DeleteByID(Guid id)
         {
-            var response = await _baseService.DeleteByIDAsync(ID);
+            var response = await _baseService.DeleteByIDAsync(id);
             
             if (!response.IsSuccess && response.Code == (int)ResponseCode.NotFound)
                 return NotFound(response);
@@ -88,28 +91,21 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ServiceResponse>> Post([FromBody] TEntity entity)
         {
-            try
-            {
-                var response = await _baseService.InsertAsync(entity);
-                
-                if (!response.IsSuccess)
-                    return BadRequest(response);
+            var response = await _baseService.InsertAsync(entity);
 
-                return StatusCode((int)ResponseCode.Created, response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            if (!response.IsSuccess)
+                return BadRequest(response);
+
+            return StatusCode((int)ResponseCode.Created, response);
         }
 
         /// <summary>
         /// Sửa một thực thể
         /// </summary>
-        [HttpPut("{id}")]
-        public async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
+        [HttpPut("{id:guid}")]
+        public async Task<ActionResult<ServiceResponse>> Put(Guid id, [FromBody] TEntity entity)
         {
-            var response = await _baseService.UpdateAsync(Guid.Parse(id), entity);
+            var response = await _baseService.UpdateAsync(id, entity);
 
             if (!response.IsSuccess)
             {

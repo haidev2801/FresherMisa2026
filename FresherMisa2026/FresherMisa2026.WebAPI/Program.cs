@@ -3,6 +3,9 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Infrastructure;
 using FresherMisa2026.WebAPI.Middlewares;
 
+// log tiếng việt
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -33,6 +36,7 @@ SQLExtension.Initialize();
 
 //Middlewares
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseHttpsRedirection();
 

@@ -1,5 +1,6 @@
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
+using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Position;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,11 +20,15 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
-            var response = new ServiceResponse();
-            response.Data = await _positionService.GetPositionByCodeAsync(code);
-            response.IsSuccess = true;
+            var response = await _positionService.GetPositionByCodeAsync(code);
 
-            return response;
+            if (!response.IsSuccess && response.Code == (int)ResponseCode.NotFound)
+                return NotFound(response);
+
+            if (!response.IsSuccess && response.Code == (int)ResponseCode.BadRequest)
+                return BadRequest(response);
+
+            return Ok(response);
         }
     }
 }

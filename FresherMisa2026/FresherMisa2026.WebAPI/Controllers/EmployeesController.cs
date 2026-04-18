@@ -1,6 +1,7 @@
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Employee.DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -44,6 +45,19 @@ namespace FresherMisa2026.WebAPI.Controllers
             response.IsSuccess = true;
 
             return response;
+        }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<ServiceResponse>> Filter([FromQuery] EmployeeFilterRequest request)
+        {
+            var response = await _employeeService.FilterEmployeesPagingAsync(request);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
         }
     }
 }
