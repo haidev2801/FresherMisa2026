@@ -50,7 +50,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             var filterResponse = new PagingResponse<Employee>();
             await OpenConnectionAsync();
 
-            string store = string.Format("Proc_Employee_Filter", _tableName);
+            string store = string.Format("Proc_Employee_Filter_Main", _tableName);
             var parameters = new DynamicParameters();
             parameters.Add("@v_departmentId", filterRequest.DepartmentId);
             parameters.Add("@v_positionId", filterRequest.PositionId);
