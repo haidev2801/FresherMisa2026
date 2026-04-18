@@ -20,6 +20,7 @@ namespace FresherMisa2026.Application.Mappers.Employees
                 DepartmentID = dto.DepartmentID,
                 PositionID = dto.PositionID,
                 Salary = dto.Salary,
+                HireDate = dto.HireDate,
             };
         }
     }

@@ -25,5 +25,6 @@
         public decimal? Salary { get; set; }
 
         public DateTime? CreatedDate { get; set; }
+        public DateTime? HireDate { get; set; }
     }
 }

@@ -6,8 +6,8 @@ CREATE PROCEDURE Proc_Employee_Filter(
     IN p_SalaryFrom DECIMAL(18,4),
     IN p_SalaryTo DECIMAL(18,4),
     IN p_Gender INT,
-    IN p_HireDateFrom DATE,
-    IN p_HireDateTo DATE,
+    IN p_HireDateFrom DATETIME,
+    IN p_HireDateTo DATETIME,
     IN p_PageIndex INT,
     IN p_PageSize INT
 )
@@ -28,7 +28,8 @@ BEGIN
         e.DepartmentID,
         e.PositionID,
         e.Salary,
-        e.CreatedDate
+        e.CreatedDate,
+        e.HireDate
     FROM employee e
     WHERE 
         (p_DepartmentId IS NULL OR e.DepartmentID = p_DepartmentId)
@@ -36,8 +37,14 @@ BEGIN
         AND (p_Gender IS NULL OR e.Gender = p_Gender)
         AND (p_SalaryFrom IS NULL OR e.Salary >= p_SalaryFrom)
         AND (p_SalaryTo IS NULL OR e.Salary <= p_SalaryTo)
-        AND (p_HireDateFrom IS NULL OR DATE(e.CreatedDate) >= p_HireDateFrom)
-        AND (p_HireDateTo IS NULL OR DATE(e.CreatedDate) <= p_HireDateTo)
+        AND (
+			p_HireDateFrom IS NULL OR e.HireDate >= p_HireDateFrom
+		)
+		AND (
+			p_HireDateTo IS NULL 
+			OR e.HireDate < DATE_ADD(p_HireDateTo, INTERVAL 1 DAY)
+		)
+
     ORDER BY e.CreatedDate DESC
     LIMIT v_Offset, p_PageSize;
 

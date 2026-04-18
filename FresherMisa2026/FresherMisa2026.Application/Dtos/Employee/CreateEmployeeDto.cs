@@ -13,5 +13,6 @@ namespace FresherMisa2026.Application.Dtos.Employee
         public Guid DepartmentID { get; set; }
         public Guid PositionID { get; set; }
         public decimal? Salary { get; set; }
+        public DateTime? HireDate { get; set; }
     }
 }
