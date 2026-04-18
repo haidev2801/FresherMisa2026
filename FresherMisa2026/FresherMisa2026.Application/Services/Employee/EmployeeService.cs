@@ -5,6 +5,7 @@ using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -53,7 +54,57 @@ namespace FresherMisa2026.Application.Services
                 errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
             }
 
+            if (employee.DepartmentID == Guid.Empty)
+            {
+                errors.Add(new ValidationError("DepartmentID", "Trường Phòng ban bắt buộc nhập"));
+            }
+
+            if (employee.PositionID == Guid.Empty)
+            {
+                errors.Add(new ValidationError("PositionID", "Trường Vị trí bắt buộc nhập"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.EmployeeCode))
+            {
+                var existedEmployee = _employeeRepository
+                    .GetEmployeeByCode(employee.EmployeeCode)
+                    .GetAwaiter()
+                    .GetResult();
+
+                if (existedEmployee != null && existedEmployee.EmployeeID != employee.EmployeeID)
+                {
+                    errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.Email) && !IsValidEmail(employee.Email))
+            {
+                errors.Add(new ValidationError("Email", "Email không đúng định dạng"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(employee.PhoneNumber) && !IsValidPhoneNumber(employee.PhoneNumber))
+            {
+                errors.Add(new ValidationError("PhoneNumber", "Số điện thoại không đúng định dạng"));
+            }
+
+            if (employee.DateOfBirth.HasValue && employee.DateOfBirth.Value.Date >= DateTime.Now.Date)
+            {
+                errors.Add(new ValidationError("DateOfBirth", "Ngày sinh phải nhỏ hơn ngày hiện tại"));
+            }
+
             return errors;
+        }
+
+        private static bool IsValidEmail(string email)
+        {
+            const string emailPattern = @"^[^\s@]+@[^\s@]+\.[^\s@]+$";
+            return Regex.IsMatch(email, emailPattern, RegexOptions.IgnoreCase);
+        }
+
+        private static bool IsValidPhoneNumber(string phoneNumber)
+        {
+            const string phonePattern = @"^\+?\d{9,15}$";
+            return Regex.IsMatch(phoneNumber, phonePattern);
         }
     }
 }
