@@ -54,60 +54,82 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await connection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployees(Guid? departmentId, Guid? positionId, decimal? salaryFrom, decimal? salaryTo, int? gender, DateTime? hireDateFrom, DateTime? hireDateTo)
+        public async Task<(long Total, IEnumerable<Employee> Data)> FilterEmployees(Guid? departmentId, Guid? positionId, decimal? salaryFrom, decimal? salaryTo, int? gender, DateTime? hireDateFrom, DateTime? hireDateTo, int pageSize, int pageIndex)
         {
             // Build dynamic query
-            var sql = new StringBuilder(SQLExtension.GetQuery("Employee.FilterBase"));
+            var where = new StringBuilder();
 
             var parameters = new DynamicParameters();
 
             if (departmentId.HasValue && departmentId != Guid.Empty)
             {
-                sql.Append(" AND DepartmentID = @DepartmentID");
+                where.Append(" AND DepartmentID = @DepartmentID");
                 parameters.Add("@DepartmentID", departmentId.Value);
             }
 
             if (positionId.HasValue && positionId != Guid.Empty)
             {
-                sql.Append(" AND PositionID = @PositionID");
+                where.Append(" AND PositionID = @PositionID");
                 parameters.Add("@PositionID", positionId.Value);
             }
 
             if (salaryFrom.HasValue)
             {
-                sql.Append(" AND Salary >= @SalaryFrom");
+                where.Append(" AND Salary >= @SalaryFrom");
                 parameters.Add("@SalaryFrom", salaryFrom.Value);
             }
 
             if (salaryTo.HasValue)
             {
-                sql.Append(" AND Salary <= @SalaryTo");
+                where.Append(" AND Salary <= @SalaryTo");
                 parameters.Add("@SalaryTo", salaryTo.Value);
             }
 
             if (gender.HasValue)
             {
-                sql.Append(" AND Gender = @Gender");
+                where.Append(" AND Gender = @Gender");
                 parameters.Add("@Gender", gender.Value);
             }
 
             // Use CreatedDate as hire date if provided
             if (hireDateFrom.HasValue)
             {
-                sql.Append(" AND CreatedDate >= @HireDateFrom");
+                where.Append(" AND CreatedDate >= @HireDateFrom");
                 parameters.Add("@HireDateFrom", hireDateFrom.Value.Date);
             }
 
             if (hireDateTo.HasValue)
             {
-                sql.Append(" AND CreatedDate <= @HireDateTo");
+                where.Append(" AND CreatedDate <= @HireDateTo");
                 parameters.Add("@HireDateTo", hireDateTo.Value.Date);
             }
 
-            var finalSql = sql.ToString();
+            // Prepare count query
+            //var countSql = new StringBuilder("SELECT COUNT(1) FROM Employee WHERE 1=1");
+            var countSql = new StringBuilder(SQLExtension.GetQuery("Employee.Count"));
+            countSql.Append(where.ToString());
+
+            // Ensure pageIndex and pageSize have sensible values
+            if (pageSize <= 0) pageSize = 10;
+            if (pageIndex <= 0) pageIndex = 1;
+
+            var offset = (pageIndex - 1) * pageSize;
+
+            // Prepare data query with limit/offset
+            //var dataSql = new StringBuilder("SELECT * FROM Employee WHERE 1=1");
+            var dataSql = new StringBuilder(SQLExtension.GetQuery("Employee.FilterBase"));
+            dataSql.Append(where.ToString());
+            dataSql.Append(" LIMIT @PageSize OFFSET @Offset");
+
+            parameters.Add("@PageSize", pageSize);
+            parameters.Add("@Offset", offset);
 
             using var connection = await OpenConnectionAsync();
-            return await connection.QueryAsync<Employee>(finalSql, parameters, commandType: System.Data.CommandType.Text);
+
+            var total = await connection.ExecuteScalarAsync<long>(countSql.ToString(), parameters, commandType: System.Data.CommandType.Text);
+            var data = await connection.QueryAsync<Employee>(dataSql.ToString(), parameters, commandType: System.Data.CommandType.Text);
+
+            return (total, data);
         }
     }
 }

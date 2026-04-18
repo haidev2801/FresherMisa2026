@@ -4,5 +4,6 @@
   "Employee.GetByCode": "SELECT * FROM Employee WHERE EmployeeCode=@EmployeeCode",
   "Employee.GetByDepartmentId": "SELECT * FROM Employee WHERE DepartmentID=@DepartmentID",
   "Employee.GetByPositionId": "SELECT * FROM Employee WHERE PositionID=@PositionID",
-  "Employee.FilterBase": "SELECT * FROM Employee WHERE 1=1"
+  "Employee.FilterBase": "SELECT * FROM Employee WHERE 1=1",
+  "Employee.Count": "SELECT COUNT(1) FROM Employee WHERE 1=1"
 }
