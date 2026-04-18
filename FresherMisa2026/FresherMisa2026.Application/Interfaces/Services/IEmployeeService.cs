@@ -12,6 +12,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentIdAsync(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId);
         Task<ServiceResponse> FilterEmployeesAsync(EmployeeFilterRequest request);
+        Task<ServiceResponse> FilterEmployeesPagingAsync(EmployeeFilterRequest request);
 
     }
 }

@@ -10,7 +10,6 @@ namespace FresherMisa2026.WebAPI.Middlewares
     {
         private readonly RequestDelegate _next;
 
-        // Map tên UNIQUE INDEX → tên field thân thiện
         private static readonly Dictionary<string, string> _uniqueKeyFriendlyNames = new(StringComparer.OrdinalIgnoreCase)
         {
             { "UQ_EmployeeCode",   "Mã nhân viên" },
@@ -83,7 +82,7 @@ namespace FresherMisa2026.WebAPI.Middlewares
         }
 
         /// <summary>
-        /// Parse message MySQL 1062 để build message thân thiện, không hardcode tên field.
+        /// Parse message MySQL 1062 để build message
         /// MySQL format: "Duplicate entry 'EMP001' for key 'employee.UQ_EmployeeCode'"
         /// </summary>
         private static string BuildDuplicateKeyMessage(string mysqlMessage)

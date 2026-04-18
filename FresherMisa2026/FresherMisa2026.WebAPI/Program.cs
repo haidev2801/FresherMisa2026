@@ -36,6 +36,7 @@ SQLExtension.Initialize();
 
 //Middlewares
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseHttpsRedirection();
 

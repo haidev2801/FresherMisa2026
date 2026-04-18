@@ -1,3 +1,4 @@
+using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using FresherMisa2026.Entities.Employee.DTO;
 using System;
@@ -12,5 +13,6 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
         Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest);
         Task<int> CountEmployeesByDepartmentIdAsync(Guid departmentId);
+        Task<PagingResponse<Employee>> FilterEmployeesPagingAsync(EmployeeFilterRequest filterRequest);
     }
 }

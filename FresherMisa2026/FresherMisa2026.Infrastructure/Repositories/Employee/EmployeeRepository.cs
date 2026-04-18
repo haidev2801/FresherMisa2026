@@ -1,6 +1,7 @@
 using Dapper;
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
+using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using FresherMisa2026.Entities.Employee.DTO;
 using Microsoft.Extensions.Caching.Memory;
@@ -73,6 +74,35 @@ namespace FresherMisa2026.Infrastructure.Repositories
             const string sql = "SELECT COUNT(*) FROM Employee WHERE DepartmentID = @DepartmentID";
             using var connection = CreateConnection();
             return await connection.ExecuteScalarAsync<int>(sql, new { DepartmentID = departmentId });
+        }
+
+        public async Task<PagingResponse<Employee>> FilterEmployeesPagingAsync(EmployeeFilterRequest request)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@v_DepartmentID", request.DepartmentId);
+            parameters.Add("@v_PositionID", request.PositionId);
+            parameters.Add("@v_SalaryFrom", request.SalaryFrom);
+            parameters.Add("@v_SalaryTo", request.SalaryTo);
+            parameters.Add("@v_Gender", request.Gender);
+            parameters.Add("@v_HireDateFrom", request.HireDateFrom);
+            parameters.Add("@v_HireDateTo", request.HireDateTo);
+            parameters.Add("@v_PageSize", request.PageSize);
+            parameters.Add("@v_PageIndex", request.PageIndex);
+            parameters.Add("@v_Total", dbType: System.Data.DbType.Int64, direction: System.Data.ParameterDirection.Output);
+
+            using var connection = CreateConnection();
+            var data = await connection.QueryAsync<Employee>(
+                "Proc_Employee_Filter_Paging",
+                parameters,
+                commandType: CommandType.StoredProcedure);
+
+            var total = parameters.Get<long>("@v_Total");
+
+            return new PagingResponse<Employee>
+            {
+                Total = total,
+                Data = data.ToList()
+            };
         }
     }
 }

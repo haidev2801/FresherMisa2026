@@ -203,5 +203,42 @@ namespace FresherMisa2026.Application.Services
 
             return CreateSuccessResponse(data);
         }
+
+        public async Task<ServiceResponse> FilterEmployeesPagingAsync(EmployeeFilterRequest request)
+        {
+            if (request.SalaryFrom.HasValue && request.SalaryTo.HasValue && request.SalaryFrom > request.SalaryTo)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest,
+                        "salaryFrom không được lớn hơn salaryTo",
+                        "salaryFrom không được lớn hơn salaryTo");
+            }
+
+            if (request.HireDateFrom.HasValue && request.HireDateTo.HasValue && request.HireDateFrom > request.HireDateTo)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest,
+                        "hireDateFrom không được lớn hơn hireDateTo",
+                        "hireDateFrom không được lớn hơn hireDateTo");
+            }
+
+            if (request.Gender.HasValue && request.Gender is < 0 or > 2)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest,
+                        "gender chỉ nhận các giá trị 0, 1, 2",
+                        "gender chỉ nhận các giá trị 0, 1, 2");
+            }
+
+            if (request.PageSize <= 0) request.PageSize = 10;
+            if (request.PageIndex <= 0) request.PageIndex = 1;
+
+            var pagingResult = await _employeeRepository.FilterEmployeesPagingAsync(request);
+
+            return CreateSuccessResponse(new
+            {
+                pagingResult.Total,
+                PageSize = request.PageSize,
+                PageIndex = request.PageIndex,
+                pagingResult.Data
+            });
+        }
     }
 }

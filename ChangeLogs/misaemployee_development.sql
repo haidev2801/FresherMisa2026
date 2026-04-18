@@ -11,7 +11,7 @@
  Target Server Version : 80406 (8.4.6)
  File Encoding         : 65001
 
- Date: 18/04/2026 15:16:05
+ Date: 18/04/2026 18:28:40
 */
 
 SET NAMES utf8mb4;
@@ -79,9 +79,6 @@ INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000009', 'EMP009',
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000012', 'EMP012', 'Nguyễn Trung Kiên', 1, '1998-05-05', '0912000001', 'kien.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 17500000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000013', 'EMP013', 'Trịnh Hà My', 0, '1997-09-09', '0912000002', 'my.trinh@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '22222222-2222-2222-2222-222222222222', 15500000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000014', 'EMP014', 'Đỗ Minh Tuấn', 1, '1994-07-07', '0912000003', 'tuan.do@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 19000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e67efcdf-2bf6-41d3-a7d3-fa823f2181c2', 'EMP655882', 'Employee 655882', 1, '1998-01-01', '0901234567', 'employee655882@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00', '2026-04-16 09:00:00');
-INSERT INTO `employee` VALUES ('94aac558-0d77-4ba5-a481-d5dde96e1882', 'EMP713713', 'Employee 713713', 1, '1998-01-01', '0901234567', 'employee713713@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00', '2026-04-16 09:00:00');
-INSERT INTO `employee` VALUES ('37fd89ba-64a8-4055-8bb4-ed5202f7510d', 'EMP_RACE001', 'Race Test Nhân Viên 1', 1, '1996-08-10', '0911000001', 'race1@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 16000000.0000, '2025-01-01 00:00:00', NULL);
 INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000015', 'UPD713713', 'Updated Employee 713713', 0, '1997-05-05', '0911002200', 'updated@test.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 15000000.0000, '2026-04-16 09:00:00', '2026-04-16 09:00:00');
 
 -- ----------------------------
@@ -142,6 +139,38 @@ delimiter ;;
 CREATE PROCEDURE `Proc_DeletePositionById`(IN v_PositionID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci)
 BEGIN
   DELETE FROM Position WHERE PositionID = v_PositionID;
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for Proc_DeleteSeedEmployees
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `Proc_DeleteSeedEmployees`;
+delimiter ;;
+CREATE PROCEDURE `Proc_DeleteSeedEmployees`()
+BEGIN
+    DECLARE v_batch   INT DEFAULT 1000;
+    DECLARE v_deleted INT DEFAULT 0;
+    DECLARE v_total   INT DEFAULT 0;
+
+    -- Đếm tổng cần xóa
+    SELECT COUNT(*) INTO v_total FROM employee WHERE EmployeeCode LIKE 'SEED%';
+    SELECT CONCAT('Tổng cần xóa: ', v_total, ' bản ghi') AS Info;
+
+    -- Xóa theo batch để tránh lock bảng quá lâu
+    REPEAT
+        DELETE FROM employee
+        WHERE EmployeeCode LIKE 'SEED%'
+        LIMIT 1000;
+
+        SET v_deleted = v_deleted + ROW_COUNT();
+        SELECT CONCAT('Đã xóa: ', v_deleted, ' / ', v_total) AS Progress;
+        COMMIT;
+
+    UNTIL ROW_COUNT() = 0 END REPEAT;
+
+    SELECT CONCAT('Hoàn thành! Đã xóa tổng cộng ', v_deleted, ' bản ghi.') AS Result;
 END
 ;;
 delimiter ;
@@ -448,6 +477,55 @@ END
 delimiter ;
 
 -- ----------------------------
+-- Procedure structure for Proc_Employee_Filter_Paging
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `Proc_Employee_Filter_Paging`;
+delimiter ;;
+CREATE PROCEDURE `Proc_Employee_Filter_Paging`(IN v_DepartmentID char(36),
+  IN v_PositionID char(36),
+  IN v_SalaryFrom decimal(18,4),
+  IN v_SalaryTo decimal(18,4),
+  IN v_Gender int,
+  IN v_HireDateFrom datetime,
+  IN v_HireDateTo datetime,
+  IN v_PageSize int,
+  IN v_PageIndex int,
+  OUT v_Total bigint)
+BEGIN
+  DECLARE v_offset int;
+
+  IF v_PageIndex < 1 THEN SET v_PageIndex = 1; END IF;
+  IF v_PageSize < 1 THEN SET v_PageSize = 10; END IF;
+  SET v_offset = (v_PageIndex - 1) * v_PageSize;
+
+  SELECT COUNT(*) INTO v_Total
+  FROM employee
+  WHERE 1 = 1
+    AND (v_DepartmentID IS NULL OR DepartmentID = v_DepartmentID)
+    AND (v_PositionID IS NULL OR PositionID = v_PositionID)
+    AND (v_SalaryFrom IS NULL OR Salary >= v_SalaryFrom)
+    AND (v_SalaryTo IS NULL OR Salary <= v_SalaryTo)
+    AND (v_Gender IS NULL OR Gender = v_Gender)
+    AND (v_HireDateFrom IS NULL OR HireDate >= v_HireDateFrom)
+    AND (v_HireDateTo IS NULL OR HireDate <= v_HireDateTo);
+
+  SELECT *
+  FROM employee
+  WHERE 1 = 1
+    AND (v_DepartmentID IS NULL OR DepartmentID = v_DepartmentID)
+    AND (v_PositionID IS NULL OR PositionID = v_PositionID)
+    AND (v_SalaryFrom IS NULL OR Salary >= v_SalaryFrom)
+    AND (v_SalaryTo IS NULL OR Salary <= v_SalaryTo)
+    AND (v_Gender IS NULL OR Gender = v_Gender)
+    AND (v_HireDateFrom IS NULL OR HireDate >= v_HireDateFrom)
+    AND (v_HireDateTo IS NULL OR HireDate <= v_HireDateTo)
+  ORDER BY EmployeeID DESC
+  LIMIT v_PageSize OFFSET v_offset;
+END
+;;
+delimiter ;
+
+-- ----------------------------
 -- Procedure structure for Proc_InsertDepartment
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `Proc_InsertDepartment`;
@@ -642,6 +720,125 @@ BEGIN
   PREPARE stmt FROM @v_sqlCount;
   EXECUTE stmt;
   DEALLOCATE PREPARE stmt;
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for Proc_SeedEmployees
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `Proc_SeedEmployees`;
+delimiter ;;
+CREATE PROCEDURE `Proc_SeedEmployees`(IN p_count INT)
+BEGIN
+    DECLARE i          INT DEFAULT 1;
+    DECLARE v_uuid     CHAR(36);
+    DECLARE v_code     VARCHAR(20);
+    DECLARE v_name     VARCHAR(100);
+    DECLARE v_gender   INT;
+    DECLARE v_dob      DATE;
+    DECLARE v_phone    VARCHAR(50);
+    DECLARE v_email    VARCHAR(100);
+    DECLARE v_address  VARCHAR(255);
+    DECLARE v_deptID   CHAR(36);
+    DECLARE v_posID    CHAR(36);
+    DECLARE v_salary   DECIMAL(18,4);
+    DECLARE v_hire     DATETIME;
+    DECLARE v_created  DATETIME;
+
+    -- Mảng giả: danh sách DepartmentID có sẵn
+    -- (8 phòng ban thực tế trong DB)
+    DECLARE dept1 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440010';
+    DECLARE dept2 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440011';
+    DECLARE dept3 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440012';
+    DECLARE dept4 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440013';
+    DECLARE dept5 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440014';
+    DECLARE dept6 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440015';
+    DECLARE dept7 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440016';
+    DECLARE dept8 CHAR(36) DEFAULT '550e8400-e29b-41d4-a716-446655440017';
+
+    -- Mảng giả: danh sách PositionID có sẵn
+    DECLARE pos1 CHAR(36) DEFAULT '11111111-1111-1111-1111-111111111111';
+    DECLARE pos2 CHAR(36) DEFAULT '22222222-2222-2222-2222-222222222222';
+    DECLARE pos3 CHAR(36) DEFAULT '33333333-3333-3333-3333-333333333333';
+    DECLARE pos4 CHAR(36) DEFAULT '44444444-4444-4444-4444-444444444444';
+    DECLARE pos5 CHAR(36) DEFAULT '55555555-5555-5555-5555-555555555555';
+    DECLARE pos6 CHAR(36) DEFAULT '66666666-6666-6666-6666-666666666666';
+    DECLARE pos7 CHAR(36) DEFAULT '77777777-7777-7777-7777-777777777777';
+
+    main_loop: WHILE i <= p_count DO
+
+        -- UUID ngẫu nhiên
+        SET v_uuid = UUID();
+
+        -- Mã nhân viên: SEED + số thứ tự 7 chữ số
+        SET v_code = CONCAT('SEED', LPAD(i, 7, '0'));
+
+        -- Tên: kết hợp họ + tên theo nhóm i mod
+        SET v_name = CONCAT(
+            ELT(1 + (i MOD 20),
+                'Nguyễn','Trần','Lê','Phạm','Hoàng','Huỳnh','Phan','Vũ',
+                'Võ','Đặng','Bùi','Đỗ','Hồ','Ngô','Dương','Lý',
+                'Đinh','Mai','Trịnh','Tô'
+            ), ' ',
+            ELT(1 + (FLOOR(i/20) MOD 30),
+                'Văn An','Thị Mai','Minh Hoàng','Thị Hương','Quốc Bảo',
+                'Thị Lan','Văn Sơn','Thị Thu','Anh Tú','Trung Kiên',
+                'Hà My','Minh Tuấn','Thanh Hà','Đức Thành','Thị Ngọc',
+                'Hoài Nam','Thị Phương','Quang Huy','Thị Linh','Đình Long',
+                'Bích Ngọc','Hữu Phúc','Thị Trang','Công Danh','Thị Yến',
+                'Quốc Hùng','Thị Kim','Minh Châu','Thị Diễm','Văn Lộc'
+            )
+        );
+
+        -- Giới tính: 0-Nữ, 1-Nam, 2-Khác
+        SET v_gender = i MOD 3;
+
+        -- Ngày sinh: từ 1975 đến 2000
+        SET v_dob = DATE_ADD('1975-01-01', INTERVAL FLOOR(RAND() * 9500) DAY);
+
+        -- Số điện thoại
+        SET v_phone = CONCAT('09', LPAD(FLOOR(RAND() * 100000000), 8, '0'));
+
+        -- Email
+        SET v_email = CONCAT('seed', i, '@perftest.local');
+
+        -- Địa chỉ
+        SET v_address = ELT(1 + (i MOD 5), 'Hà Nội','Hồ Chí Minh','Đà Nẵng','Cần Thơ','Hải Phòng');
+
+        -- DepartmentID (xoay vòng 8 phòng ban)
+        SET v_deptID = ELT(1 + (i MOD 8), dept1,dept2,dept3,dept4,dept5,dept6,dept7,dept8);
+
+        -- PositionID (xoay vòng 7 chức vụ)
+        SET v_posID = ELT(1 + (i MOD 7), pos1,pos2,pos3,pos4,pos5,pos6,pos7);
+
+        -- Lương: từ 8 triệu đến 50 triệu
+        SET v_salary = (8000000 + FLOOR(RAND() * 42000000));
+
+        -- Ngày vào làm: từ 2015 đến 2025
+        SET v_hire = DATE_ADD('2015-01-01', INTERVAL FLOOR(RAND() * 3650) DAY);
+
+        -- Ngày tạo
+        SET v_created = NOW();
+
+        INSERT INTO `employee`
+            (EmployeeID, EmployeeCode, EmployeeName, Gender,
+             DateOfBirth, PhoneNumber, Email, Address,
+             DepartmentID, PositionID, Salary, HireDate, CreatedDate)
+        VALUES
+            (v_uuid, v_code, v_name, v_gender,
+             v_dob, v_phone, v_email, v_address,
+             v_deptID, v_posID, v_salary, v_hire, v_created);
+
+        -- Commit theo batch 1000 dòng để tránh lock lớn
+        IF (i MOD 1000 = 0) THEN
+            COMMIT;
+        END IF;
+
+        SET i = i + 1;
+    END WHILE;
+
+    COMMIT; -- Commit phần còn lại
 END
 ;;
 delimiter ;
