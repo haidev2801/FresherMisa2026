@@ -1,5 +1,5 @@
 # FresherMisa2026 - Task Completion Report
-
+# P/S : Khó quá anh ạ =))
 ASP.NET Core WebAPI project với Clean Architecture 4 layers: WebAPI, Application, Infrastructure, Entities.
 
 ---
