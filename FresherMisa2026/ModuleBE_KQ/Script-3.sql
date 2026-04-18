@@ -1145,23 +1145,45 @@ ON Employee (
     CreatedDate
 );
 
-
+--- test index departmentid
 EXPLAIN
 SELECT *
 FROM Employee
-WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002';
+WHERE DepartmentID =
+'550e8400-e29b-41d4-a716-446655440002';
 
+--- test index positionid
 EXPLAIN
 SELECT *
 FROM Employee
-WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002'
-AND PositionID = '11111111-1111-1111-1111-111111111111'
+WHERE PositionID =
+'11111111-1111-1111-1111-111111111111';
+
+--- test index employeeCode
+EXPLAIN
+SELECT *
+FROM Employee
+WHERE EmployeeCode = 'EMP001';
+
+
+--- test index Composite employee_filter_main
+EXPLAIN
+SELECT *
+FROM Employee
+FORCE INDEX (idx_employee_filter)
+WHERE DepartmentID =
+'550e8400-e29b-41d4-a716-446655440002'
+AND PositionID =
+'11111111-1111-1111-1111-111111111111'
 ORDER BY CreatedDate DESC;
 
+--- add column hiredatefrom + hiredateto
 ALTER TABLE Employee
 ADD COLUMN HireDateFrom DATETIME NULL,
 ADD COLUMN HireDateTo DATETIME NULL;
 
+
+--- add data hiredatefrom and hiredateto
 UPDATE Employee
 SET 
     HireDateFrom = DATE_ADD(
