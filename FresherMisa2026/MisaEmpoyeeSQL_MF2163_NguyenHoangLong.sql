@@ -46,6 +46,23 @@ CREATE INDEX idx_employee_position_id  ON employee(PositionId);
 CREATE INDEX idx_employee_code  ON employee(EmployeeCode);
 CREATE INDEX idx_department_code  ON department(DepartmentCode);
 CREATE INDEX idx_position_code  ON `position`(PositionCode);
+CREATE INDEX idx_employee_department_position ON employee(DepartmentID, PositionID);
+
+EXPLAIN SELECT * FROM employee WHERE EmployeeCode = 'EMP001';
+
+EXPLAIN SELECT * FROM department WHERE DepartmentCode = 'D002';
+
+EXPLAIN SELECT * FROM position WHERE PositionCode = 'P001';
+
+EXPLAIN SELECT e.EmployeeName, d.DepartmentName, p.PositionName
+
+FROM employee e
+INNER JOIN department d ON e.DepartmentID = d.DepartmentID
+INNER JOIN position p ON e.PositionID = p.PositionID
+WHERE d.DepartmentCode = 'D002';
+
+SELECT * FROM employee WHERE DepartmentID = '2a7d9f41-3c5e-4b8a-9e12-6d7f8a9b0c21' AND PositionID = 'b2c3d4e5-f6a7-4b8c-9d01-1e2f3a4b5c6d';
+
 
 
 INSERT INTO department (DepartmentID, DepartmentCode, DepartmentName, Description) VALUES
