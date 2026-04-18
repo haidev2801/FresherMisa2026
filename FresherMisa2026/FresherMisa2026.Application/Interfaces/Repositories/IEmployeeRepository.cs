@@ -7,6 +7,7 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
     public interface IEmployeeRepository : IBaseRepository<Employee>
     {
         Task<Employee> GetEmployeeByEmployeeCodeAsync(string employeeCode);
+        Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string departmentCode);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
     }

@@ -23,6 +23,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await _dbConnection.QueryFirstOrDefaultAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string departmentCode)
+        {
+            string query = SQLExtension.GetQuery("Employee.GetEmployeesByDepartmentCode");
+            var parameters = new { DepartmentCode = departmentCode };
+            return await _dbConnection.QueryAsync<Employee>(query, parameters);
+        }
+
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId)
         {
             string query = SQLExtension.GetQuery("Employee.GetByDepartmentId");

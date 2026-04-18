@@ -38,6 +38,18 @@ namespace FresherMisa2026.Application.Services
             return department;
         }
 
+        public async Task<ServiceResponse> GetEmployeeCountByDepartmentCode(string code)
+        {
+            var employees = await _employeeRepository.GetEmployeesByDepartmentCodeAsync(code);
+            return CreateSuccessResponse(employees.Count());
+        }
+
+        public async Task<ServiceResponse> GetEmployeesByDepartmentCode(string code)
+        {
+            var employees = await _employeeRepository.GetEmployeesByDepartmentCodeAsync(code);
+            return CreateSuccessResponse(employees);
+        }
+
         #region OVERRIDE METHODS
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
