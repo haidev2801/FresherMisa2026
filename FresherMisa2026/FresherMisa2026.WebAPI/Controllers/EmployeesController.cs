@@ -5,6 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
 {
+    /// <summary>
+    /// API quản lý nhân viên.
+    /// Các API CRUD cơ bản được kế thừa từ BaseController:
+    /// - GET /api/Employees
+    /// - GET /api/Employees/{id}
+    /// - POST /api/Employees
+    /// - PUT /api/Employees/{id}
+    /// - DELETE /api/Employees/{id}
+    /// </summary>
     [ApiController]
     public class EmployeesController : BaseController<Employee>
     {
@@ -16,6 +25,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             _employeeService = employeeService;
         }
 
+        /// <summary>
+        /// Lấy nhân viên theo mã nhân viên.
+        /// </summary>
+        /// <param name="code">Mã nhân viên</param>
+        /// <returns>Thông tin nhân viên tương ứng</returns>
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
@@ -26,6 +40,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo phòng ban.
+        /// </summary>
+        /// <param name="departmentId">Id phòng ban</param>
+        /// <returns>Danh sách nhân viên thuộc phòng ban</returns>
         [HttpGet("Department/{departmentId}")]
         public async Task<ActionResult<ServiceResponse>> GetByDepartmentId(Guid departmentId)
         {
@@ -36,6 +55,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo vị trí.
+        /// </summary>
+        /// <param name="positionId">Id vị trí</param>
+        /// <returns>Danh sách nhân viên thuộc vị trí</returns>
         [HttpGet("Position/{positionId}")]
         public async Task<ActionResult<ServiceResponse>> GetByPositionId(Guid positionId)
         {
