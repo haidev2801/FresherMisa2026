@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Employee.DTO;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -38,6 +39,11 @@ namespace FresherMisa2026.Application.Services
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId)
         {
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
+        }
+
+        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
+        {
+            return await _employeeRepository.FilterEmployeesAsync(filterRequest);
         }
 
         protected override List<ValidationError> ValidateCustom(Employee employee)
