@@ -3,6 +3,8 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Enums;
+using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -38,6 +40,31 @@ namespace FresherMisa2026.Application.Services
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId)
         {
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
+        }
+
+        async Task<ServiceResponse> IBaseService<Employee>.InsertAsync(Employee entity)
+        {
+            return await InsertEmployeeAsync(entity);
+        }
+
+        public new async Task<ServiceResponse> InsertAsync(Employee entity)
+        {
+            return await InsertEmployeeAsync(entity);
+        }
+
+        private async Task<ServiceResponse> InsertEmployeeAsync(Employee entity)
+        {
+            try
+            {
+                return await base.InsertAsync(entity);
+            }
+            catch (Exception ex) when (IsDuplicateEmployeeCodeException(ex))
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "EmployeeCode \u0111\u00E3 t\u1ED3n t\u1EA1i",
+                    "M\u00E3 nh\u00E2n vi\u00EAn \u0111\u00E3 t\u1ED3n t\u1EA1i");
+            }
         }
 
         public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
@@ -87,6 +114,28 @@ namespace FresherMisa2026.Application.Services
             }
 
             return errors;
+        }
+
+        private static bool IsDuplicateEmployeeCodeException(Exception ex)
+        {
+            if (ex is MySqlException mySqlException)
+            {
+                if (mySqlException.Number == 1062
+                    || mySqlException.Number == 1644
+                    || mySqlException.Message.Contains("UQ_EmployeeCode", StringComparison.OrdinalIgnoreCase)
+                    || mySqlException.Message.Contains("EmployeeCode", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            if (ex.Message.Contains("UQ_EmployeeCode", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("EmployeeCode", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return ex.InnerException != null && IsDuplicateEmployeeCodeException(ex.InnerException);
         }
     }
 }
