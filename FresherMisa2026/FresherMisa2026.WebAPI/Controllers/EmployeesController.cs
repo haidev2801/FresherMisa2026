@@ -2,6 +2,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace FresherMisa2026.WebAPI.Controllers
 {
@@ -42,6 +43,37 @@ namespace FresherMisa2026.WebAPI.Controllers
             var response = new ServiceResponse();
             response.Data = await _employeeService.GetEmployeesByPositionIdAsync(positionId);
             response.IsSuccess = true;
+
+            return response;
+        }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<ServiceResponse>> Filter(
+            [FromQuery] Guid? departmentId,
+            [FromQuery] Guid? positionId,
+            [FromQuery] decimal? salaryFrom,
+            [FromQuery] decimal? salaryTo,
+            [FromQuery] int? gender,
+            [FromQuery] DateTime? hireDateFrom,
+            [FromQuery] DateTime? hireDateTo)
+        {
+            var employees = await _employeeService.FilterEmployeesAsync(
+                departmentId,
+                positionId,
+                salaryFrom,
+                salaryTo,
+                gender,
+                hireDateFrom,
+                hireDateTo);
+
+            var response = new ServiceResponse();
+            response.Data = employees;
+            response.IsSuccess = true;
+
+            if (!employees.Any())
+            {
+                response.UserMessage = "Không có nhân viên tương ứng";
+            }
 
             return response;
         }
