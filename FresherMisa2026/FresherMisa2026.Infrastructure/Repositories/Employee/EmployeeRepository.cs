@@ -38,8 +38,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 parameters.Add("@v_Gender", gender < 0 ? null : gender);
                 parameters.Add("@v_HireDateFrom", hireDateFrom == null ? null : hireDateFrom.Value.Date);
                 parameters.Add("@v_HireDateTo", hireDateTo == null ? null : hireDateTo.Value.Date);
+                //Thêm pageSize và pageIndex
                 parameters.Add("@v_PageSize", PageSize);
                 parameters.Add("@v_PageIndex", PageIndex);
+                
 
                 
                 var multi = await _dbConnection.QueryMultipleAsync(
