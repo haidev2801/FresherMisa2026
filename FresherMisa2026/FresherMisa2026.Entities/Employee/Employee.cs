@@ -44,6 +44,9 @@ namespace FresherMisa2026.Entities.Employee
         [Display(Name = "Lương")]
         public decimal? Salary { get; set; }
 
+        [Display(Name = "Ngày vào làm")]
+        public DateTime? HireDate { get; set; }
+
         [Display(Name = "Ngày tạo")]
         public DateTime? CreatedDate { get; set; }
     }

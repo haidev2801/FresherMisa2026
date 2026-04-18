@@ -11,7 +11,7 @@
  Target Server Version : 80406 (8.4.6)
  File Encoding         : 65001
 
- Date: 17/04/2026 10:46:19
+ Date: 18/04/2026 14:49:02
 */
 
 SET NAMES utf8mb4;
@@ -33,6 +33,7 @@ CREATE TABLE `department`  (
 -- ----------------------------
 -- Records of department
 -- ----------------------------
+INSERT INTO `department` VALUES ('32a44a52-e4e4-470a-9db6-dc2cc42d8296', 'string', 'string', 'string');
 INSERT INTO `department` VALUES ('550e8400-e29b-41d4-a716-446655440010', 'RND', 'Research & Development', 'Nghiên cứu và phát triển sản phẩm');
 INSERT INTO `department` VALUES ('550e8400-e29b-41d4-a716-446655440011', 'CS', 'Customer Service', 'Chăm sóc khách hàng');
 INSERT INTO `department` VALUES ('550e8400-e29b-41d4-a716-446655440012', 'SALE', 'Sales', 'Kinh doanh và bán hàng');
@@ -58,27 +59,28 @@ CREATE TABLE `employee`  (
   `DepartmentID` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Phòng ban',
   `PositionID` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Chức vụ',
   `Salary` decimal(18, 4) NULL DEFAULT 0.0000 COMMENT 'Lương cơ bản',
+  `HireDate` datetime NULL DEFAULT NULL COMMENT 'Ngày vào làm',
   `CreatedDate` datetime NULL DEFAULT NULL COMMENT 'Ngày tạo'
 ) ENGINE = InnoDB AVG_ROW_LENGTH = 1092 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of employee
 -- ----------------------------
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000001', 'EMP001', 'Nguyễn Văn An', 1, '1995-03-15', '0912345678', 'an.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 18000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000002', 'EMP002', 'Trần Thị Mai', 0, '1998-07-20', '0987654321', 'mai.tran@misa.com', 'Hồ Chí Minh', '550e8400-e29b-41d4-a716-446655440010', '22222222-2222-2222-2222-222222222222', 15000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000003', 'EMP003', 'Phạm Minh Hoàng', 1, '1993-11-05', '0905123456', 'hoang.pham@misa.com', 'Đà Nẵng', '550e8400-e29b-41d4-a716-446655440010', '33333333-3333-3333-3333-333333333333', 35000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000004', 'EMP004', 'Lê Thị Hương', 0, '1996-02-10', '0934567890', 'huong.le@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440013', '44444444-4444-4444-4444-444444444444', 14000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000005', 'EMP005', 'Nguyễn Quốc Bảo', 1, '1992-09-18', '0911223344', 'bao.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440013', '44444444-4444-4444-4444-444444444444', 16000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000006', 'EMP006', 'Đặng Thị Lan', 0, '1994-04-22', '0977112233', 'lan.dang@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440011', '55555555-5555-5555-5555-555555555555', 20000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000007', 'EMP007', 'Hoàng Văn Sơn', 1, '1990-01-30', '0944556677', 'son.hoang@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440011', '55555555-5555-5555-5555-555555555555', 22000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000008', 'EMP008', 'Vũ Thị Thu', 0, '1997-06-12', '0966889900', 'thu.vu@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440012', '66666666-6666-6666-6666-666666666666', 17000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000009', 'EMP009', 'Phan Anh Tú', 1, '1999-12-01', '0922113344', 'tu.phan@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440012', '66666666-6666-6666-6666-666666666666', 16500000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000012', 'EMP012', 'Nguyễn Trung Kiên', 1, '1998-05-05', '0912000001', 'kien.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 17500000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000013', 'EMP013', 'Trịnh Hà My', 0, '1997-09-09', '0912000002', 'my.trinh@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '22222222-2222-2222-2222-222222222222', 15500000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000014', 'EMP014', 'Đỗ Minh Tuấn', 1, '1994-07-07', '0912000003', 'tuan.do@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 19000000.0000, '2026-04-15 09:29:18');
-INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000015', 'UPD713713', 'Updated Employee 713713', 0, '1997-05-05', '0911002200', 'updated@test.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 15000000.0000, '2026-04-16 09:00:00');
-INSERT INTO `employee` VALUES ('e67efcdf-2bf6-41d3-a7d3-fa823f2181c2', 'EMP655882', 'Employee 655882', 1, '1998-01-01', '0901234567', 'employee655882@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00');
-INSERT INTO `employee` VALUES ('94aac558-0d77-4ba5-a481-d5dde96e1882', 'EMP713713', 'Employee 713713', 1, '1998-01-01', '0901234567', 'employee713713@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000001', 'EMP001', 'Nguyễn Văn An', 1, '1995-03-15', '0912345678', 'an.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 18000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000002', 'EMP002', 'Trần Thị Mai', 0, '1998-07-20', '0987654321', 'mai.tran@misa.com', 'Hồ Chí Minh', '550e8400-e29b-41d4-a716-446655440010', '22222222-2222-2222-2222-222222222222', 15000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000003', 'EMP003', 'Phạm Minh Hoàng', 1, '1993-11-05', '0905123456', 'hoang.pham@misa.com', 'Đà Nẵng', '550e8400-e29b-41d4-a716-446655440010', '33333333-3333-3333-3333-333333333333', 35000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000004', 'EMP004', 'Lê Thị Hương', 0, '1996-02-10', '0934567890', 'huong.le@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440013', '44444444-4444-4444-4444-444444444444', 14000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000005', 'EMP005', 'Nguyễn Quốc Bảo', 1, '1992-09-18', '0911223344', 'bao.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440013', '44444444-4444-4444-4444-444444444444', 16000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000006', 'EMP006', 'Đặng Thị Lan', 0, '1994-04-22', '0977112233', 'lan.dang@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440011', '55555555-5555-5555-5555-555555555555', 20000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000007', 'EMP007', 'Hoàng Văn Sơn', 1, '1990-01-30', '0944556677', 'son.hoang@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440011', '55555555-5555-5555-5555-555555555555', 22000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000008', 'EMP008', 'Vũ Thị Thu', 0, '1997-06-12', '0966889900', 'thu.vu@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440012', '66666666-6666-6666-6666-666666666666', 17000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000009', 'EMP009', 'Phan Anh Tú', 1, '1999-12-01', '0922113344', 'tu.phan@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440012', '66666666-6666-6666-6666-666666666666', 16500000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000012', 'EMP012', 'Nguyễn Trung Kiên', 1, '1998-05-05', '0912000001', 'kien.nguyen@misa.com', 'Hà Nội', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 17500000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000013', 'EMP013', 'Trịnh Hà My', 0, '1997-09-09', '0912000002', 'my.trinh@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '22222222-2222-2222-2222-222222222222', 15500000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000014', 'EMP014', 'Đỗ Minh Tuấn', 1, '1994-07-07', '0912000003', 'tuan.do@misa.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 19000000.0000, '2026-04-15 09:29:18', '2026-04-15 09:29:18');
+INSERT INTO `employee` VALUES ('e0000001-0000-0000-0000-000000000015', 'UPD713713', 'Updated Employee 713713', 0, '1997-05-05', '0911002200', 'updated@test.com', 'HCM', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 15000000.0000, '2026-04-16 09:00:00', '2026-04-16 09:00:00');
+INSERT INTO `employee` VALUES ('e67efcdf-2bf6-41d3-a7d3-fa823f2181c2', 'EMP655882', 'Employee 655882', 1, '1998-01-01', '0901234567', 'employee655882@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00', '2026-04-16 09:00:00');
+INSERT INTO `employee` VALUES ('94aac558-0d77-4ba5-a481-d5dde96e1882', 'EMP713713', 'Employee 713713', 1, '1998-01-01', '0901234567', 'employee713713@test.com', 'Ha Noi', '550e8400-e29b-41d4-a716-446655440010', '11111111-1111-1111-1111-111111111111', 12000000.0000, '2026-04-16 09:00:00', '2026-04-16 09:00:00');
 
 -- ----------------------------
 -- Table structure for position
@@ -295,8 +297,8 @@ BEGIN
     AND (v_SalaryFrom IS NULL OR Salary >= v_SalaryFrom)
     AND (v_SalaryTo IS NULL OR Salary <= v_SalaryTo)
     AND (v_Gender IS NULL OR Gender = v_Gender)
-    AND (v_HireDateFrom IS NULL OR CreatedDate >= v_HireDateFrom)
-    AND (v_HireDateTo IS NULL OR CreatedDate <= v_HireDateTo)
+    AND (v_HireDateFrom IS NULL OR HireDate >= v_HireDateFrom)
+    AND (v_HireDateTo IS NULL OR HireDate <= v_HireDateTo)
   ORDER BY EmployeeID DESC;
 END
 ;;
@@ -469,17 +471,18 @@ delimiter ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `Proc_InsertEmployee`;
 delimiter ;;
-CREATE PROCEDURE `Proc_InsertEmployee`(IN v_EmployeeID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_EmployeeCode varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_EmployeeName varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+CREATE PROCEDURE `Proc_InsertEmployee`(IN v_EmployeeID char(36),
+  IN v_EmployeeCode varchar(20),
+  IN v_EmployeeName varchar(100),
   IN v_Gender int,
   IN v_DateOfBirth date,
-  IN v_PhoneNumber varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_Email varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_Address varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_DepartmentID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_PositionID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_Salary decimal(18, 4),
+  IN v_PhoneNumber varchar(50),
+  IN v_Email varchar(100),
+  IN v_Address varchar(255),
+  IN v_DepartmentID char(36),
+  IN v_PositionID char(36),
+  IN v_Salary decimal(18,4),
+  IN v_HireDate datetime,
   IN v_CreatedDate datetime)
 BEGIN
   IF EXISTS (SELECT 1 FROM employee WHERE EmployeeCode = v_EmployeeCode) THEN
@@ -488,11 +491,10 @@ BEGIN
   ELSE
     INSERT INTO employee (
       EmployeeID, EmployeeCode, EmployeeName, Gender, DateOfBirth,
-      PhoneNumber, Email, Address, DepartmentID, PositionID, Salary, CreatedDate
-    )
-    VALUES (
+      PhoneNumber, Email, Address, DepartmentID, PositionID, Salary, HireDate, CreatedDate
+    ) VALUES (
       v_EmployeeID, v_EmployeeCode, v_EmployeeName, v_Gender, v_DateOfBirth,
-      v_PhoneNumber, v_Email, v_Address, v_DepartmentID, v_PositionID, v_Salary, v_CreatedDate
+      v_PhoneNumber, v_Email, v_Address, v_DepartmentID, v_PositionID, v_Salary, v_HireDate, v_CreatedDate
     );
   END IF;
 END
@@ -676,17 +678,18 @@ delimiter ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `Proc_UpdateEmployee`;
 delimiter ;;
-CREATE PROCEDURE `Proc_UpdateEmployee`(IN v_EmployeeID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_EmployeeCode varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_EmployeeName varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+CREATE PROCEDURE `Proc_UpdateEmployee`(IN v_EmployeeID char(36),
+  IN v_EmployeeCode varchar(20),
+  IN v_EmployeeName varchar(100),
   IN v_Gender int,
   IN v_DateOfBirth date,
-  IN v_PhoneNumber varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_Email varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_Address varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_DepartmentID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_PositionID char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  IN v_Salary decimal(18, 4),
+  IN v_PhoneNumber varchar(50),
+  IN v_Email varchar(100),
+  IN v_Address varchar(255),
+  IN v_DepartmentID char(36),
+  IN v_PositionID char(36),
+  IN v_Salary decimal(18,4),
+  IN v_HireDate datetime,
   IN v_CreatedDate datetime)
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM employee WHERE EmployeeID = v_EmployeeID) THEN
@@ -710,6 +713,7 @@ BEGIN
       DepartmentID = v_DepartmentID,
       PositionID = v_PositionID,
       Salary = v_Salary,
+      HireDate = v_HireDate,
       CreatedDate = v_CreatedDate
   WHERE EmployeeID = v_EmployeeID;
 END
