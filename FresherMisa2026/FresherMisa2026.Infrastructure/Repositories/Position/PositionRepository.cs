@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Position;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
 
 namespace FresherMisa2026.Infrastructure.Repositories
@@ -13,7 +14,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Created by: Phuong (17/04/2026)
     public class PositionRepository : BaseRepository<Position>, IPositionRepository
     {
-        public PositionRepository(IConfiguration configuration) : base(configuration)
+        public PositionRepository(IConfiguration configuration, IMemoryCache memoryCache) : base(configuration, memoryCache)
         {
         }
 
