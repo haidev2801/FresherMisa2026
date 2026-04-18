@@ -13,7 +13,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
         }
 
-        public async Task<Employee> GetEmployeeByCode(string code)
+        public async Task<Employee> GetEmployeeByEmployeeCodeAsync(string code)
         {
             string query = SQLExtension.GetQuery("Employee.GetByCode");
             var param = new Dictionary<string, object>

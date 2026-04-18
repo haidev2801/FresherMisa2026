@@ -44,7 +44,7 @@ namespace FresherMisa2026.Application.Services
             IsSuccess = false,
             Code = (int)code,
             DevMessage = devMessage,
-            Data = userMessage
+            UserMessage = userMessage
         };
 
         private static PropertyInfo[] GetCachedProperties(Type entityType)
@@ -246,12 +246,23 @@ namespace FresherMisa2026.Application.Services
             
             if (errors.Count == 0)
             {
-                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
-                if (rowAffects > 0)
+                try
                 {
-                    return CreateSuccessResponse(rowAffects);
+                    int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
+                    if (rowAffects > 0)
+                    {
+                        return CreateSuccessResponse(rowAffects);
+                    }
+                    return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
                 }
-                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+                catch (DatabaseException ex)
+                {
+                    if (ex.ErrorCode == "1062")
+                    {
+                        return CreateErrorResponse(ResponseCode.Conflict, "Lỗi Update dữ liệu vào database", ex.Message);
+                    }
+                    return CreateErrorResponse(ResponseCode.InternalServerError, "Lỗi Update dữ liệu vào database", ex.Message);
+                }
             }
 
             //3. Validate fail - trả về BadRequest

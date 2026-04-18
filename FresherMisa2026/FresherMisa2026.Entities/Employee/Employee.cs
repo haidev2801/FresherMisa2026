@@ -1,6 +1,8 @@
 using FresherMisa2026.Entities.Extensions;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace FresherMisa2026.Entities.Employee
 {
@@ -9,27 +11,20 @@ namespace FresherMisa2026.Entities.Employee
     {
         [Key]
         public Guid EmployeeID { get; set; }
-
-        public string EmployeeCode { get; set; }
-
-        public string EmployeeName { get; set; }
-
-        public int? Gender { get; set; }
-
+        [IRequired]
+        public string? EmployeeCode { get; set; }
+        [IRequired]
+        public string? EmployeeName { get; set; }
+        public int Gender { get; set; }
         public DateTime? DateOfBirth { get; set; }
-
         public string? PhoneNumber { get; set; }
-
         public string? Email { get; set; }
-
         public string? Address { get; set; }
-
-        public Guid DepartmentID { get; set; }
-
-        public Guid PositionID { get; set; }
-
-        public decimal? Salary { get; set; }
-
+        public decimal Salary { get; set; }
+        [IRequired]
+        public Guid? DepartmentID { get; set; }
+        [IRequired]
+        public Guid? PositionID { get; set; }
         public DateTime? CreatedDate { get; set; }
     }
 }
