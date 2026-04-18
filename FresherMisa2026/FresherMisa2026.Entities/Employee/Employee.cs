@@ -50,6 +50,11 @@ namespace FresherMisa2026.Entities.Employee
 
         public decimal? Salary { get; set; }
 
+        /// <summary>
+        /// Ngày vào làm
+        /// </summary>
+        public DateTime? HireDate { get; set; }
+
         public DateTime? CreatedDate { get; set; }
     }
 }

@@ -40,6 +40,19 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(
+            Guid? departmentId,
+            Guid? positionId,
+            decimal? salaryFrom,
+            decimal? salaryTo,
+            int? gender,
+            DateTime? hireDateFrom,
+            DateTime? hireDateTo)
+        {
+            return await _employeeRepository.FilterEmployees(
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo);
+        }
+
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();

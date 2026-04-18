@@ -42,5 +42,64 @@ namespace FresherMisa2026.Infrastructure.Repositories
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
+
+        public async Task<IEnumerable<Employee>> FilterEmployees(
+            Guid? departmentId,
+            Guid? positionId,
+            decimal? salaryFrom,
+            decimal? salaryTo,
+            int? gender,
+            DateTime? hireDateFrom,
+            DateTime? hireDateTo)
+        {
+            var sql = "SELECT * FROM Employee WHERE 1=1";
+            var param = new DynamicParameters();
+
+            if (departmentId.HasValue)
+            {
+                sql += " AND DepartmentID = @DepartmentID";
+                param.Add("@DepartmentID", departmentId.Value.ToString());
+            }
+
+            if (positionId.HasValue)
+            {
+                sql += " AND PositionID = @PositionID";
+                param.Add("@PositionID", positionId.Value.ToString());
+            }
+
+            if (salaryFrom.HasValue)
+            {
+                sql += " AND Salary >= @SalaryFrom";
+                param.Add("@SalaryFrom", salaryFrom.Value);
+            }
+
+            if (salaryTo.HasValue)
+            {
+                sql += " AND Salary <= @SalaryTo";
+                param.Add("@SalaryTo", salaryTo.Value);
+            }
+
+            if (gender.HasValue)
+            {
+                sql += " AND Gender = @Gender";
+                param.Add("@Gender", gender.Value);
+            }
+
+            if (hireDateFrom.HasValue)
+            {
+                sql += " AND HireDate >= @HireDateFrom";
+                param.Add("@HireDateFrom", hireDateFrom.Value);
+            }
+
+            if (hireDateTo.HasValue)
+            {
+                sql += " AND HireDate <= @HireDateTo";
+                param.Add("@HireDateTo", hireDateTo.Value);
+            }
+
+            sql += " ORDER BY EmployeeCode ASC";
+
+            return await _dbConnection.QueryAsync<Employee>(sql, param, commandType: System.Data.CommandType.Text);
+        }
     }
-}
+}
