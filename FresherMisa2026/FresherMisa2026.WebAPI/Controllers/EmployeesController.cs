@@ -1,6 +1,7 @@
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Employee.DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -44,6 +45,35 @@ namespace FresherMisa2026.WebAPI.Controllers
             response.IsSuccess = true;
 
             return response;
+        }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<ServiceResponse>> Filter(
+            [FromQuery] Guid? departmentId,
+            [FromQuery] Guid? positionId,
+            [FromQuery] decimal? salaryFrom,
+            [FromQuery] decimal? salaryTo,
+            [FromQuery] int? gender,
+            [FromQuery] DateTime? hireDateFrom,
+            [FromQuery] DateTime? hireDateTo,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int pageIndex = 1)
+        {
+            var filterRequest = new FilterRequest
+            {
+                DepartmentId = departmentId,
+                PositionId = positionId,
+                SalaryFrom = salaryFrom,
+                SalaryTo = salaryTo,
+                Gender = gender,
+                HireDateFrom = hireDateFrom,
+                HireDateTo = hireDateTo,
+                PageSize = pageSize,
+                PageIndex = pageIndex
+            };
+
+            var response = await _employeeService.GetFilterEmployeesAsync(filterRequest);
+            return Ok(response);
         }
     }
 }

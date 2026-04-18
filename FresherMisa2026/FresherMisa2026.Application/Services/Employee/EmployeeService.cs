@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Employee.DTO;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -40,13 +41,49 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+
+        /// <summary>
+        /// Lọc và phân trang danh sách nhân viên theo các tiêu chí: 
+        /// phòng ban, chức vụ, mức lương, giới tính, ngày tuyển dụng
+        /// </summary>
+        /// <param name="filterRequest"></param>
+        /// <returns></returns>
+        /// Create By: Tannn (18/04/2026)
+        public async Task<ServiceResponse> GetFilterEmployeesAsync(FilterRequest filterRequest)
+        {
+            var (total, employees) = await _employeeRepository.GetFilterEmployeesAsync(
+                filterRequest.PageSize,
+                filterRequest.PageIndex,
+                filterRequest.DepartmentId,
+                filterRequest.PositionId,
+                filterRequest.SalaryFrom,
+                filterRequest.SalaryTo,
+                filterRequest.Gender,
+                filterRequest.HireDateFrom,
+                filterRequest.HireDateTo);
+
+            var response = new PagingResponse<Employee>
+            {
+                Total = total,
+                Data = employees.ToList(),
+                PageSize = filterRequest.PageSize,
+                PageIndex = filterRequest.PageIndex
+            };
+
+            return CreateSuccessResponse(response);
+        }
+
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
 
-            if (!string.IsNullOrEmpty(employee.EmployeeCode) && _employeeRepository.GetEmployeeByCode(employee.EmployeeCode) != null)
+            if (!string.IsNullOrEmpty(employee.EmployeeCode))
             {
-                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+                var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+                if (existingEmployee != null)
+                {
+                    errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+                }
             }
 
             string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
