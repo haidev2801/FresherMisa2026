@@ -93,6 +93,10 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (07/07/2026)
         public async Task<ServiceResponse> DeleteByIDAsync(Guid entityId)
         {
+            //int rowAffects = await _baseRepository.Delete(entityId);
+            //if(rowAffects > 0)
+            //    AfterDelete();
+            //return rowAffects > 0;
             if (entityId == Guid.Empty)
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
@@ -104,10 +108,18 @@ namespace FresherMisa2026.Application.Services
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Không thể xóa bản ghi này");
             }
-            
+
             //2. Thực hiện xóa
-            int rowAffects = await _baseRepository.DeleteAsync(entityId);
-            
+            int rowAffects;
+            try
+            {
+                rowAffects = await _baseRepository.DeleteAsync(entityId);
+            }
+            catch (DatabaseException ex)
+            {
+                return CreateErrorResponse(ResponseCode.InternalServerError, "Lỗi thao tác database", ex.Message);
+            }
+
             if (rowAffects > 0)
             {
                 //3. Xóa thành công thì làm gì
@@ -195,6 +207,28 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
+            //entity.State = ModelSate.Add;
+
+            ////1. Validate tất cả các trường nếu được gắn thẻ
+            //var isValid = Validate(entity);
+
+            ////2. Sử lí lỗi tương ứng
+            //if (isValid)
+            //{
+            //    _serviceResult.IsSuccess = true;
+            //    _serviceResult.Data = await _baseRepository.Insert(entity);
+            //    _serviceResult.Code = (int)ResponseCode.Created;
+            //    _serviceResult.UserMessage = "Thêm thành công";
+            //}
+            //else
+            //{
+            //    _serviceResult.Code = (int)ResponseCode.BadRequest;
+            //    _serviceResult.DevMessage = "Validate thất bại";
+            //}
+
+            ////3. Trả về kế quả
+            //return _serviceResult;
+
             entity.State = ModelSate.Add;
 
             //1. Validate tất cả các trường nếu được gắn thẻ
