@@ -94,13 +94,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
             // Use CreatedDate as hire date if provided
             if (hireDateFrom.HasValue)
             {
-                where.Append(" AND CreatedDate >= @HireDateFrom");
+                where.Append(" AND HireDate >= @HireDateFrom");
                 parameters.Add("@HireDateFrom", hireDateFrom.Value.Date);
             }
 
             if (hireDateTo.HasValue)
             {
-                where.Append(" AND CreatedDate <= @HireDateTo");
+                where.Append(" AND HireDate <= @HireDateTo");
                 parameters.Add("@HireDateTo", hireDateTo.Value.Date);
             }
 
