@@ -1,16 +1,13 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -90,13 +87,16 @@ namespace FresherMisa2026.Infrastructure.Repositories
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
             var query = new StringBuilder($"select * from {_tableName}");
-            int whereCount = 0;
 
             if (_modelType.GetHasDeletedColumn())
             {
-                whereCount++;
                 query.Append($" where IsDeleted = FALSE");
             }
+            // - Tạo connection trong phạm vi method (short-lived).
+            // - Kết thúc method là Dispose -> trả connection về pool (không hủy socket ngay).
+            // - Đây là pattern tận dụng connection pooling tốt hơn, an toàn hơn khi xử lý đồng thời.
+            await using var connection = new MySqlConnection(_connectionString);
+            await connection.OpenAsync();
 
             var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
 

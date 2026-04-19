@@ -3,8 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
-using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -13,8 +12,9 @@ namespace FresherMisa2026.Application.Services
         private readonly IEmployeeRepository _employeeRepository;
         public EmployeeService(
             IBaseRepository<Employee> baseRepository,
-            IEmployeeRepository employeeRepository
-            ) : base(baseRepository)
+            IEmployeeRepository employeeRepository,
+                IMemoryCache cache
+            ) : base(baseRepository, cache)
         {
             _employeeRepository = employeeRepository;
         }

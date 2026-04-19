@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -12,8 +13,9 @@ namespace FresherMisa2026.Application.Services
 
         public DepartmentService(
             IBaseRepository<Department> baseRepository,
-            IDepartmentRepository departmentRepository
-            ) : base(baseRepository)
+            IDepartmentRepository departmentRepository,
+            IMemoryCache cache
+            ) : base(baseRepository, cache)
         {
             _deptRepository = departmentRepository;
         }

@@ -55,4 +55,19 @@
   - [x] Thêm endpoint `GET /api/departments/{id}/employees` để lấy danh sách nhân viên theo phòng ban
   - [x] Thêm enpoint `GET /api/departments/{id}/employees-count` để lấy số lượng nhân viên theo phòng ban
   Git commit: "feat(task-2.3): add API get employees and employee count by department"
+
+  - [x] **Task 3.1: Refactor BaseRepository - Tối Ưu Performance**
+  - Refactor để sử dụng connection pooling hiệu quả hơn - DONE
+    Test cho API GetEntitiesUsingCommandTextAsync dùng using tạo connection để hết hàm sẽ tự dipose, không giữ lại như tạo trong constructor
+  - Thêm caching cho các truy vấn `GetEntities`, `GetEntityByID` với thời gian cache 5 phút - DONE
+    Hiện đang để cache sống 5 phút và gia hạn thêm 2 phút mỗi khi request
+    Dùng ImemoryCache cho GetEntities, GetEntityByID trong BaseService
+    Thêm RemoveCache để clear cache khi data change
+    delete thì truyền thêm id để xóa cache ở GetEntityByID nữa
+  - Đánh giá: Sử dụng `IMemoryCache` hoặc `IDistributedCache` - Dùng IMemoryCache 
+
+**Kiểm tra:**
+- [x] Review code để đảm bảo không có breaking changes
+- [x] Test performance trước và sau khi refactor
+- [x] Đảm bảo cache được clear khi có thay đổi dữ liệu
 ---
