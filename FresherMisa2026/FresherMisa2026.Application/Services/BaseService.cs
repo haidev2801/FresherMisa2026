@@ -39,6 +39,8 @@ namespace FresherMisa2026.Application.Services
             Data = data
         };
 
+
+
         protected static ServiceResponse CreateErrorResponse(ResponseCode code, string devMessage, string? userMessage = null) => new()
         {
             IsSuccess = false,
@@ -200,21 +202,30 @@ namespace FresherMisa2026.Application.Services
         {
             entity.State = ModelSate.Add;
 
-            //1. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
 
-            //2. Sử lí lỗi tương ứng
-            if (errors.Count == 0)
+            if (errors.Count > 0)
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
+            }
+
+            try
             {
                 var result = await _baseRepository.InsertAsync(entity);
                 return CreateSuccessResponse(result);
             }
-
-            return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            catch (DuplicateException ex)
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    ex.Message,
+                    $"{ex.Field} đã tồn tại"
+                );
+            }
         }
 
         /// <summary>
@@ -232,28 +243,36 @@ namespace FresherMisa2026.Application.Services
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
             }
 
-            //1. Trạng thái
             entity.State = ModelSate.Update;
 
-            //2. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
-            
-            if (errors.Count == 0)
+
+            if (errors.Count > 0)
             {
-                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
-                if (rowAffects > 0)
-                {
-                    return CreateSuccessResponse(rowAffects);
-                }
-                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
             }
 
-            //3. Validate fail - trả về BadRequest
-            return CreateErrorResponse(
-                ResponseCode.BadRequest,
-                "Validate thất bại",
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            try
+            {
+                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
+
+                if (rowAffects > 0)
+                    return CreateSuccessResponse(rowAffects);
+
+                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+            }
+            catch (DuplicateException ex)
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    ex.Message,
+                    $"{ex.Field} đã tồn tại"
+                );
+            }
         }
 
         /// <summary>

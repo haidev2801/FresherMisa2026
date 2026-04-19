@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
+
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
@@ -92,11 +93,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
             // nếu có cache thì trả luôn
             if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity> cached))
             {
-                Console.WriteLine("🔥 GET ALL FROM CACHE");
+                Console.WriteLine("GET ALL FROM CACHE");
                 return cached;
             }
 
-            Console.WriteLine("💾 GET ALL FROM DB");
+            Console.WriteLine("GET ALL FROM DB");
 
             var data = await GetEntitiesUsingCommandTextAsync();
 
@@ -143,11 +144,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
             // check cache
             if (_cache.TryGetValue(cacheKey, out TEntity cached))
             {
-                Console.WriteLine("🔥 GET BY ID FROM CACHE");
+                Console.WriteLine("GET BY ID FROM CACHE");
                 return cached;
             }
 
-            Console.WriteLine("💾 GET BY ID FROM DB");
+            Console.WriteLine("GET BY ID FROM DB");
 
             var entity = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
 
@@ -263,6 +264,29 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     // clear cache
                     _cache.Remove($"{_tableName}_ALL");
                 }
+
+                catch (MySqlException ex)
+                {
+                    transaction.Rollback();
+
+                    if (ex.Number == 1062)
+                    {
+                        Console.WriteLine($"MySQL Duplicate Entry Error: {ex.Message}");
+                        if (ex.Message.Contains("uq_employee_code"))
+                            throw new DuplicateException("Mã nhân viên", ex.Message);
+
+                        if (ex.Message.Contains("uq_department_code"))
+                            throw new DuplicateException("Mã phòng ban", ex.Message);
+
+                        if (ex.Message.Contains("uq_position_code"))
+                            throw new DuplicateException("Mã chức vụ", ex.Message);
+
+
+                        throw new DuplicateException("Dữ liệu", ex.Message);
+                    }
+
+                    throw;
+                }
                 catch
                 {
                     transaction.Rollback();
@@ -305,6 +329,27 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     // clear cache
                     _cache.Remove($"{_tableName}_ALL");
                     _cache.Remove($"{_tableName}_{entityId}");
+                }
+
+                catch (MySqlException ex)
+                {
+                    transaction.Rollback();
+
+                    if (ex.Number == 1062)
+                    {
+                        if (ex.Message.Contains("EmployeeCode"))
+                            throw new DuplicateException("Mã nhân viên", ex.Message);
+
+                        if (ex.Message.Contains("DepartmentCode"))
+                            throw new DuplicateException("Mã phòng ban", ex.Message);
+
+                        if (ex.Message.Contains("PositionCode"))
+                            throw new DuplicateException("Mã chức vụ", ex.Message);
+
+                        throw new DuplicateException("Dữ liệu", ex.Message);
+                    }
+
+                    throw;
                 }
                 catch
                 {
@@ -392,5 +437,6 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         #endregion
+        
     }
 }

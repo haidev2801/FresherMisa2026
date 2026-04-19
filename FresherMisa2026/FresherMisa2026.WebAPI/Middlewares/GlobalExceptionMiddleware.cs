@@ -44,20 +44,28 @@ namespace FresherMisa2026.WebAPI.Middlewares
         /// </summary>
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            // Thiết lập status code và content type
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            // Tạo payload phản hồi
+            int statusCode = (int)HttpStatusCode.InternalServerError;
+            string userMessage = "Có lỗi xảy ra vui lòng liên hệ Misa!";
+
+            // Bắt duplicate
+            if (exception is DuplicateException)
+            {
+                statusCode = (int)HttpStatusCode.BadRequest;
+                userMessage = exception.Message;
+            }
+
+            context.Response.StatusCode = statusCode;
+
             var response = new ServiceResponse
             {
                 IsSuccess = false,
-                Code = context.Response.StatusCode,
-                UserMessage = "Có lỗi xảy ra vui lòng liên hệ Misa!",
-                DevMessage = exception.Message // Tùy chọn: bao gồm cho dev
+                Code = statusCode,
+                UserMessage = userMessage,
+                DevMessage = exception.Message
             };
 
-            // Chuyển đổi phản hồi thành JSON
             var jsonResponse = JsonSerializer.Serialize(response);
 
             return context.Response.WriteAsync(jsonResponse);
