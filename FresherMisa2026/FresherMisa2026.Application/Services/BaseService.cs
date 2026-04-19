@@ -200,17 +200,18 @@ namespace FresherMisa2026.Application.Services
             var errors = Validate(entity);
 
             //2. Sử lí lỗi tương ứng
-            if (errors.Count == 0)
+            if (errors.Count > 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
             }
 
-            return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            // DuplicateKeyException (race condition) sẽ bubble up lên GlobalExceptionMiddleware
+            var result = await _baseRepository.InsertAsync(entity);
+            return CreateSuccessResponse(result);
         }
 
         /// <summary>
@@ -383,6 +384,7 @@ namespace FresherMisa2026.Application.Services
         {
             return Task.FromResult(true);
         }
+
         #endregion
     }
 

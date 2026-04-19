@@ -2,6 +2,7 @@
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Exceptions;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
@@ -207,6 +208,16 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // Lỗi 1062 là MySQL Duplicate Entry — vi phạm unique constraint.
+                    // Trường hợp này xảy ra khi 2 request cùng lúc vượt qua validate ở service
+                    // nhưng khi insert thì DB phát hiện trùng (race condition).
+                    // Rollback transaction rồi chuyển thành DuplicateKeyException
+                    // để tầng service có thể xử lý và trả về message phù hợp.
+                    transaction.Rollback();
+                    throw new DuplicateKeyException(ex.Message);
                 }
                 catch
                 {
