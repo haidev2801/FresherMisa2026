@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Data;
+using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -45,54 +46,67 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployees(EmployeeFilterRequest request)
+        public async Task<(long Total, IEnumerable<Employee> Data)> FilterEmployees(EmployeeFilterRequest request)
         {
-            var sql = "SELECT * FROM employee WHERE 1=1";
+            var sql = new StringBuilder("FROM employee WHERE 1=1");
             var parameters = new DynamicParameters();
 
             if (request.DepartmentId.HasValue)
             {
-                sql += " AND DepartmentID = @DepartmentID";
+                sql.Append(" AND DepartmentID = @DepartmentID");
                 parameters.Add("@DepartmentID", request.DepartmentId);
             }
 
             if (request.PositionId.HasValue)
             {
-                sql += " AND PositionID = @PositionID";
+                sql.Append(" AND PositionID = @PositionID");
                 parameters.Add("@PositionID", request.PositionId);
             }
 
             if (request.SalaryFrom.HasValue)
             {
-                sql += " AND Salary >= @SalaryFrom";
+                sql.Append(" AND Salary >= @SalaryFrom");
                 parameters.Add("@SalaryFrom", request.SalaryFrom);
             }
 
             if (request.SalaryTo.HasValue)
             {
-                sql += " AND Salary <= @SalaryTo";
+                sql.Append(" AND Salary <= @SalaryTo");
                 parameters.Add("@SalaryTo", request.SalaryTo);
             }
 
             if (request.Gender.HasValue)
             {
-                sql += " AND Gender = @Gender";
+                sql.Append(" AND Gender = @Gender");
                 parameters.Add("@Gender", request.Gender);
             }
 
             if (request.HireDateFrom.HasValue)
             {
-                sql += " AND CreatedDate >= @HireDateFrom";
+                sql.Append(" AND CreatedDate >= @HireDateFrom");
                 parameters.Add("@HireDateFrom", request.HireDateFrom);
             }
 
             if (request.HireDateTo.HasValue)
             {
-                sql += " AND CreatedDate <= @HireDateTo";
+                sql.Append(" AND CreatedDate <= @HireDateTo");
                 parameters.Add("@HireDateTo", request.HireDateTo);
             }
 
-            return await _dbConnection.QueryAsync<Employee>(sql, parameters);
+            // query total
+            var totalSql = $"SELECT COUNT(*) {sql}";
+            var total = await _dbConnection.ExecuteScalarAsync<long>(totalSql, parameters);
+
+            // paging
+            var offset = (request.PageIndex - 1) * request.PageSize;
+            parameters.Add("@Offset", offset);
+            parameters.Add("@PageSize", request.PageSize);
+
+            var dataSql = $"SELECT * {sql} LIMIT @PageSize OFFSET @Offset";
+
+            var data = await _dbConnection.QueryAsync<Employee>(dataSql, parameters);
+
+            return (total, data);
         }
     }
 }

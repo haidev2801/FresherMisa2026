@@ -13,5 +13,7 @@ namespace FresherMisa2026.Entities.Employee
         public int? Gender { get; set; }
         public DateTime? HireDateFrom { get; set; }
         public DateTime? HireDateTo { get; set; }
+        public int PageSize { get; set; } = 10;
+        public int PageIndex { get; set; } = 1;
     }
 }

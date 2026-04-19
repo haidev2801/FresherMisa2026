@@ -50,13 +50,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpGet("filter")]
         public async Task<ActionResult<ServiceResponse>> Filter([FromQuery] EmployeeFilterRequest request)
         {
-            var response = new ServiceResponse();
-
-            response.Data = await _employeeService.FilterEmployeesAsync(request);
-            response.IsSuccess = true;
-            response.Code = (int)ResponseCode.Success;
-
-            return response;
+            return await _employeeService.FilterEmployeesAsync(request);
         }
     }
 }

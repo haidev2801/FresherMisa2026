@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -91,9 +92,24 @@ namespace FresherMisa2026.Application.Services
             return errors;
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest request)
+        public async Task<ServiceResponse> FilterEmployeesAsync(EmployeeFilterRequest request)
         {
-            return await _employeeRepository.FilterEmployees(request);
+            var (total, data) = await _employeeRepository.FilterEmployees(request);
+
+            var paging = new PagingResponse<Employee>
+            {
+                Total = total,
+                PageSize = request.PageSize,
+                PageIndex = request.PageIndex,
+                Data = data.ToList()
+            };
+
+            return new ServiceResponse
+            {
+                IsSuccess = true,
+                Code = (int)ResponseCode.Success,
+                Data = paging
+            };
         }
     }
 }
