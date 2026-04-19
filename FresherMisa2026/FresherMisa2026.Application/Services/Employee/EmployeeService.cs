@@ -92,13 +92,18 @@ namespace FresherMisa2026.Application.Services
             decimal? salaryTo,
             int? gender,
             DateTime? hireDateFrom,
-            DateTime? hireDateTo)
+            DateTime? hireDateTo,
+            int pageSize = 10,
+            int pageIndex = 1)
         {
             var (total, data) = await _employeeRepository.FilterEmployees(
-                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo);
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo,
+                pageSize, pageIndex);
             return new PagingResponse<Employee>
             {
                 Total = total,
+                PageSize = pageSize,
+                PageIndex = pageIndex,
                 Data = data.ToList()
             };
         }

@@ -17,7 +17,9 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
             decimal? salaryTo,
             int? gender,
             DateTime? hireDateFrom,
-            DateTime? hireDateTo
+            DateTime? hireDateTo,
+            int pageSize = 10,
+            int pageIndex = 1
         );
 
         // Custom for Department endpoints

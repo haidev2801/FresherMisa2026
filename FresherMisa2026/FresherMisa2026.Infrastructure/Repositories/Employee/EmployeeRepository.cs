@@ -50,7 +50,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
             decimal? salaryTo,
             int? gender,
             DateTime? hireDateFrom,
-            DateTime? hireDateTo)
+            DateTime? hireDateTo,
+            int pageSize = 10,
+            int pageIndex = 1)
         {
             // Xây dựng truy vấn SQL động
             var sql = @"SELECT * FROM Employee WHERE 1=1";
@@ -100,7 +102,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 param.Add("HireDateTo", hireDateTo);
             }
 
-            // Thực thi truy vấn lấy dữ liệu và tổng số bản ghi
+            // Thêm LIMIT/OFFSET để phân trang
+            // pageIndex bắt đầu từ 1, OFFSET = (pageIndex - 1) * pageSize
+            int offset = (pageIndex - 1) * pageSize;
+            sql += " LIMIT @PageSize OFFSET @Offset";
+            param.Add("PageSize", pageSize);
+            param.Add("Offset", offset);
+
             var data = await _dbConnection.QueryAsync<Employee>(sql, param, commandType: System.Data.CommandType.Text);
             var total = await _dbConnection.ExecuteScalarAsync<long>(countSql, param, commandType: System.Data.CommandType.Text);
             return (total, data);
