@@ -16,6 +16,7 @@ builder.Services.AddSwaggerGen();
 
 //DI
 builder.Services.AddApplicationDI();
+builder.Services.AddMemoryCache();
 builder.Services.AddInfrastructure();
 
 var app = builder.Build();
