@@ -10,12 +10,12 @@ namespace FresherMisa2026.WebAPI.Controllers
     [ApiController]
     public class DepartmentsController : BaseController<Department>
     {
-        private readonly IDepartmentSerice _departmentSerice;
+        private readonly IDepartmentService _departmentService;
 
         public DepartmentsController(
-            IDepartmentSerice departmentSerice) : base(departmentSerice)
+            IDepartmentService departmentService) : base(departmentService)
         {
-            _departmentSerice = departmentSerice;
+            _departmentService = departmentService;
         }
 
 
@@ -28,7 +28,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
             var response = new ServiceResponse();
-            response.Data = await _departmentSerice.GetDepartmentByCodeAsync(code);
+            response.Data = await _departmentService.GetDepartmentByCodeAsync(code);
             response.IsSuccess = true;
 
             return response;
@@ -44,7 +44,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
         {
             var response = new ServiceResponse();
-            response.Data = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+            response.Data = await _departmentService.GetEmployeesByDepartmentCodeAsync(code);
             response.IsSuccess = true;
 
             return response;
@@ -60,7 +60,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string code)
         {
             var response = new ServiceResponse();
-            response.Data = await _departmentSerice.GetEmployeeCountByDepartmentCodeAsync(code);
+            response.Data = await _departmentService.GetEmployeeCountByDepartmentCodeAsync(code);
             response.IsSuccess = true;
 
             return response;
