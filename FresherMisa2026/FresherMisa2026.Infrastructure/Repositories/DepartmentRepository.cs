@@ -4,6 +4,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,7 +18,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Created By: dvhai (09/04/2026)
     public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
     {
-        public DepartmentRepository(IConfiguration configuration) : base(configuration)
+        public DepartmentRepository(IConfiguration configuration, IMemoryCache cache) : base(configuration, cache)
         {
 
         }

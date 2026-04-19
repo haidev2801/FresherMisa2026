@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json.Serialization;
 
 namespace FresherMisa2026.Infrastructure.Repositories
@@ -27,12 +28,14 @@ namespace FresherMisa2026.Infrastructure.Repositories
         protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
+        protected IMemoryCache _cache;
 
 
         //Constructor
-        public BaseRepository(IConfiguration configuration)
+        public BaseRepository(IConfiguration configuration, IMemoryCache cache)
         {
             _configuration = configuration;
+            _cache = cache;
             // Lấy connection string từ appsettings (key: DefaultConnection)
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             // Khởi tạo connection MySql
@@ -84,7 +87,23 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            var cacheKey = $"{_tableName}_ALL";
+
+            // nếu có cache thì trả luôn
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity> cached))
+            {
+                Console.WriteLine("🔥 GET ALL FROM CACHE");
+                return cached;
+            }
+
+            Console.WriteLine("💾 GET ALL FROM DB");
+
+            var data = await GetEntitiesUsingCommandTextAsync();
+
+            // lưu cache 5 phút
+            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(5));
+
+            return data;
         }
 
         /// <summary>
@@ -119,7 +138,25 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            var cacheKey = $"{_tableName}_{entityId}";
+
+            // check cache
+            if (_cache.TryGetValue(cacheKey, out TEntity cached))
+            {
+                Console.WriteLine("🔥 GET BY ID FROM CACHE");
+                return cached;
+            }
+
+            Console.WriteLine("💾 GET BY ID FROM DB");
+
+            var entity = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+
+            if (entity != null)
+            {
+                _cache.Set(cacheKey, entity, TimeSpan.FromMinutes(5));
+            }
+
+            return entity;
         }
 
         /// <summary>
@@ -183,6 +220,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    // clear cache
+                    _cache.Remove($"{_tableName}_ALL");
+                    _cache.Remove($"{_tableName}_{entityId}");
                 }
                 catch
                 {
@@ -218,6 +259,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    // clear cache
+                    _cache.Remove($"{_tableName}_ALL");
                 }
                 catch
                 {
@@ -257,6 +301,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    // clear cache
+                    _cache.Remove($"{_tableName}_ALL");
+                    _cache.Remove($"{_tableName}_{entityId}");
                 }
                 catch
                 {
