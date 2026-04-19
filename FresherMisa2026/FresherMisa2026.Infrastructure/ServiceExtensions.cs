@@ -14,6 +14,9 @@ namespace FresherMisa2026.Infrastructure
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services)
         {
+            // Đăng ký IMemoryCache để BaseRepository có thể inject
+            services.AddMemoryCache();
+
             //base
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
