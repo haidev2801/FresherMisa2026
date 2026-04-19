@@ -9,6 +9,7 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         Task<Employee> GetEmployeeByCode(string code);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
+        Task<IEnumerable<Employee>> FilterEmployees(EmployeeFilterRequest request);
 
     }
 }

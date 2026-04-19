@@ -90,5 +90,10 @@ namespace FresherMisa2026.Application.Services
 
             return errors;
         }
+
+        public async Task<IEnumerable<Employee>> FilterEmployeesAsync(EmployeeFilterRequest request)
+        {
+            return await _employeeRepository.FilterEmployees(request);
+        }
     }
 }

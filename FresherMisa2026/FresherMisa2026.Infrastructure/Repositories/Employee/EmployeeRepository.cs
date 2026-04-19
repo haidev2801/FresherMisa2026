@@ -43,5 +43,55 @@ namespace FresherMisa2026.Infrastructure.Repositories
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
+
+        public async Task<IEnumerable<Employee>> FilterEmployees(EmployeeFilterRequest request)
+        {
+            var sql = "SELECT * FROM employee WHERE 1=1";
+            var parameters = new DynamicParameters();
+
+            if (request.DepartmentId.HasValue)
+            {
+                sql += " AND DepartmentID = @DepartmentID";
+                parameters.Add("@DepartmentID", request.DepartmentId);
+            }
+
+            if (request.PositionId.HasValue)
+            {
+                sql += " AND PositionID = @PositionID";
+                parameters.Add("@PositionID", request.PositionId);
+            }
+
+            if (request.SalaryFrom.HasValue)
+            {
+                sql += " AND Salary >= @SalaryFrom";
+                parameters.Add("@SalaryFrom", request.SalaryFrom);
+            }
+
+            if (request.SalaryTo.HasValue)
+            {
+                sql += " AND Salary <= @SalaryTo";
+                parameters.Add("@SalaryTo", request.SalaryTo);
+            }
+
+            if (request.Gender.HasValue)
+            {
+                sql += " AND Gender = @Gender";
+                parameters.Add("@Gender", request.Gender);
+            }
+
+            if (request.HireDateFrom.HasValue)
+            {
+                sql += " AND CreatedDate >= @HireDateFrom";
+                parameters.Add("@HireDateFrom", request.HireDateFrom);
+            }
+
+            if (request.HireDateTo.HasValue)
+            {
+                sql += " AND CreatedDate <= @HireDateTo";
+                parameters.Add("@HireDateTo", request.HireDateTo);
+            }
+
+            return await _dbConnection.QueryAsync<Employee>(sql, parameters);
+        }
     }
 }
