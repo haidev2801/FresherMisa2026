@@ -2,19 +2,20 @@ using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Position;
+using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
 
 namespace FresherMisa2026.Application.Services
 {
-    public class PositionService : BaseService<Position>, IPositionService
+    public class EmployeeService : BaseService<Employee>, IEmployeeService
     {
-    
-        public PositionService(
-            IBaseRepository<Position> baseRepository
+        public EmployeeService(
+            IBaseRepository<Employee> baseRepository
             ) : base(baseRepository)
         {
+         
         }
+
     }
 }

@@ -26,4 +26,12 @@
   - [x] Kiểm tra đủ 5 API CRUD: GET all, GET by id, POST, PUT, DELETE
   Git commit: "feat(task-1.1): implement position CRUD"
 
+  - [x] **Task 1.2 - Hoàn thiện CRUD cho Employee:**
+  - [x] Tạo `EmployeeRepository` kế thừa `BaseRepository<Employee>`
+  - [x] Tạo `EmployeeService` kế thừa `BaseService<Employee>`
+  - [x] Tạo `EmployeesController` kế thừa `BaseController<Employee>`
+  - [x] Đăng ký DI trong `ServiceExtensions.cs`
+  - [x] Kiểm tra đủ 5 API CRUD: GET all, GET by id, POST, PUT, DELETE
+  Git commit: "feat(task-1.2): implement employee CRUD"
+
 ---
