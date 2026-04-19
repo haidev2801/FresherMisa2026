@@ -165,7 +165,8 @@ namespace FresherMisa2026.Application.Services
             //3. Tên hiển thị
             var propertyDisplayName = typeof(TEntity).GetColumnDisplayName(propertyName);
 
-            if (propertyValue == null || string.IsNullOrEmpty(propertyValue.ToString()))
+            if (propertyValue == null || string.IsNullOrEmpty(propertyValue.ToString())
+                || (propertyValue is Guid guid && guid == Guid.Empty))
             {
                 return new ValidationError(propertyName, $"Trường {propertyDisplayName} bắt buộc nhập");
             }

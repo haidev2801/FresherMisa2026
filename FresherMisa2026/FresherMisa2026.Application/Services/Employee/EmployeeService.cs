@@ -102,5 +102,15 @@ namespace FresherMisa2026.Application.Services
                 Data = data.ToList()
             };
         }
+
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string departmentCode)
+        {
+            return await _employeeRepository.GetEmployeesByDepartmentCode(departmentCode);
+        }
+
+        public async Task<int> CountEmployeesByDepartmentCodeAsync(string departmentCode)
+        {
+            return await _employeeRepository.CountEmployeesByDepartmentCode(departmentCode);
+        }
     }
 }
