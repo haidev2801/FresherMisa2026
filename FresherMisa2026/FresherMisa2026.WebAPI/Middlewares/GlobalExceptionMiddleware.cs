@@ -1,4 +1,5 @@
-﻿using FresherMisa2026.Entities;
+using FresherMisa2026.Entities;
+using FresherMisa2026.Infrastructure.Repositories;
 using System.Net;
 using System.Text.Json;
 
@@ -22,11 +23,36 @@ namespace FresherMisa2026.WebAPI.Middlewares
                 await _next(context);
                 Console.WriteLine("After run middleware");
             }
+            catch (DuplicateEntryException ex)
+            {
+                // Xử lý race condition - duplicate entry từ database
+                await HandleDuplicateEntryAsync(context, ex);
+            }
             catch (Exception ex)
             {
                 // Handle the exception globally
                 await HandleExceptionAsync(context, ex);
             }
+        }
+
+        /// <summary>
+        /// Xử lý lỗi duplicate entry (race condition) - trả về 400
+        /// </summary>
+        private static Task HandleDuplicateEntryAsync(HttpContext context, DuplicateEntryException exception)
+        {
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+
+            var response = new ServiceResponse
+            {
+                IsSuccess = false,
+                Code = context.Response.StatusCode,
+                UserMessage = exception.Message,
+                DevMessage = "Duplicate entry detected (race condition handled)"
+            };
+
+            var jsonResponse = JsonSerializer.Serialize(response);
+            return context.Response.WriteAsync(jsonResponse);
         }
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)

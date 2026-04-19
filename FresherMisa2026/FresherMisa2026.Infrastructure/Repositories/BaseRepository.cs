@@ -1,8 +1,9 @@
-﻿using Dapper;
+using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
 using System;
@@ -15,7 +16,7 @@ using System.Text.Json.Serialization;
 namespace FresherMisa2026.Infrastructure.Repositories
 {
     /// <summary>
-    /// Base repository
+    /// Base repository với connection pooling và caching
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
@@ -28,15 +29,35 @@ namespace FresherMisa2026.Infrastructure.Repositories
         protected string _tableName;
         public Type _modelType = null;
 
+        // Cache
+        private readonly IMemoryCache _cache;
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
+        /// <summary>
+        /// Cache key cho danh sách entities
+        /// </summary>
+        private string GetEntitiesCacheKey() => $"Entities_{_tableName}_All";
+
+        /// <summary>
+        /// Cache key cho entity theo ID
+        /// </summary>
+        private string GetEntityByIdCacheKey(Guid id) => $"Entity_{_tableName}_{id}";
+
 
         //Constructor
-        public BaseRepository(IConfiguration configuration)
+        public BaseRepository(IConfiguration configuration, IMemoryCache cache)
         {
             _configuration = configuration;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
             _tableName = _modelType.GetTableName();
+            _cache = cache;
+        }
+
+        // Constructor cho backward compatibility (các repository con không cần sửa nếu chưa dùng cache)
+        public BaseRepository(IConfiguration configuration) : this(configuration, new MemoryCache(new MemoryCacheOptions()))
+        {
         }
 
 
@@ -54,7 +75,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Mở kết nối database
+        /// Mở kết nối database - sử dụng connection pooling từ MySqlConnector
+        /// MySqlConnector tự quản lý connection pooling qua connection string
         /// </summary>
         private async Task OpenConnectionAsync()
         {
@@ -71,15 +93,51 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
         }
 
+        /// <summary>
+        /// Xóa cache liên quan đến entity khi có thay đổi dữ liệu
+        /// </summary>
+        private void InvalidateCache()
+        {
+            // Xóa cache danh sách
+            _cache.Remove(GetEntitiesCacheKey());
+        }
+
+        /// <summary>
+        /// Xóa cache cho một entity cụ thể và danh sách
+        /// </summary>
+        private void InvalidateCache(Guid entityId)
+        {
+            _cache.Remove(GetEntitiesCacheKey());
+            _cache.Remove(GetEntityByIdCacheKey(entityId));
+        }
+
         #region Method Get
         /// <summary>
-        /// Lấy danh sách entity
+        /// Lấy danh sách entity (có cache 5 phút)
         /// </summary>
         /// <returns>Danh sách tất cả bản ghi</returns>
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            var cacheKey = GetEntitiesCacheKey();
+
+            // Kiểm tra cache trước
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity> cachedEntities))
+            {
+                return cachedEntities;
+            }
+
+            // Nếu không có cache, truy vấn DB
+            var entities = await GetEntitiesUsingCommandTextAsync();
+
+            // Lưu vào cache với thời gian 5 phút
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(CacheDuration)
+                .SetSlidingExpiration(TimeSpan.FromMinutes(2));
+
+            _cache.Set(cacheKey, entities, cacheOptions);
+
+            return entities;
         }
 
         /// <summary>
@@ -104,14 +162,35 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy bản ghi theo id
+        /// Lấy bản ghi theo id (có cache 5 phút)
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi tìm thấy hoặc null</returns>
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            var cacheKey = GetEntityByIdCacheKey(entityId);
+
+            // Kiểm tra cache trước
+            if (_cache.TryGetValue(cacheKey, out TEntity cachedEntity))
+            {
+                return cachedEntity;
+            }
+
+            // Nếu không có cache, truy vấn DB
+            var entity = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+
+            // Lưu vào cache nếu tìm thấy
+            if (entity != null)
+            {
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(CacheDuration)
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(2));
+
+                _cache.Set(cacheKey, entity, cacheOptions);
+            }
+
+            return entity;
         }
 
         /// <summary>
@@ -148,7 +227,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Xóa bản ghi theo id
+        /// Xóa bản ghi theo id (invalidate cache)
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số bản ghi bị xóa</returns>
@@ -172,6 +251,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    //3. Xóa cache khi delete thành công
+                    InvalidateCache(entityId);
                 }
                 catch
                 {
@@ -180,13 +262,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 }
             }
 
-            //3. Trả về số bản ghi bị ảnh hưởng
+            //4. Trả về số bản ghi bị ảnh hưởng
             return rowAffects;
         }
 
 
         /// <summary>
-        /// Thêm bản ghi mới
+        /// Thêm bản ghi mới (invalidate cache)
         /// </summary>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi thêm mới</returns>
@@ -207,6 +289,15 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    //3. Xóa cache danh sách khi insert thành công
+                    InvalidateCache();
+                }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // Duplicate entry - race condition xảy ra
+                    transaction.Rollback();
+                    throw new DuplicateEntryException(ExtractDuplicateMessage(ex.Message));
                 }
                 catch
                 {
@@ -215,12 +306,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 }
             }
 
-            //3.Trả về số bản ghi thêm mới
+            //4.Trả về số bản ghi thêm mới
             return rowAffects;
         }
 
         /// <summary>
-        /// Cập nhật thông tin bản ghi
+        /// Cập nhật thông tin bản ghi (invalidate cache)
         /// </summary>
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
@@ -246,6 +337,15 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    //4. Xóa cache khi update thành công
+                    InvalidateCache(entityId);
+                }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // Duplicate entry - race condition xảy ra
+                    transaction.Rollback();
+                    throw new DuplicateEntryException(ExtractDuplicateMessage(ex.Message));
                 }
                 catch
                 {
@@ -253,7 +353,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     throw;
                 }
             }
-            //4. Trả về dữ liệu
+            //5. Trả về dữ liệu
             return rowAffects;
         }
 
@@ -332,5 +432,30 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         #endregion
+
+        /// <summary>
+        /// Trích xuất thông báo lỗi duplicate từ MySQL error message
+        /// MySQL error format: "Duplicate entry 'VALUE' for key 'INDEX_NAME'"
+        /// </summary>
+        private string ExtractDuplicateMessage(string mysqlErrorMessage)
+        {
+            // MySQL error: "Duplicate entry 'EMP001' for key 'UQ_Employee_EmployeeCode'"
+            if (mysqlErrorMessage.Contains("EmployeeCode"))
+                return "Mã nhân viên đã tồn tại";
+            if (mysqlErrorMessage.Contains("DepartmentCode"))
+                return "Mã phòng ban đã tồn tại";
+            if (mysqlErrorMessage.Contains("PositionCode"))
+                return "Mã vị trí đã tồn tại";
+
+            return "Dữ liệu bị trùng lặp";
+        }
+    }
+
+    /// <summary>
+    /// Exception cho lỗi duplicate entry từ database
+    /// </summary>
+    public class DuplicateEntryException : Exception
+    {
+        public DuplicateEntryException(string message) : base(message) { }
     }
 }

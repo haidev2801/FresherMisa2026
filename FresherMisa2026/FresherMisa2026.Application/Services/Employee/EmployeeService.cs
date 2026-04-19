@@ -5,6 +5,7 @@ using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -39,21 +40,76 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+        public async Task<PagingResponse<Employee>> FilterEmployeesAsync(
+            Guid? departmentId,
+            Guid? positionId,
+            decimal? salaryFrom,
+            decimal? salaryTo,
+            int? gender,
+            DateTime? hireDateFrom,
+            DateTime? hireDateTo,
+            int pageSize = 20,
+            int pageIndex = 1)
+        {
+            var (total, data) = await _employeeRepository.FilterEmployees(
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo, pageSize, pageIndex);
+
+            return new PagingResponse<Employee>
+            {
+                Total = total,
+                PageSize = pageSize,
+                PageIndex = pageIndex,
+                Data = data.ToList()
+            };
+        }
+
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
 
+            // 1. Validate mã nhân viên không được vượt quá 20 ký tự
             if (!string.IsNullOrEmpty(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
             {
                 errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
             }
 
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            // 2. Validate mã nhân viên không được trùng lặp
+            if (!string.IsNullOrEmpty(employee.EmployeeCode))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+                if (existingEmployee != null && existingEmployee.EmployeeID != employee.EmployeeID)
+                {
+                    errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+                }
+            }
+
+            // 3. Validate email đúng định dạng (nếu có)
+            if (!string.IsNullOrEmpty(employee.Email))
+            {
+                string emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+                if (!Regex.IsMatch(employee.Email, emailPattern))
+                {
+                    errors.Add(new ValidationError("Email", "Email không đúng định dạng"));
+                }
+            }
+
+            // 4. Validate số điện thoại đúng định dạng (nếu có)
+            if (!string.IsNullOrEmpty(employee.PhoneNumber))
+            {
+                string phonePattern = @"^(0|\+84)[0-9]{9,10}$";
+                if (!Regex.IsMatch(employee.PhoneNumber, phonePattern))
+                {
+                    errors.Add(new ValidationError("PhoneNumber", "Số điện thoại không đúng định dạng"));
+                }
+            }
+
+            // 5. Validate ngày sinh phải nhỏ hơn ngày hiện tại
+            if (employee.DateOfBirth.HasValue && employee.DateOfBirth.Value >= DateTime.Now)
+            {
+                errors.Add(new ValidationError("DateOfBirth", "Ngày sinh phải nhỏ hơn ngày hiện tại"));
             }
 
             return errors;
         }
     }
-}
+}
