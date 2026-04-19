@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FresherMisa2026.Infrastructure.Repositories.Department
+namespace FresherMisa2026.Infrastructure.Repositories
 {
     /// <summary>
     /// Repository for Department entity
@@ -35,6 +35,14 @@ namespace FresherMisa2026.Infrastructure.Repositories.Department
                 {"@DepartmentCode", code }
             };
             return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+        }
+
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCode(string code)
+        {
+            var param = new DynamicParameters();
+            param.Add("v_DepartmentCode", code);
+
+            return await _dbConnection.QueryAsync<Employee>("Proc_GetEmployeesByDepartmentCode", param, commandType: System.Data.CommandType.StoredProcedure);
         }
     }
 }
