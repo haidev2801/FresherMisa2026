@@ -130,7 +130,11 @@ CREATE TABLE employee (
   HireDateTo date DEFAULT NULL COMMENT 'Ngày vào làm đến',
   CreatedDate datetime DEFAULT NULL COMMENT 'Ngày tạo',
   PRIMARY KEY (EmployeeID),
-  UNIQUE INDEX UQ_Employee_EmployeeCode (EmployeeCode)
+  UNIQUE INDEX UQ_Employee_EmployeeCode (EmployeeCode),
+  INDEX IDX_Employee_DepartmentID (DepartmentID),
+  INDEX IDX_Employee_PositionID (PositionID),
+  INDEX IDX_Employee_Dept_Pos_Gender (DepartmentID, PositionID, Gender),
+  INDEX IDX_Employee_Salary (Salary)
 )
 ENGINE = INNODB,
 AVG_ROW_LENGTH = 1092,
