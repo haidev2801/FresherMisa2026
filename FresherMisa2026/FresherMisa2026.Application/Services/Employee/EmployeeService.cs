@@ -1,7 +1,9 @@
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
+using FresherMisa2026.Application.DTOs.Employee;
 using FresherMisa2026.Entities;
+using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
@@ -52,6 +54,50 @@ namespace FresherMisa2026.Application.Services
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId)
         {
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
+        }
+
+        public async Task<ServiceResponse> FilterEmployeesAsync(EmployeeFilterRequest filterRequest)
+        {
+            filterRequest ??= new EmployeeFilterRequest();
+
+            if (filterRequest.Gender.HasValue && (filterRequest.Gender < 0 || filterRequest.Gender > 2))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Giới tính không hợp lệ. Chi chap nhan 0, 1, 2");
+            }
+
+            if (filterRequest.SalaryFrom.HasValue && filterRequest.SalaryTo.HasValue
+                && filterRequest.SalaryFrom > filterRequest.SalaryTo)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Mức lương bắt đầu phải nhỏ hơn mức lương kết thúc");
+            }
+
+            if (filterRequest.HireDateFrom.HasValue && filterRequest.HireDateTo.HasValue
+                && filterRequest.HireDateFrom > filterRequest.HireDateTo)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Ngày bắt đầu phải nhỏ hơn ngày kết thúc");
+            }
+
+            if (filterRequest.PageSize <= 0)
+            {
+                filterRequest.PageSize = 20;
+            }
+
+            if (filterRequest.PageIndex <= 0)
+            {
+                filterRequest.PageIndex = 1;
+            }
+
+            var (total, data) = await _employeeRepository.FilterEmployeesAsync(filterRequest);
+
+            var response = new PagingResponse<Employee>
+            {
+                Total = total,
+                PageSize = filterRequest.PageSize,
+                PageIndex = filterRequest.PageIndex,
+                Data = data.ToList()
+            };
+
+            return CreateSuccessResponse(response);
         }
 
         /// <summary>
