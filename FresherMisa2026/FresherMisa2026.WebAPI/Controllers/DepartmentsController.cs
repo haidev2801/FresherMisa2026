@@ -33,5 +33,37 @@ namespace FresherMisa2026.WebAPI.Controllers
 
             return response;
         }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Danh sách nhân viên thuộc phòng ban</returns>
+        /// Created by: Anhs (20/04/2026)
+        [HttpGet("{code}/employees")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
+        {
+            var response = new ServiceResponse();
+            response.Data = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+            response.IsSuccess = true;
+
+            return response;
+        }
+
+        /// <summary>
+        /// Đếm số nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Số lượng nhân viên thuộc phòng ban</returns>
+        /// Created by: Anhs (20/04/2026)
+        [HttpGet("{code}/employee-count")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string code)
+        {
+            var response = new ServiceResponse();
+            response.Data = await _departmentSerice.GetEmployeeCountByDepartmentCodeAsync(code);
+            response.IsSuccess = true;
+
+            return response;
+        }
     }
 }
