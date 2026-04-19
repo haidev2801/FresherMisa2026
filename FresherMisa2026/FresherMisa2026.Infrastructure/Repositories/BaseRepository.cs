@@ -293,6 +293,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     //3. Xóa cache danh sách khi insert thành công
                     InvalidateCache();
                 }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // Duplicate entry - race condition xảy ra
+                    transaction.Rollback();
+                    throw new DuplicateEntryException(ExtractDuplicateMessage(ex.Message));
+                }
                 catch
                 {
                     transaction.Rollback();
@@ -334,6 +340,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
                     //4. Xóa cache khi update thành công
                     InvalidateCache(entityId);
+                }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // Duplicate entry - race condition xảy ra
+                    transaction.Rollback();
+                    throw new DuplicateEntryException(ExtractDuplicateMessage(ex.Message));
                 }
                 catch
                 {
@@ -420,5 +432,30 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         #endregion
+
+        /// <summary>
+        /// Trích xuất thông báo lỗi duplicate từ MySQL error message
+        /// MySQL error format: "Duplicate entry 'VALUE' for key 'INDEX_NAME'"
+        /// </summary>
+        private string ExtractDuplicateMessage(string mysqlErrorMessage)
+        {
+            // MySQL error: "Duplicate entry 'EMP001' for key 'UQ_Employee_EmployeeCode'"
+            if (mysqlErrorMessage.Contains("EmployeeCode"))
+                return "Mã nhân viên đã tồn tại";
+            if (mysqlErrorMessage.Contains("DepartmentCode"))
+                return "Mã phòng ban đã tồn tại";
+            if (mysqlErrorMessage.Contains("PositionCode"))
+                return "Mã vị trí đã tồn tại";
+
+            return "Dữ liệu bị trùng lặp";
+        }
+    }
+
+    /// <summary>
+    /// Exception cho lỗi duplicate entry từ database
+    /// </summary>
+    public class DuplicateEntryException : Exception
+    {
+        public DuplicateEntryException(string message) : base(message) { }
     }
 }

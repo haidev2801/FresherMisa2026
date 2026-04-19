@@ -123,7 +123,9 @@ CREATE TABLE employee (
   Salary decimal(18, 4) DEFAULT 0.0000 COMMENT 'Lương cơ bản',
   HireDateFrom date DEFAULT NULL COMMENT 'Ngày vào làm từ',
   HireDateTo date DEFAULT NULL COMMENT 'Ngày vào làm đến',
-  CreatedDate datetime DEFAULT NULL COMMENT 'Ngày tạo'
+  CreatedDate datetime DEFAULT NULL COMMENT 'Ngày tạo',
+  PRIMARY KEY (EmployeeID),
+  UNIQUE INDEX UQ_Employee_EmployeeCode (EmployeeCode)
 )
 ENGINE = INNODB,
 AVG_ROW_LENGTH = 1092,
