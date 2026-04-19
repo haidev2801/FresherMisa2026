@@ -15,14 +15,18 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 //DI
+// Đăng ký các dependency injection cho layer Application và Infrastructure thông qua các extension method.
 builder.Services.AddApplicationDI();
 builder.Services.AddInfrastructure();
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // Trong môi trường dev bật swagger để test API nhanh
     //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -32,6 +36,7 @@ if (app.Environment.IsDevelopment())
 SQLExtension.Initialize();
 
 //Middlewares
+// Global exception handler: bắt mọi exception không xử lý và trả ServiceResponse chuẩn
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();

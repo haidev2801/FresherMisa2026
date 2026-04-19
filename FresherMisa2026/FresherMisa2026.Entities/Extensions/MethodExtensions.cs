@@ -6,12 +6,18 @@ using System.Text;
 namespace FresherMisa2026.Entities.Extensions
 {
 
+    /// <summary>
+    /// Các phương thức extension dùng reflection để lấy thông tin cấu hình giữa entity và database.
+    /// Helper này đọc Attribute ConfigTable, DisplayAttribute, KeyAttribute... để cung cấp tên bảng, tên khoá chính, tên hiển thị...
+    /// Các phương thức được dùng ở repository/service để tự động hoá việc mapping và validate.
+    /// </summary>
     public static class MethodExtensions
     {
         /// <summary>
-        /// Lấy tên class
+        /// Lấy tên bảng (TableName) từ attribute ConfigTable gắn trên class.
+        /// Nếu không có attribute sẽ ném lỗi.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Tên bảng trong DB</returns>
         public static string GetTableName(this Type type)
         {
             var configTable = GetConfigTable(type);
@@ -27,9 +33,9 @@ namespace FresherMisa2026.Entities.Extensions
         }
 
         /// <summary>
-        /// Lấy trường unique trong table
+        /// Lấy chuỗi các cột unique (nếu có) từ attribute ConfigTable.
+        /// Dùng trong logic kiểm tra trùng dữ liệu trước khi insert/update.
         /// </summary>
-        /// <returns></returns>
         public static string GetUniqueColumns(this Type type)
         {
             var configTable = GetConfigTable(type);
@@ -37,9 +43,10 @@ namespace FresherMisa2026.Entities.Extensions
         }
 
         /// <summary>
-        /// Lấy tên trường hiển thị
+        /// Lấy tên hiển thị của một property dựa vào DisplayAttribute.
+        /// Nếu không có DisplayAttribute trả về chính tên property.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="name">Tên property</param>
         public static string GetColumnDisplayName(this Type type, string name)
         {
             var obj = type.GetProperty(name).GetCustomAttributes(typeof(DisplayAttribute),
@@ -50,9 +57,9 @@ namespace FresherMisa2026.Entities.Extensions
         }
 
         /// <summary>
-        /// Lấy trạng thái table có trường deleted không
+        /// Kiểm tra cấu hình table có cột IsDeleted (xóa mềm) hay không.
+        /// Nếu true thì repository sẽ thêm điều kiện lọc IsDeleted = FALSE trong truy vấn đọc.
         /// </summary>
-        /// <returns></returns>
         public static bool GetHasDeletedColumn(this Type type)
         {
             var configTable = GetConfigTable(type);
@@ -60,16 +67,15 @@ namespace FresherMisa2026.Entities.Extensions
         }
 
         /// <summary>
-        /// Lấy config table
+        /// Lấy đối tượng ConfigTable từ attribute gắn trên class. Nếu không có attribute thì trả ConfigTable mặc định.
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
         private static ConfigTable GetConfigTable(this Type type)
         {
             var configTable = type.GetCustomAttributes(typeof(ConfigTable), true).FirstOrDefault() as ConfigTable;
 
             if (configTable == null)
             {
+                // Trả về object mặc định để tránh null reference trong các helper khác
                 configTable = new ConfigTable();
             }
 
@@ -77,9 +83,9 @@ namespace FresherMisa2026.Entities.Extensions
         }
 
         /// <summary>
-        /// Lấy tên khóa chính
+        /// Lấy tên thuộc tính được đánh dấu [Key] - được xem là primary key của entity.
+        /// Nếu không có KeyAttribute sẽ ném ArgumentException.
         /// </summary>
-        /// <returns></returns>
         public static string GetKeyName(this Type type)
         {
             var propeties = type.GetProperties();

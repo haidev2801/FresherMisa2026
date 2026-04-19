@@ -9,7 +9,8 @@ using System.Reflection;
 namespace FresherMisa2026.Application.Services
 {
     /// <summary>
-    /// Service dùng chung
+    /// Service dùng chung cho các entity. Bao gồm các nghiệp vụ chung như Get/Insert/Update/Delete và validate cơ bản.
+    /// Mỗi entity-specific service có thể kế thừa BaseService để tái sử dụng logic chung.
     /// </summary>
     /// <typeparam name="TEntity">Loại thực thể</typeparam>
     /// CREATED BY: DVHAI (11/07/2026)
@@ -38,6 +39,8 @@ namespace FresherMisa2026.Application.Services
             Data = data
         };
 
+
+
         protected static ServiceResponse CreateErrorResponse(ResponseCode code, string devMessage, string? userMessage = null) => new()
         {
             IsSuccess = false,
@@ -54,7 +57,7 @@ namespace FresherMisa2026.Application.Services
 
         #region Methods
         /// <summary>
-        /// Lấy tất cả bản ghi
+        /// Lấy tất cả bản ghi. Gọi repository để lấy dữ liệu và cast về TEntity.
         /// </summary>
         /// <returns>Danh sách bản ghi</returns>
         /// CREATED BY: DVHAI 11/07/2026
@@ -65,7 +68,7 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
-        /// Lấy bản ghi theo Id
+        /// Lấy bản ghi theo Id, gọi repository tương ứng.
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi duy nhất</returns>
@@ -84,7 +87,8 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
-        /// Xóa bản ghi
+        /// Xóa bản ghi theo Id. Nếu xóa thành công sẽ gọi AfterDelete() để service có thể xử lý thêm.
+        /// Trả về true nếu có ít nhất 1 bản ghi bị ảnh hưởng.
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số dòng bị xóa</returns>
@@ -117,7 +121,8 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
-        /// Validate tất cả
+        /// Validate toàn bộ entity dựa trên các attribute (ví dụ IRequired) và validate tuỳ chỉnh (ValidateCustom override).
+        /// Trả về true nếu pass tất cả kiểm tra.
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi validate</returns>
@@ -148,7 +153,7 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
-        /// Validate bắt buộc nhập
+        /// Validate bắt buộc nhập cho một property. Nếu thất bại sẽ ghi thông tin vào _serviceResult để controller có thể trả về.
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <param name="propertyInfo">Thuộc tính của thực thể</param>
@@ -174,7 +179,8 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
-        /// Validate từng màn hình
+        /// Validate tùy chỉnh cho từng service (nếu cần override trong service con để kiểm tra business rule đặc thù).
+        /// Mặc định trả về true (không có validate tuỳ chỉnh).
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi tùy chỉnh</returns>
@@ -186,7 +192,8 @@ namespace FresherMisa2026.Application.Services
 
 
         /// <summary>
-        /// Thêm một thực thể
+        /// Thêm một thực thể. Thiết lập ModelSate.Add, gọi Validate và nếu hợp lệ gọi repository Insert.
+        /// Trả về ServiceResponse để controller dễ dàng trả HTTP code phù hợp.
         /// </summary>
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
@@ -195,25 +202,35 @@ namespace FresherMisa2026.Application.Services
         {
             entity.State = ModelSate.Add;
 
-            //1. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
 
-            //2. Sử lí lỗi tương ứng
-            if (errors.Count == 0)
+            if (errors.Count > 0)
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
+            }
+
+            try
             {
                 var result = await _baseRepository.InsertAsync(entity);
                 return CreateSuccessResponse(result);
             }
-
-            return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            catch (DuplicateException ex)
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    ex.Message,
+                    $"{ex.Field} đã tồn tại"
+                );
+            }
         }
 
         /// <summary>
-        /// Cập nhập thông tin bản ghi 
+        /// Cập nhập thông tin bản ghi. Thiết lập ModelSate.Update, validate, rồi gọi repository Update.
+        /// Trả về ServiceResponse với Data là số bản ghi bị ảnh hưởng.
         /// </summary>
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
@@ -226,28 +243,36 @@ namespace FresherMisa2026.Application.Services
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
             }
 
-            //1. Trạng thái
             entity.State = ModelSate.Update;
 
-            //2. Validate tất cả các trường nếu được gắn thẻ
             var errors = Validate(entity);
-            
-            if (errors.Count == 0)
+
+            if (errors.Count > 0)
             {
-                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
-                if (rowAffects > 0)
-                {
-                    return CreateSuccessResponse(rowAffects);
-                }
-                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
             }
 
-            //3. Validate fail - trả về BadRequest
-            return CreateErrorResponse(
-                ResponseCode.BadRequest,
-                "Validate thất bại",
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            try
+            {
+                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
+
+                if (rowAffects > 0)
+                    return CreateSuccessResponse(rowAffects);
+
+                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+            }
+            catch (DuplicateException ex)
+            {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    ex.Message,
+                    $"{ex.Field} đã tồn tại"
+                );
+            }
         }
 
         /// <summary>
@@ -367,7 +392,7 @@ namespace FresherMisa2026.Application.Services
 
         #region Virtual method - Override methods
         /// <summary>
-        /// Xóa thành công
+        /// Hook method được gọi sau khi xóa thành công. Service con có thể override để xử lý thêm.
         /// </summary>
         protected virtual void AfterDelete()
         {

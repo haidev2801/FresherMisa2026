@@ -7,6 +7,10 @@ using System.Text;
 
 namespace FresherMisa2026.Application
 {
+    /// <summary>
+    /// Extension method đăng ký DI cho Application layer.
+    /// Đăng ký BaseService<> theo scoped để inject vào controller/service khi cần.
+    /// </summary>
     public static class ServiceExtensions
     {
         public static IServiceCollection AddApplicationDI(

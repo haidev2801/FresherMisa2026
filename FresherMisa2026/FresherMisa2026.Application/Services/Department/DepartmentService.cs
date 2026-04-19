@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,6 +34,16 @@ namespace FresherMisa2026.Application.Services
                 throw new Exception("department is null");
 
             return department;
+        }
+
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            return await _deptRepository.GetEmployeesByDepartmentCode(code);
+        }
+
+        public async Task<int> CountEmployeesByDepartmentCodeAsync(string code)
+        {
+            return await _deptRepository.CountEmployeesByDepartmentCode(code);
         }
 
         #region OVERRIDE METHODS
