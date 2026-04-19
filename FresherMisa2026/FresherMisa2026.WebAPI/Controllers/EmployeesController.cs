@@ -1,6 +1,7 @@
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -53,6 +54,7 @@ namespace FresherMisa2026.WebAPI.Controllers
 
             response.Data = await _employeeService.FilterEmployeesAsync(request);
             response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
 
             return response;
         }

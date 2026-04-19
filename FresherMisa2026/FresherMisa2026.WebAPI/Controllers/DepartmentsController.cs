@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Application.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -36,6 +37,30 @@ namespace FresherMisa2026.WebAPI.Controllers
             response.IsSuccess = true;
 
             return response;
+        }
+
+        [HttpGet("{code}/employees")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
+        {
+            var response = new ServiceResponse();
+
+            response.Data = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+            response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
+
+            return Ok(response);
+        }
+
+        [HttpGet("{code}/employee-count")]
+        public async Task<ActionResult<ServiceResponse>> CountEmployeesByDepartmentCode(string code)
+        {
+            var response = new ServiceResponse();
+
+            response.Data = await _departmentSerice.CountEmployeesByDepartmentCodeAsync(code);
+            response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
+
+            return Ok(response);
         }
     }
 }
