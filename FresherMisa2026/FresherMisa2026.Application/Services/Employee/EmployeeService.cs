@@ -84,5 +84,23 @@ namespace FresherMisa2026.Application.Services
 
             return errors;
         }
+
+        public async Task<PagingResponse<Employee>> FilterEmployeesAsync(
+            Guid? departmentId,
+            Guid? positionId,
+            decimal? salaryFrom,
+            decimal? salaryTo,
+            int? gender,
+            DateTime? hireDateFrom,
+            DateTime? hireDateTo)
+        {
+            var (total, data) = await _employeeRepository.FilterEmployees(
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo);
+            return new PagingResponse<Employee>
+            {
+                Total = total,
+                Data = data.ToList()
+            };
+        }
     }
 }
