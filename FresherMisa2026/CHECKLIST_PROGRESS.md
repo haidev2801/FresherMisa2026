@@ -44,4 +44,10 @@
   - [x] Kiểm tra các trường hợp validation: thiếu trường bắt buộc, mã nhân viên trùng lặp, email/số điện thoại sai định dạng, ngày sinh không hợp lệ
   Git commit: "feat(task-2.1): add validation for employee entity"
 
+  - [x] **Task 2.2 - Tạo API Lọc Employee Theo Điều Kiện:**
+  - [x] Tạo `FilterEmployeesRequest` để nhận các điều kiện lọc từ client
+  - [x] Thêm method `GetEmployeeByFilter` trong `EmployeeService`
+  - [x] Thêm endpoint `GET /api/employees/filter` trong `EmployeesController`
+  - [x] Kiểm tra các trường hợp lọc: theo phòng ban, vị trí, mức lương, giới tính, ngày tuyển dụng
+
 ---

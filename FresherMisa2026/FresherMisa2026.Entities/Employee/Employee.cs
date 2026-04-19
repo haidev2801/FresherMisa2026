@@ -29,5 +29,7 @@ namespace FresherMisa2026.Entities.Employee
         public Guid PositionID { get; set; }
 
         public decimal? Salary { get; set; }
+
+        public DateTime? HireDate { get; set; }
     }
 }

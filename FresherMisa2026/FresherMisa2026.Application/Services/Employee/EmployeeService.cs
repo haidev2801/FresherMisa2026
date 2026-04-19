@@ -19,6 +19,37 @@ namespace FresherMisa2026.Application.Services
             _employeeRepository = employeeRepository;
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo bộ lọc
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<ServiceResponse> GetEmployeeByFilter(FilterEmployeesRequest request)
+        {
+            var response = new FilterResponse<Employee>();
+
+            var rq = new FilterEmployeesRequest
+            {
+                DepartmentId = request.DepartmentId == Guid.Empty ? null : request.DepartmentId,
+                PositionId = request.PositionId == Guid.Empty ? null : request.PositionId,
+                SalaryFrom = request.SalaryFrom,
+                SalaryTo = request.SalaryTo,
+                Gender = request.Gender,
+                HireDateFrom = request.HireDateFrom,
+                HireDateTo = request.HireDateTo,
+            };
+
+            response = await _employeeRepository.GetEmployeesByFilter(rq);
+
+            return CreateSuccessResponse(response);
+        }
+
+        /// <summary>
+        /// Validate theo yêu cầu nghiệp vụ
+        /// </summary>
+        /// <param name="employee"></param>
+        /// <returns></returns>
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
