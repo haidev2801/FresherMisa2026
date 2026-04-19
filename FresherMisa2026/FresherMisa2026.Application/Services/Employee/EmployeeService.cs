@@ -43,14 +43,43 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
 
-            if (!string.IsNullOrEmpty(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
+            // EmployeeCode max length
+            if (!string.IsNullOrWhiteSpace(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
             {
                 errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
             }
 
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            // Email format
+            if (!string.IsNullOrWhiteSpace(employee.Email))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                var emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(employee.Email, emailPattern))
+                {
+                    errors.Add(new ValidationError("Email", "Email không đúng định dạng"));
+                }
+            }
+
+            // Phone number format (simple VN phone regex)
+            if (!string.IsNullOrWhiteSpace(employee.PhoneNumber))
+            {
+                var phonePattern = @"^(0|\+84)[0-9]{9,10}$";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(employee.PhoneNumber, phonePattern))
+                {
+                    errors.Add(new ValidationError("PhoneNumber", "Số điện thoại không đúng định dạng"));
+                }
+            }
+
+            // DateOfBirth < Now
+            if (employee.DateOfBirth.HasValue && employee.DateOfBirth.Value >= DateTime.Now.Date)
+            {
+                errors.Add(new ValidationError("DateOfBirth", "Ngày sinh phải nhỏ hơn ngày hiện tại"));
+            }
+
+            // Check duplicate EmployeeCode (async, nhưng ở đây chỉ check sync, production nên check DB async)
+            var exist = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+            if (exist != null && exist.EmployeeID != employee.EmployeeID)
+            {
+                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
             }
 
             return errors;
