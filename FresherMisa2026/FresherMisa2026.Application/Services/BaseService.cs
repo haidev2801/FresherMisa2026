@@ -191,7 +191,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<ServiceResponse> InsertAsync(TEntity entity)
+        public virtual async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
             entity.State = ModelSate.Add;
 

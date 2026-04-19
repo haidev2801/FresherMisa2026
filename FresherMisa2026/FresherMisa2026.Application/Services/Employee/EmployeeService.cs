@@ -4,6 +4,8 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using FresherMisa2026.Entities.Employee.DTO;
+using FresherMisa2026.Entities.Enums;
+using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -77,14 +79,14 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
 
-            if (!string.IsNullOrEmpty(employee.EmployeeCode))
-            {
-                var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
-                if (existingEmployee != null)
-                {
-                    errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
-                }
-            }
+            //if (!string.IsNullOrEmpty(employee.EmployeeCode))
+            //{
+            //    var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+            //    if (existingEmployee != null)
+            //    {
+            //        errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+            //    }
+            //}
 
             string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             if (!string.IsNullOrEmpty(employee.Email) && !Regex.IsMatch(employee.Email, emailPattern))
@@ -104,6 +106,18 @@ namespace FresherMisa2026.Application.Services
             }
 
             return errors;
+        }
+
+        public override async Task<ServiceResponse> InsertAsync(Employee employee)
+        {
+            try
+            {
+                return await base.InsertAsync(employee);
+            }
+            catch (MySqlException ex) when (ex.Number == 1062)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Mã nhân viên đã tồn tại");
+            }
         }
     }
 }

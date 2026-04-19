@@ -21,7 +21,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
     /// Modified By: Tannn (18/04/2026) - Added caching and connection pooling optimization
-    public class BaseRepository<TEntity> : IBaseRepository<TEntity>, IDisposable where TEntity : BaseModel
+    public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : BaseModel
     {
         //Properties
         private readonly string _connectionString = string.Empty;
