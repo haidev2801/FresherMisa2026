@@ -11,15 +11,17 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
 
         /// <summary>
-        /// Lọc nhân viên theo nhiều điều kiện
+        /// Lọc nhân viên theo nhiều điều kiện (có phân trang)
         /// </summary>
-        Task<IEnumerable<Employee>> FilterEmployees(
+        Task<(long Total, IEnumerable<Employee> Data)> FilterEmployees(
             Guid? departmentId,
             Guid? positionId,
             decimal? salaryFrom,
             decimal? salaryTo,
             int? gender,
             DateTime? hireDateFrom,
-            DateTime? hireDateTo);
+            DateTime? hireDateTo,
+            int pageSize = 20,
+            int pageIndex = 1);
     }
 }
