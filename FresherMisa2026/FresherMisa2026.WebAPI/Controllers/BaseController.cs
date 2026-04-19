@@ -54,10 +54,10 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <summary>
         /// Một phần tử
         /// </summary>
-        [HttpGet("{ID}")]
-        public async Task<ActionResult<ServiceResponse>> GetByID(Guid ID)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ServiceResponse>> GetByID(Guid id)
         {
-            var response = await _baseService.GetEntityByIDAsync(ID);
+            var response = await _baseService.GetEntityByIDAsync(id);
 
             if (!response.IsSuccess && response.Code == (int)ResponseCode.NotFound)
                 return NotFound(response);
@@ -68,11 +68,11 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// <summary>
         /// Xóa một phần tử
         /// </summary>
-        [HttpDelete("{ID}")]
-        public async Task<ActionResult<ServiceResponse>> DeleteByID(Guid ID)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ServiceResponse>> DeleteByID(Guid id)
         {
-            var response = await _baseService.DeleteByIDAsync(ID);
-            
+            var response = await _baseService.DeleteByIDAsync(id);
+
             if (!response.IsSuccess && response.Code == (int)ResponseCode.NotFound)
                 return NotFound(response);
             

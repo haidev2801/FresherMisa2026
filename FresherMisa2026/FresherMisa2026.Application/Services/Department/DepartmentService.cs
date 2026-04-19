@@ -3,6 +3,8 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
+using FresherMisa2026.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,6 +35,73 @@ namespace FresherMisa2026.Application.Services
                 throw new Exception("department is null");
 
             return department;
+        }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên theo department code
+        /// </summary>
+        /// <param name="departmentCode"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// Created By: tannn (18/04/2026)
+        public async Task<IEnumerable<ServiceResponse>> GetEmployeesByDepartmentCodeAsync(string departmentCode)
+        {
+            var department = await _deptRepository.GetDepartmentByCode(departmentCode);
+
+            var response = new ServiceResponse();
+
+            if (department == null)
+            {
+                response.IsSuccess = false;
+                response.Code = (int)ResponseCode.NotFound;
+                response.UserMessage = "Không tìm thấy phòng ban";
+                return new List<ServiceResponse> { response };
+            }
+
+            var employees = await _deptRepository.GetEmployeesByDepartmentCode(departmentCode);
+
+
+            if (employees == null || !employees.Any())
+            {
+                response.IsSuccess = true;
+                response.Code = (int)ResponseCode.Success;
+                response.UserMessage = "Không tìm thấy nhân viên nào trong phòng ban này";
+                return new List<ServiceResponse> { response };
+            }
+
+            response.Data = employees;
+            response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
+
+            return new List<ServiceResponse> { response };
+        }
+
+        /// <summary>
+        /// Lấy số lượng nhân viên theo department code
+        /// </summary>
+        /// <param name="departmentCode"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// Created By: tannn (18/04/2026)
+        public async Task<ServiceResponse> CountEmployeesByDepartmentCodeAsync(string departmentCode)
+        {
+            var department = await _deptRepository.GetDepartmentByCode(departmentCode);
+
+            var response = new ServiceResponse();
+
+            if (department == null)
+            {
+                response.IsSuccess = false;
+                response.Code = (int)ResponseCode.NotFound;
+                response.UserMessage = "Không tìm thấy phòng ban";
+                return response;
+            }
+
+            response.Data = await _deptRepository.CountEmployeesByDepartmentCode(departmentCode);
+            response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
+
+            return response;
         }
 
         #region OVERRIDE METHODS

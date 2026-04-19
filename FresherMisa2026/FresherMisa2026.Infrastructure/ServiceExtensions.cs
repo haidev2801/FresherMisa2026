@@ -21,6 +21,8 @@ namespace FresherMisa2026.Infrastructure
             services.AddScoped<IPositionRepository, PositionRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
+            services.AddMemoryCache();
+
             return services;
         }
     }
