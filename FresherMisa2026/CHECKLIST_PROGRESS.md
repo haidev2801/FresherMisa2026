@@ -34,4 +34,14 @@
   - [x] Kiểm tra đủ 5 API CRUD: GET all, GET by id, POST, PUT, DELETE
   Git commit: "feat(task-1.2): implement employee CRUD"
 
+  - [x] **Task 2.1 - Thêm Validation cho Employee:**
+  - [x] Thêm `[IRequired]` attribute cho các trường bắt buộc: `EmployeeCode`, `EmployeeName`, `DepartmentID`, `PositionID`
+  - [x] Override method `ValidateCustom()` trong `EmployeeService` để thêm các validation tùy chỉnh:
+    - Mã nhân viên không được trùng lặp
+    - Email phải đúng định dạng (nếu có)
+    - Số điện thoại phải đúng định dạng (nếu có)
+    - Ngày sinh phải nhỏ hơn ngày hiện tại
+  - [x] Kiểm tra các trường hợp validation: thiếu trường bắt buộc, mã nhân viên trùng lặp, email/số điện thoại sai định dạng, ngày sinh không hợp lệ
+  Git commit: "feat(task-2.1): add validation for employee entity"
+
 ---

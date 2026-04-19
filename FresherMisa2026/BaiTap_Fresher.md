@@ -104,9 +104,9 @@ Bài tập được chia thành **3 cấp độ**, từ cơ bản đến nâng c
   - Ngày sinh phải nhỏ hơn ngày hiện tại
 
 **Kiểm tra:**
-- [ ] POST employee thiếu các trường bắt buộc → trả về lỗi 400 với thông báo rõ ràng
-- [ ] POST employee có mã trùng lặp → trả về lỗi "Mã nhân viên đã tồn tại"
-- [ ] POST employee có email sai định dạng → trả về lỗi "Email không đúng định dạng"
+- [x] POST employee thiếu các trường bắt buộc → trả về lỗi 400 với thông báo rõ ràng
+- [x] POST employee có mã trùng lặp → trả về lỗi "Mã nhân viên đã tồn tại"
+- [x] POST employee có email sai định dạng → trả về lỗi "Email không đúng định dạng"
 
 ---
 
