@@ -27,6 +27,11 @@ SET NAMES 'utf8';
 USE misaemployee_development;
 
 --
+-- Fix collation để tránh lỗi "Illegal mix of collations"
+--
+ALTER DATABASE misaemployee_development CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+--
 -- Drop procedure `Proc_DeletePositionById`
 --
 DROP PROCEDURE IF EXISTS Proc_DeletePositionById;
