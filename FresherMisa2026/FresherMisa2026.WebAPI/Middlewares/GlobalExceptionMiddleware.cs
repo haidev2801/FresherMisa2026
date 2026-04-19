@@ -41,7 +41,13 @@ namespace FresherMisa2026.WebAPI.Middlewares
         {
             // Set status code and content type
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            context.Response.StatusCode = exception switch
+            {
+                ArgumentException => (int)HttpStatusCode.BadRequest,
+                FormatException => (int)HttpStatusCode.BadRequest,
+                KeyNotFoundException => (int)HttpStatusCode.NotFound,
+                _ => (int)HttpStatusCode.InternalServerError
+            };
 
             // Create response payload
             var response = new ServiceResponse

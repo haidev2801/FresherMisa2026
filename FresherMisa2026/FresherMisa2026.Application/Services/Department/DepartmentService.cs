@@ -27,11 +27,15 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <returns></returns>
         /// Created By: dvhai (10/04/2026)
+        /// Updated by: Anhs (20/04/2026) - Thêm validate mã phòng ban không được để trống
         public async Task<Department> GetDepartmentByCodeAsync(string code)
         {
+            if (string.IsNullOrWhiteSpace(code))
+                throw new ArgumentException("Department code is required");
+
             var department = await _deptRepository.GetDepartmentByCode(code);
             if (department == null)
-                throw new Exception("department is null");
+                throw new KeyNotFoundException("department is null");
 
             return department;
         }
@@ -45,11 +49,11 @@ namespace FresherMisa2026.Application.Services
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
-                throw new Exception("Department code is required");
+                throw new ArgumentException("Department code is required");
 
             var department = await _deptRepository.GetDepartmentByCode(code.Trim());
             if (department == null)
-                throw new Exception("department is null");
+                throw new KeyNotFoundException("department is null");
 
             return await _deptRepository.GetEmployeesByDepartmentCode(code.Trim());
         }
@@ -63,11 +67,11 @@ namespace FresherMisa2026.Application.Services
         public async Task<long> GetEmployeeCountByDepartmentCodeAsync(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
-                throw new Exception("Department code is required");
+                throw new ArgumentException("Department code is required");
 
             var department = await _deptRepository.GetDepartmentByCode(code.Trim());
             if (department == null)
-                throw new Exception("department is null");
+                throw new KeyNotFoundException("department is null");
 
             return await _deptRepository.GetEmployeeCountByDepartmentCode(code.Trim());
         }
@@ -75,10 +79,15 @@ namespace FresherMisa2026.Application.Services
         #region OVERRIDE METHODS
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
-            //1. Validate còn nhân viên trong phòng ban không
-            bool hasEmployee = true;
+            // Nếu phòng ban không tồn tại thì cho phép flow delete chạy tiếp để BaseService trả NotFound đúng chuẩn.
+            var department = await _baseRepository.GetEntityByIDAsync(entityId);
+            if (department == null)
+            {
+                return true;
+            }
 
-            return !hasEmployee;
+            var employeeCount = await _deptRepository.GetEmployeeCountByDepartmentCode(department.DepartmentCode);
+            return employeeCount == 0;
         }
 
         /// <summary>

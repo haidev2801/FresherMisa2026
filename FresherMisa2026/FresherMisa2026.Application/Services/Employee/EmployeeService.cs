@@ -39,9 +39,12 @@ namespace FresherMisa2026.Application.Services
 
         public async Task<Employee> GetEmployeeByCodeAsync(string code)
         {
+            if (string.IsNullOrWhiteSpace(code))
+                throw new ArgumentException("Employee code is required");
+
             var employee = await _employeeRepository.GetEmployeeByCode(code);
             if (employee == null)
-                throw new Exception("Employee not found");
+                throw new KeyNotFoundException("Employee not found");
 
             return employee;
         }

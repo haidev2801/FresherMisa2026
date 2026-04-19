@@ -107,9 +107,9 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// Sửa một thực thể
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
+        public async Task<ActionResult<ServiceResponse>> Put([FromRoute] Guid id, [FromBody] TEntity entity)
         {
-            var response = await _baseService.UpdateAsync(Guid.Parse(id), entity);
+            var response = await _baseService.UpdateAsync(id, entity);
 
             if (!response.IsSuccess)
             {

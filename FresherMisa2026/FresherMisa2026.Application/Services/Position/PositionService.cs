@@ -22,9 +22,12 @@ namespace FresherMisa2026.Application.Services
 
         public async Task<Position> GetPositionByCodeAsync(string code)
         {
+            if (string.IsNullOrWhiteSpace(code))
+                throw new ArgumentException("Position code is required");
+
             var position = await _positionRepository.GetPositionByCode(code);
             if (position == null)
-                throw new Exception("Position not found");
+                throw new KeyNotFoundException("Position not found");
 
             return position;
         }

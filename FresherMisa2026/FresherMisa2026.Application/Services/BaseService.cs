@@ -31,11 +31,13 @@ namespace FresherMisa2026.Application.Services
         #endregion
 
         #region Protected Helpers - có thể override trong derived class
-        protected static ServiceResponse CreateSuccessResponse(object? data = null) => new()
+        protected static ServiceResponse CreateSuccessResponse(object? data = null, string? userMessage = null, string? devMessage = null) => new()
         {
             IsSuccess = true,
             Code = (int)ResponseCode.Success,
-            Data = data
+            Data = data,
+            UserMessage = userMessage,
+            DevMessage = devMessage
         };
 
         protected static ServiceResponse CreateErrorResponse(ResponseCode code, string devMessage, string? userMessage = null) => new()
@@ -110,7 +112,11 @@ namespace FresherMisa2026.Application.Services
             {
                 //3. Xóa thành công thì làm gì
                 AfterDelete();
-                return CreateSuccessResponse(rowAffects);
+                return CreateSuccessResponse(
+                    rowAffects,
+                    "Xóa dữ liệu thành công",
+                    $"Delete {_tableName} thành công"
+                );
             }
 
             return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để xóa");
