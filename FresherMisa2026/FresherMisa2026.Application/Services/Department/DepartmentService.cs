@@ -1,6 +1,7 @@
 ﻿using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
+using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
 
 namespace FresherMisa2026.Application.Services
@@ -29,6 +30,26 @@ namespace FresherMisa2026.Application.Services
                 throw new Exception("department is null");
 
             return department;
+        }
+
+        public async Task<ServiceResponse> GetEmployeeCountByDepartmentCodeAsync(string code)
+        {
+            var department = await _deptRepository.GetDepartmentByCode(code);
+            if (department == null)
+                throw new Exception("department is null");
+
+            var employeeCount = await _deptRepository.GetCountEmployeesByDepartmentCode(department.DepartmentCode);
+            return CreateSuccessResponse(employeeCount);
+        }
+
+        public async Task<ServiceResponse> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            var department = await _deptRepository.GetDepartmentByCode(code);
+            if (department == null)
+                throw new Exception("department is null");
+
+            var employees = await _deptRepository.GetEmployeesByDepartmentCode(department.DepartmentCode);
+            return CreateSuccessResponse(employees);
         }
 
         #region OVERRIDE METHODS

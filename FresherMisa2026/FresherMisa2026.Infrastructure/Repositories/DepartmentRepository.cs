@@ -2,9 +2,11 @@
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
@@ -18,6 +20,21 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public DepartmentRepository(IConfiguration configuration) : base(configuration)
         {
 
+        }
+
+        public async Task<int> GetCountEmployeesByDepartmentCode(string departmentCode)
+        {
+            await OpenConnectionAsync();
+
+            string store = string.Format("Proc_Employee_CountByDepartmentCode", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("@v_departmentCode", departmentCode);
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+               new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            var total = await reader.ReadFirstAsync<long>();
+            return (int)total;
         }
 
         /// <summary>
@@ -34,6 +51,21 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {"@DepartmentCode", code }
             };
             return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+        }
+
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCode(string departmentCode)
+        {
+            await OpenConnectionAsync();
+
+            string store = string.Format("Proc_Employee_GetByDepartmentCode", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("@v_departmentCode", departmentCode);
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+               new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            var data = (await reader.ReadAsync<Employee>()).ToList();
+            return data;
         }
     }
 }

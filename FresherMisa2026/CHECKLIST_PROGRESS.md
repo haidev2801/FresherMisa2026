@@ -49,5 +49,10 @@
   - [x] Thêm method `GetEmployeeByFilter` trong `EmployeeService`
   - [x] Thêm endpoint `GET /api/employees/filter` trong `EmployeesController`
   - [x] Kiểm tra các trường hợp lọc: theo phòng ban, vị trí, mức lương, giới tính, ngày tuyển dụng
+  Git commit: "feat(task-2.2): implement employee filtering API"
 
+  - [x] **Task 2.3 - Thêm Custom Endpoint Cho Department:**
+  - [x] Thêm endpoint `GET /api/departments/{id}/employees` để lấy danh sách nhân viên theo phòng ban
+  - [x] Thêm enpoint `GET /api/departments/{id}/employees-count` để lấy số lượng nhân viên theo phòng ban
+  Git commit: "feat(task-2.3): add API get employees and employee count by department"
 ---
