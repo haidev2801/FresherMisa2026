@@ -35,6 +35,41 @@ namespace FresherMisa2026.Application.Services
             return department;
         }
 
+
+
+        // Lấy số lượng nhân viên theo mã phòng ban
+        public async Task<ServiceResponse> GetEmployeeCountByDepartmentCodeAsync(string code)
+        {
+            var department = await _deptRepository.GetDepartmentByCode(code);
+            if (department == null)
+                throw new Exception("department is null");
+
+            var employeeCount = await _deptRepository.GetCountEmployeesByDepartmentCode(department.DepartmentCode);
+            return CreateSuccessResponse(employeeCount);
+        }
+
+        // Lấy danh sách nhân viên theo mã phòng ban
+
+        public async Task<ServiceResponse> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            var department = await _deptRepository.GetDepartmentByCode(code);
+            if (department == null)
+            {
+                return new ServiceResponse
+                {
+
+                    IsSuccess = false,
+                    DevMessage = "Department không tồn tại"
+                };
+            }
+
+            var employees = await _deptRepository.GetEmployeesByDepartmentCode(department.DepartmentCode);
+            return CreateSuccessResponse(employees);
+        }
+
+
+
+
         #region OVERRIDE METHODS
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
