@@ -162,7 +162,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 var keyName = _modelType.GetKeyName();
 
                 var dynamicParams = new DynamicParameters();
-                dynamicParams.Add($"@v_{keyName}", entityId);
+                dynamicParams.Add($"@v_{keyName}", entityId.ToString(), DbType.String);
 
                 //2. Kết nối tới CSDL:
                 rowAffects = await connection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);

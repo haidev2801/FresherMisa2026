@@ -51,5 +51,18 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
             return await connection.QueryAsync<Employee>("Proc_GetEmployeesByDepartmentCode", param, commandType: System.Data.CommandType.StoredProcedure);
         }
+
+        public async Task<long> CountEmployeesByDepartmentIdAsync(Guid departmentId)
+        {
+            const string query = "SELECT COUNT(*) FROM employee WHERE DepartmentID = @DepartmentID";
+
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+
+            return await connection.ExecuteScalarAsync<long>(
+                query,
+                new { DepartmentID = departmentId.ToString() },
+                commandType: System.Data.CommandType.Text);
+        }
     }
 }

@@ -40,10 +40,9 @@ namespace FresherMisa2026.Application.Services
         #region OVERRIDE METHODS
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
-            //1. Validate còn nhân viên trong phòng ban không
-            bool hasEmployee = true;
+            var employeeCount = await _deptRepository.CountEmployeesByDepartmentIdAsync(entityId);
 
-            return !hasEmployee;
+            return employeeCount == 0;
         }
 
         /// <summary>
