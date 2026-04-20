@@ -20,13 +20,9 @@ namespace FresherMisa2026.Application.Services
             _employeeRepository = employeeRepository;
         }
 
-        public async Task<Employee> GetEmployeeByCodeAsync(string code)
+        public async Task<Employee?> GetEmployeeByCodeAsync(string code)
         {
-            var employee = await _employeeRepository.GetEmployeeByCode(code);
-            if (employee == null)
-                throw new Exception("Employee not found");
-
-            return employee;
+            return await _employeeRepository.GetEmployeeByCode(code);
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentIdAsync(Guid departmentId)
@@ -38,6 +34,39 @@ namespace FresherMisa2026.Application.Services
         {
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
+        /// <summary>
+        /// Hàm lấy danh sách nhân viên theo các tiêu chí lọc
+        /// </summary>
+        /// <param name="departmentId"></param>
+        /// <param name="positionId"></param>
+        /// <param name="salaryFrom"></param>
+        /// <param name="salaryTo"></param>
+        /// <param name="gender"></param>
+        /// <param name="hireDateFrom"></param>
+        /// <param name="hireDateTo"></param>
+        /// <returns></returns>
+        public async Task<PagingResponse<Employee>> GetEmployeesFilterAsync(
+            Guid? departmentId,
+            Guid? positionId,
+            string? salaryFrom,
+            string? salaryTo,
+            int? gender,
+            DateTime? hireDateFrom,
+            DateTime? hireDateTo,
+            int pageSize,
+            int pageIndex)
+        {
+            return await _employeeRepository.GetEmployeesFilterAsync(
+                departmentId,
+                positionId,
+                salaryFrom,
+                salaryTo,
+                gender,
+                hireDateFrom,
+                hireDateTo,
+                pageSize,
+                pageIndex);
+        }
 
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
@@ -48,9 +77,38 @@ namespace FresherMisa2026.Application.Services
                 errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
             }
 
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            if (!string.IsNullOrEmpty(employee.EmployeeCode))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
+                if (existingEmployee != null && existingEmployee.EmployeeID != employee.EmployeeID)
+                {
+                    errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(employee.Email)) { 
+                var regex = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(employee.Email, regex))
+                {
+                    errors.Add(new ValidationError("Email", "Email không hợp lệ"));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(employee.PhoneNumber))
+            {
+                var regex = @"^\d{10}$";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(employee.PhoneNumber, regex))
+                {
+                    errors.Add(new ValidationError("PhoneNumber", "Số điện thoại không hợp lệ"));
+                }
+            }
+
+            if (employee.DateOfBirth.HasValue)
+            {
+                if (employee.DateOfBirth.Value.Date > DateTime.Now.Date)
+                {
+                    errors.Add(new ValidationError("DateOfBirth", "Ngày sinh không hợp lệ"));
+                }
             }
 
             return errors;

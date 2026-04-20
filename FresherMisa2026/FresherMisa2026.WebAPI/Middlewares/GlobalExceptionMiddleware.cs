@@ -1,4 +1,5 @@
-﻿using FresherMisa2026.Entities;
+using FresherMisa2026.Entities;
+using MySqlConnector;
 using System.Net;
 using System.Text.Json;
 
@@ -33,14 +34,18 @@ namespace FresherMisa2026.WebAPI.Middlewares
         {
             // Set status code and content type
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            context.Response.StatusCode = IsDuplicateEmployeeCodeException(exception)
+                ? (int)HttpStatusCode.BadRequest
+                : (int)HttpStatusCode.InternalServerError;
 
             // Create response payload
             var response = new ServiceResponse
             {
                 IsSuccess = false,
                 Code = context.Response.StatusCode,
-                UserMessage = "Có lỗi xảy ra vui lòng liên hệ Misa!",
+                UserMessage = IsDuplicateEmployeeCodeException(exception)
+                    ? "Mã nhân viên đã tồn tại"
+                    : "Có lỗi xảy ra vui lòng liên hệ Misa!",
                 DevMessage = exception.Message // Optional: include for dev
             };
 
@@ -49,6 +54,22 @@ namespace FresherMisa2026.WebAPI.Middlewares
 
             return context.Response.WriteAsync(jsonResponse);
         }
+
+        private static bool IsDuplicateEmployeeCodeException(Exception exception)
+        {
+            if (exception is not MySqlException mySqlException)
+            {
+                return false;
+            }
+
+            var isDuplicateErrorCode = mySqlException.Number == 1062 || mySqlException.Number == 1644;
+            if (!isDuplicateErrorCode)
+            {
+                return false;
+            }
+
+            return mySqlException.Message.Contains("EmployeeCode", StringComparison.OrdinalIgnoreCase)
+                || mySqlException.Message.Contains("UQ_EmployeeCode", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
-

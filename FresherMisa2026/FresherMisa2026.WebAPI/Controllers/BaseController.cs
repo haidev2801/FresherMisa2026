@@ -2,6 +2,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
+using MySqlConnector;
 
 namespace FresherMisa2026.WebAPI.Controllers
 {
@@ -97,6 +98,18 @@ namespace FresherMisa2026.WebAPI.Controllers
 
                 return StatusCode((int)ResponseCode.Created, response);
             }
+            catch (MySqlException ex) when (IsDuplicateEmployeeCodeException(ex))
+            {
+                var response = new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = (int)ResponseCode.BadRequest,
+                    UserMessage = "Mã nhân viên đã tồn tại",
+                    DevMessage = ex.Message
+                };
+
+                return BadRequest(response);
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
@@ -109,7 +122,20 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
         {
-            var response = await _baseService.UpdateAsync(Guid.Parse(id), entity);
+            if (!Guid.TryParse(id, out var entityId))
+            {
+                var badRequestResponse = new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = (int)ResponseCode.BadRequest,
+                    UserMessage = "Id không hợp lệ",
+                    DevMessage = $"Id '{id}' không đúng định dạng Guid"
+                };
+
+                return BadRequest(badRequestResponse);
+            }
+
+            var response = await _baseService.UpdateAsync(entityId, entity);
 
             if (!response.IsSuccess)
             {
@@ -119,6 +145,18 @@ namespace FresherMisa2026.WebAPI.Controllers
             }
 
             return Ok(response);
+        }
+
+        private static bool IsDuplicateEmployeeCodeException(MySqlException exception)
+        {
+            var isDuplicateErrorCode = exception.Number == 1062 || exception.Number == 1644;
+            if (!isDuplicateErrorCode)
+            {
+                return false;
+            }
+
+            return exception.Message.Contains("EmployeeCode", StringComparison.OrdinalIgnoreCase)
+                || exception.Message.Contains("UQ_EmployeeCode", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

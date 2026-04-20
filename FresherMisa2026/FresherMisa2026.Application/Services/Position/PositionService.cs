@@ -20,13 +20,9 @@ namespace FresherMisa2026.Application.Services
             _positionRepository = positionRepository;
         }
 
-        public async Task<Position> GetPositionByCodeAsync(string code)
+        public async Task<Position?> GetPositionByCodeAsync(string code)
         {
-            var position = await _positionRepository.GetPositionByCode(code);
-            if (position == null)
-                throw new Exception("Position not found");
-
-            return position;
+            return await _positionRepository.GetPositionByCode(code);
         }
 
         protected override List<ValidationError> ValidateCustom(Position position)

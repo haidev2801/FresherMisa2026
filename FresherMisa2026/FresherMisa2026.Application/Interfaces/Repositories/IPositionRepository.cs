@@ -5,6 +5,6 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
 {
     public interface IPositionRepository : IBaseRepository<Position>
     {
-        Task<Position> GetPositionByCode(string code);
+        Task<Position?> GetPositionByCode(string code);
     }
 }

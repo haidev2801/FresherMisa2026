@@ -1,8 +1,7 @@
-using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Services;
-using FresherMisa2026.Application.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -27,11 +26,64 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
-            var response = new ServiceResponse();
-            response.Data = await _departmentSerice.GetDepartmentByCodeAsync(code);
-            response.IsSuccess = true;
+            var department = await _departmentSerice.GetDepartmentByCodeAsync(code);
+            if (department == null)
+            {
+                return NotFound(CreateDepartmentNotFoundResponse(code));
+            }
 
-            return response;
+            return Ok(new ServiceResponse
+            {
+                IsSuccess = true,
+                Code = (int)ResponseCode.Success,
+                Data = department
+            });
+        }
+
+        [HttpGet("{code}/employees")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
+        {
+            var department = await _departmentSerice.GetDepartmentByCodeAsync(code);
+            if (department == null)
+            {
+                return NotFound(CreateDepartmentNotFoundResponse(code));
+            }
+
+            var response = new ServiceResponse();
+            response.Data = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+            response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
+
+            return Ok(response);
+        }
+
+        [HttpGet("{code}/employee-count")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string code)
+        {
+            var department = await _departmentSerice.GetDepartmentByCodeAsync(code);
+            if (department == null)
+            {
+                return NotFound(CreateDepartmentNotFoundResponse(code));
+            }
+
+            var response = new ServiceResponse();
+            var employees = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+            response.Data = employees.Count();
+            response.IsSuccess = true;
+            response.Code = (int)ResponseCode.Success;
+
+            return Ok(response);
+        }
+
+        private static ServiceResponse CreateDepartmentNotFoundResponse(string code)
+        {
+            return new ServiceResponse
+            {
+                IsSuccess = false,
+                Code = (int)ResponseCode.NotFound,
+                UserMessage = "Không tìm thấy phòng ban",
+                DevMessage = $"Không tìm thấy phòng ban có mã '{code}'"
+            };
         }
     }
 }

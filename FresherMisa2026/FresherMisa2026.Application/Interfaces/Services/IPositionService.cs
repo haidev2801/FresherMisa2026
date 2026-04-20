@@ -11,6 +11,6 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// </summary>
         /// <param name="code">Mã position</param>
         /// <returns>Position tìm thấy</returns>
-        Task<Position> GetPositionByCodeAsync(string code);
+        Task<Position?> GetPositionByCodeAsync(string code);
     }
 }

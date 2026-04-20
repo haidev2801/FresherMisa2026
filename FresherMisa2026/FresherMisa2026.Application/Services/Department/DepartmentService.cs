@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -26,22 +27,22 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <returns></returns>
         /// Created By: dvhai (10/04/2026)
-        public async Task<Department> GetDepartmentByCodeAsync(string code)
+        public async Task<Department?> GetDepartmentByCodeAsync(string code)
         {
-            var department = await _deptRepository.GetDepartmentByCode(code);
-            if (department == null)
-                throw new Exception("department is null");
+            return await _deptRepository.GetDepartmentByCode(code);
+        }
 
-            return department;
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            return await _deptRepository.GetEmployeesByDepartmentCode(code);
         }
 
         #region OVERRIDE METHODS
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
-            //1. Validate còn nhân viên trong phòng ban không
-            bool hasEmployee = true;
+            var employeeCount = await _deptRepository.CountEmployeesByDepartmentIdAsync(entityId);
 
-            return !hasEmployee;
+            return employeeCount == 0;
         }
 
         /// <summary>

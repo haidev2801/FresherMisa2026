@@ -879,3 +879,59 @@ INSERT INTO department VALUES
 -- Enable foreign keys
 -- 
 /*!40014 SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS */;
+
+-- ======================================
+-- Update unique index cho EmployeeCode
+-- ======================================
+ALTER TABLE `Employee` 
+ADD UNIQUE INDEX `UQ_EmployeeCode` (`EmployeeCode` ASC) USING BTREE;
+
+-- ======================================
+-- Thêm index phục vụ tối ưu truy vấn Employee
+-- ======================================
+ALTER TABLE `Employee`
+ADD INDEX `IX_Employee_DepartmentID` (`DepartmentID` ASC) USING BTREE;
+
+ALTER TABLE `Employee`
+ADD INDEX `IX_Employee_PositionID` (`PositionID` ASC) USING BTREE;
+
+ALTER TABLE `Employee`
+ADD INDEX `IX_Employee_DepartmentID_PositionID_CreatedDate` (`DepartmentID` ASC, `PositionID` ASC, `CreatedDate` DESC) USING BTREE;
+
+-- ======================================
+-- Kiểm tra index thực thi với EXPLAIN
+-- ======================================
+
+-- 1. Kiểm tra truy vấn lọc theo phòng ban
+EXPLAIN
+SELECT *
+FROM `Employee`
+WHERE `DepartmentID` = '550e8400-e29b-41d4-a716-446655440002';
+
+-- 2. Kiểm tra truy vấn lọc theo vị trí
+EXPLAIN
+SELECT *
+FROM `Employee`
+WHERE `PositionID` = '11111111-1111-1111-1111-111111111111';
+
+-- 3. Kiểm tra truy vấn lọc kết hợp phòng ban + vị trí + sắp xếp
+EXPLAIN
+SELECT *
+FROM `Employee`
+WHERE `DepartmentID` = '550e8400-e29b-41d4-a716-446655440002'
+  AND `PositionID` = '11111111-1111-1111-1111-111111111111'
+ORDER BY `CreatedDate` DESC
+LIMIT 0, 10;
+
+-- 4. Kiểm tra truy vấn join lấy nhân viên theo mã phòng ban
+EXPLAIN
+SELECT
+  e.EmployeeID,
+  e.EmployeeCode,
+  e.EmployeeName,
+  e.DepartmentID,
+  e.PositionID
+FROM `Employee` e
+INNER JOIN `Department` d ON e.DepartmentID = d.DepartmentID
+WHERE d.DepartmentCode = 'RND'
+ORDER BY e.EmployeeName ASC;
