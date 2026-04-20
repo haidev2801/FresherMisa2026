@@ -38,6 +38,20 @@ namespace FresherMisa2026.Application.Services
                 errors.Add(new ValidationError("PositionCode", "Mã vị trí không được vượt quá 20 ký tự"));
             }
 
+            // PositionCode không được trùng
+            if (!string.IsNullOrEmpty(position.PositionCode))
+            {
+                try
+                {
+                    var existing = _positionRepository.GetPositionByCode(position.PositionCode).GetAwaiter().GetResult();
+                    if (existing != null && existing.PositionID != position.PositionID)
+                    {
+                        errors.Add(new ValidationError("PositionCode", "Mã vị trí đã tồn tại"));
+                    }
+                }
+                catch { }
+            }
+
             return errors;
         }
     }

@@ -29,9 +29,7 @@ namespace FresherMisa2026.Application.Services
         public async Task<Department> GetDepartmentByCodeAsync(string code)
         {
             var department = await _deptRepository.GetDepartmentByCode(code);
-            if (department == null)
-                throw new Exception("department is null");
-
+            // Return null when not found; controller will handle NotFound response
             return department;
         }
 

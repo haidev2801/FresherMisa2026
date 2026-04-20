@@ -7,7 +7,7 @@ namespace FresherMisa2026.WebAPI.Controllers
 {
     [ApiController]
     [Route("/api/[controller]")]
-    public class BaseController<TEntity> : ControllerBase
+    public class BaseController<TEntity> : ControllerBase where TEntity : BaseModel
     {
         private readonly IBaseService<TEntity> _baseService;
 
@@ -109,7 +109,41 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
         {
-            var response = await _baseService.UpdateAsync(Guid.Parse(id), entity);
+            var entityId = Guid.Parse(id);
+
+            // Lấy thực thể hiện tại từ DB
+            var getResponse = await _baseService.GetEntityByIDAsync(entityId);
+            if (!getResponse.IsSuccess && getResponse.Code == (int)ResponseCode.NotFound)
+                return NotFound(getResponse);
+
+            var existing = getResponse.Data as TEntity;
+            if (existing == null)
+                return NotFound(getResponse);
+
+            // Merge: chỉ gán những thuộc tính được client gửi (khác null hoặc không phải Guid.Empty)
+            var props = typeof(TEntity).GetProperties();
+            foreach (var prop in props)
+            {
+                if (!prop.CanWrite) continue;
+
+                var incomingValue = prop.GetValue(entity);
+
+                // Nếu client không gửi trường -> skip
+                if (incomingValue == null) continue;
+
+                var propType = prop.PropertyType;
+
+                // Với Guid: nếu giá trị là Guid.Empty => coi như không gửi
+                if (propType == typeof(Guid) || propType == typeof(Guid?))
+                {
+                    if (incomingValue is Guid g && g == Guid.Empty) continue;
+                }
+
+                // Gán giá trị incoming vào thực thể hiện tại
+                prop.SetValue(existing, incomingValue);
+            }
+
+            var response = await _baseService.UpdateAsync(entityId, existing);
 
             if (!response.IsSuccess)
             {

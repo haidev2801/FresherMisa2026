@@ -1,4 +1,5 @@
 using FresherMisa2026.Entities.Extensions;
+using FresherMisa2026.Entities;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -10,8 +11,10 @@ namespace FresherMisa2026.Entities.Position
         [Key]
         public Guid PositionID { get; set; }
 
+        [IRequired]
         public string PositionCode { get; set; }
 
+        [IRequired]
         public string PositionName { get; set; }
     }
 }
