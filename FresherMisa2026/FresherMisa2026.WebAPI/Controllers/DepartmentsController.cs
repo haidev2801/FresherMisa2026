@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Application.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FresherMisa2026.WebAPI.Controllers
@@ -27,11 +28,67 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
-            var response = new ServiceResponse();
-            response.Data = await _departmentSerice.GetDepartmentByCodeAsync(code);
-            response.IsSuccess = true;
+            try
+            {
+                var response = new ServiceResponse();
+                response.Data = await _departmentSerice.GetDepartmentByCodeAsync(code);
+                response.IsSuccess = true;
 
-            return response;
+                return response;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = (int)ResponseCode.NotFound,
+                    DevMessage = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("{code}/employees")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeesByDepartmentCode(string code)
+        {
+            try
+            {
+                var response = new ServiceResponse();
+                response.Data = await _departmentSerice.GetEmployeesByDepartmentCodeAsync(code);
+                response.IsSuccess = true;
+
+                return response;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = (int)ResponseCode.NotFound,
+                    DevMessage = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("{code}/employee-count")]
+        public async Task<ActionResult<ServiceResponse>> GetEmployeeCountByDepartmentCode(string code)
+        {
+            try
+            {
+                var response = new ServiceResponse();
+                response.Data = await _departmentSerice.GetEmployeeCountByDepartmentCodeAsync(code);
+                response.IsSuccess = true;
+
+                return response;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = (int)ResponseCode.NotFound,
+                    DevMessage = ex.Message
+                });
+            }
         }
     }
 }

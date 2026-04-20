@@ -2,10 +2,10 @@
 REM =====================================================
 REM API Test - FresherMisa2026 (Windows Batch)
 REM Run directly in CMD or PowerShell
-REM Base URL: http://localhost:5000
+REM Base URL: match WebAPI launchSettings.json (default http://localhost:5237)
 REM =====================================================
 
-set BASE_URL=http://localhost:5000/api
+set BASE_URL=http://localhost:5237/api
 
 echo ========================================
 echo DEPARTMENT API TESTS
