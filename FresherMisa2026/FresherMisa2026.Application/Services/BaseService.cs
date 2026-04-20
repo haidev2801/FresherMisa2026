@@ -1,10 +1,14 @@
-﻿using FresherMisa2026.Application.Interfaces;
+﻿using FresherMisa2026.Application.Constants;
+using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Extensions;
+using MySqlConnector;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Reflection;
+
 
 namespace FresherMisa2026.Application.Services
 {
@@ -227,17 +231,30 @@ namespace FresherMisa2026.Application.Services
             var errors = Validate(entity);
 
             //2. Sử lí lỗi tương ứng
-            if (errors.Count == 0)
+            if (errors.Count > 0)
             {
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
+            }
+
+            try
+            {
+                await Task.Delay(3000);
                 var result = await _baseRepository.InsertAsync(entity);
                 return CreateSuccessResponse(result);
             }
-
-            return CreateErrorResponse(
-                ResponseCode.BadRequest,
-                "Validate thất bại",
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            // Catch 1062 (Duplicate key)
+            catch (MySqlException ex) when (ex.Number == ExceptionConstant.DUPLICATE_KEY)
+            {
+                throw new DBConcurrencyException("Mã nhân viên đã tồn tại");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>
