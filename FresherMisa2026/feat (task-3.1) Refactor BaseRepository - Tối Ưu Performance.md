@@ -25,6 +25,7 @@
 
 
 ## Các test trong `api-regression-tests.ps1`
+  ![TestRegression](./Img/TestRegression.png)
 - Mục tiêu: chạy regression end-to-end để xác nhận hệ thống vẫn ổn định sau khi tối ưu truy vấn và cache.
 - Nhóm 1 - Smoke Read APIs:
   - Test các API đọc cơ bản cho Department, Position, Employee.

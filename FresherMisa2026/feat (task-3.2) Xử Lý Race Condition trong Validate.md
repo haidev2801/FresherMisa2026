@@ -14,7 +14,9 @@ Giải thích:
 
 ## Giải thích các case trong Postman JSON
 
+
 File test sử dụng: `TestTask-3.2RaceCondition.json`.
+![TestPostMan](./Img/TestPostMan.png)
 
 ### 1) Smoke Test - API Health
 - Request: `GET /api/Employees`
