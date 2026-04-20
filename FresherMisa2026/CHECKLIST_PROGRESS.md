@@ -79,5 +79,9 @@
  - [x] Thêm UniqueMessage cho trường EmployeeCode để đảm bảo ở tầng database cũng không cho phép trùng lặp
  - [x] Test đồng thời nhiều request POST với cùng `EmployeeCode` → chỉ một request thành công, các request còn lại trả về lỗi "Mã nhân viên đã tồn tại"
  Git commit: "fix(task-3.2): handle race condition for employee code validation"
- 
+
+ - [x] **Task 3.3:  Thêm Paging Cho Employee Filter (2 điểm)**
+ - [x] Thêm các tham số `pageNumber` và `pageSize` vào endpoint `GET /api/employees/filter`
+ - [x] Reponse trả về thêm thông tin paging: tổng số trang, trang hiện tại
+ - [x] Test gọi API với paging → trả về đúng số lượng bản ghi theo pageSize và thông tin paging chính xác
 ---

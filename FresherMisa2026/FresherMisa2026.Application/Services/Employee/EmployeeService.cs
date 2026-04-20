@@ -44,6 +44,8 @@ namespace FresherMisa2026.Application.Services
                 Gender = request.Gender,
                 HireDateFrom = request.HireDateFrom,
                 HireDateTo = request.HireDateTo,
+                PageSize = request.PageSize ?? 10,
+                PageIndex = request.PageIndex ?? 1
             };
 
             response = await _employeeRepository.GetEmployeesByFilter(rq);

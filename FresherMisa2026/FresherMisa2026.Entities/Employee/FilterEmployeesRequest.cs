@@ -40,5 +40,14 @@ namespace FresherMisa2026.Entities.Employee
         /// Ngày vào làm đến
         /// </summary>
         public DateTime? HireDateTo { get; set; }
+
+        /// <summary>
+        /// Số lượng bản ghi muốn lấy
+        /// </summary>
+        public int? PageSize { get; set; } = 10;
+        /// <summary>
+        /// Trang đang muốn lấy
+        /// </summary>
+        public int? PageIndex { get; set; } = 1;
     }
 }
