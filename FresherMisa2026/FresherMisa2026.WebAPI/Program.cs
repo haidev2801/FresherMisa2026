@@ -1,10 +1,14 @@
-using FresherMisa2026.WebAPI.Middlewares;
-using FresherMisa2026.Infrastructure;
 using FresherMisa2026.Application;
+using FresherMisa2026.Application.Extensions;
+using FresherMisa2026.Infrastructure;
+using FresherMisa2026.WebAPI.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -26,6 +30,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+//Config sql load
+SQLExtension.Initialize();
 
 //Middlewares
 app.UseMiddleware<GlobalExceptionMiddleware>();
