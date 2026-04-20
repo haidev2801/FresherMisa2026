@@ -14,6 +14,9 @@ namespace FresherMisa2026.Infrastructure
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services)
         {
+            // Add in-memory cache for repository-level caching
+            services.AddMemoryCache();
+
             //base
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 

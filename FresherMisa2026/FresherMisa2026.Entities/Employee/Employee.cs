@@ -1,4 +1,5 @@
 using FresherMisa2026.Entities.Extensions;
+using FresherMisa2026.Entities;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,11 +8,14 @@ namespace FresherMisa2026.Entities.Employee
     [ConfigTable("Employee", false, "EmployeeCode")]
     public class Employee : BaseModel
     {
+
         [Key]
         public Guid EmployeeID { get; set; }
 
+        [IRequired]
         public string EmployeeCode { get; set; }
 
+        [IRequired]
         public string EmployeeName { get; set; }
 
         public int? Gender { get; set; }
@@ -24,8 +28,10 @@ namespace FresherMisa2026.Entities.Employee
 
         public string? Address { get; set; }
 
+        [IRequired]
         public Guid DepartmentID { get; set; }
 
+        [IRequired]
         public Guid PositionID { get; set; }
 
         public decimal? Salary { get; set; }

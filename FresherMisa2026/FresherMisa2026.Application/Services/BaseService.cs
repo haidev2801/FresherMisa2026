@@ -43,6 +43,7 @@ namespace FresherMisa2026.Application.Services
             IsSuccess = false,
             Code = (int)code,
             DevMessage = devMessage,
+            UserMessage = userMessage,
             Data = userMessage
         };
 
@@ -201,15 +202,45 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    return CreateSuccessResponse(result);
+                }
+                catch (Exception ex)
+                {
+                    // Handle DB-level duplicate key errors (race condition)
+                    if (ex.Message != null && ex.Message.IndexOf("duplicate", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        var uniqueCols = typeof(TEntity).GetUniqueColumns();
+                        string userMsg = "Giá trị đã tồn tại";
+
+                        if (!string.IsNullOrEmpty(uniqueCols))
+                        {
+                            if (uniqueCols.IndexOf("EmployeeCode", StringComparison.OrdinalIgnoreCase) >= 0)
+                                userMsg = "Mã nhân viên đã tồn tại";
+                            else if (uniqueCols.IndexOf("PositionCode", StringComparison.OrdinalIgnoreCase) >= 0)
+                                userMsg = "Mã vị trí đã tồn tại";
+                            else if (uniqueCols.IndexOf("DepartmentCode", StringComparison.OrdinalIgnoreCase) >= 0)
+                                userMsg = "Mã phòng ban đã tồn tại";
+                        }
+
+                        return CreateErrorResponse(ResponseCode.BadRequest, ex.Message, userMsg);
+                    }
+
+                    throw;
+                }
             }
 
-            return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            // Trả về danh sách lỗi chi tiết (field + message) để client hiển thị rõ
+            return new ServiceResponse
+            {
+                IsSuccess = false,
+                Code = (int)ResponseCode.BadRequest,
+                UserMessage = "Validate thất bại",
+                DevMessage = string.Join("; ", errors.Select(e => e.Message)),
+                Data = errors
+            };
         }
 
         /// <summary>
@@ -242,12 +273,15 @@ namespace FresherMisa2026.Application.Services
                 return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
             }
 
-            //3. Validate fail - trả về BadRequest
-            return CreateErrorResponse(
-                ResponseCode.BadRequest,
-                "Validate thất bại",
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            //3. Validate fail - trả về BadRequest với chi tiết lỗi
+            return new ServiceResponse
+            {
+                IsSuccess = false,
+                Code = (int)ResponseCode.BadRequest,
+                UserMessage = "Validate thất bại",
+                DevMessage = string.Join("; ", errors.Select(e => e.Message)),
+                Data = errors
+            };
         }
 
         /// <summary>
