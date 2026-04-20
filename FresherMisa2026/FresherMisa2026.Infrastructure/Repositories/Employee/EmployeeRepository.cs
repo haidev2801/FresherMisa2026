@@ -18,37 +18,42 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<Employee> GetEmployeeByCode(string code)
         {
             string query = SQLExtension.GetQuery("Employee.GetByCode");
+            using var conn = await CreateConnectionAsync();
             var param = new Dictionary<string, object>
             {
                 {"@EmployeeCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            return await conn.QueryFirstOrDefaultAsync<Employee>(query, param, commandType:
+                System.Data.CommandType.Text);
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId)
         {
             string query = SQLExtension.GetQuery("Employee.GetByDepartmentId");
+            using var conn = await CreateConnectionAsync();
             var param = new Dictionary<string, object>
             {
                 {"@DepartmentID", departmentId }
             };
-            return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            return await conn.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId)
         {
             string query = SQLExtension.GetQuery("Employee.GetByPositionId");
+            using var conn = await CreateConnectionAsync();
             var param = new Dictionary<string, object>
             {
                 {"@PositionID", positionId }
             };
-            return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            return await conn.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
         public async Task<(long Total, IEnumerable<EmployeeDto> Data)>
             GetEmployeesFilter(GetEmployeeFilterDto dto)
         {
             string storedProcedureName = "Proc_Employee_Filter";
+            using var conn = await CreateConnectionAsync();
 
             var parameters = new DynamicParameters();
             parameters.Add("@p_PageIndex", dto.PageIndex);
@@ -61,7 +66,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             parameters.Add("@p_HireDateFrom", dto.HireDateFrom);
             parameters.Add("@p_HireDateTo", dto.HireDateTo);
 
-            using var reader = await _dbConnection.QueryMultipleAsync(
+            using var reader = await conn.QueryMultipleAsync(
                 storedProcedureName,
                 parameters,
                 commandType: CommandType.StoredProcedure);

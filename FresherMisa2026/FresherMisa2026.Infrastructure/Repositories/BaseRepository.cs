@@ -15,56 +15,28 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
-    public class BaseRepository<TEntity> : IBaseRepository<TEntity>, IDisposable where TEntity : BaseModel
+    public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : BaseModel
     {
         //Properties
         string _connectionString = string.Empty;
         IConfiguration _configuration;
-        protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
-
 
         //Constructor
         public BaseRepository(IConfiguration configuration)
         {
             _configuration = configuration;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
-            _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
             _tableName = _modelType.GetTableName();
         }
 
-
-        /// <summary>
-        /// Dispose connection
-        /// </summary>
-        /// Created By: dvhai (09/04/2026)
-        public void Dispose()
+        public async Task<IDbConnection> CreateConnectionAsync()
         {
-            if (_dbConnection != null && _dbConnection.State == ConnectionState.Open)
-            {
-                _dbConnection.Close();
-                _dbConnection.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Mở kết nối database
-        /// </summary>
-        private async Task OpenConnectionAsync()
-        {
-            if (_dbConnection.State != ConnectionState.Open)
-            {
-                if (_dbConnection is MySqlConnection mySqlConnection)
-                {
-                    await mySqlConnection.OpenAsync();
-                }
-                else
-                {
-                    _dbConnection.Open();
-                }
-            }
+            var conn = new MySqlConnection(_connectionString);
+            await conn.OpenAsync();
+            return conn;
         }
 
         #region Method Get
@@ -85,6 +57,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// CREATED BY: DVHAI (11/07/2021)
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
+            using var conn = await CreateConnectionAsync();
             var query = new StringBuilder($"select * from {_tableName}");
             int whereCount = 0;
 
@@ -94,7 +67,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 query.Append($" where IsDeleted = FALSE");
             }
 
-            var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(),
+            var entities = await conn.QueryAsync<TEntity>(query.ToString(),
                 commandType: CommandType.Text);
 
             return entities.ToList();
@@ -118,10 +91,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <returns></returns>
         private async Task<TEntity> GetEntitieByIdUsingCommandTextAsync(string id)
         {
+            using var conn = await CreateConnectionAsync();
             var query = new StringBuilder($"select * from {_tableName}");
             int whereCount = 0;
 
-            Func<StringBuilder, bool> AppendWhere = (query) => { if (whereCount == 0) query.Append(" where "); return true; };
+            Func<StringBuilder, bool> AppendWhere = (query) =>
+            { if (whereCount == 0) query.Append(" where "); return true; };
 
             var primaryKey = _modelType.GetKeyName();
 
@@ -139,7 +114,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 whereCount++;
             }
 
-            var entities = await _dbConnection.QueryFirstOrDefaultAsync<TEntity>(query.ToString(), new { Id = id }, commandType: CommandType.Text);
+            var entities = await conn.QueryFirstOrDefaultAsync<TEntity>(query.ToString(),
+                new { Id = id }, commandType: CommandType.Text);
 
             return entities;
         }
@@ -153,9 +129,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> DeleteAsync(Guid entityId)
         {
             var rowAffects = 0;
-            await OpenConnectionAsync();
+            using var conn = await CreateConnectionAsync();
 
-            using (var transaction = _dbConnection.BeginTransaction())
+            using (var transaction = conn.BeginTransaction())
             {
                 try
                 {
@@ -166,7 +142,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     dynamicParams.Add($"@v_{keyName}", entityId);
 
                     //2. Kết nối tới CSDL:
-                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
+                    rowAffects = await conn.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
                 }
@@ -191,9 +167,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> InsertAsync(TEntity entity)
         {
             var rowAffects = 0;
-            await OpenConnectionAsync();
+            using var conn = await CreateConnectionAsync();
 
-            using (var transaction = _dbConnection.BeginTransaction())
+            using (var transaction = conn.BeginTransaction())
             {
                 try
                 {
@@ -201,7 +177,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var parameters = MappingDbType(entity);
 
                     //2.Thực hiện thêm bản ghi
-                    rowAffects = await _dbConnection.ExecuteAsync(
+                    rowAffects = await conn.ExecuteAsync(
                         $"Proc_Insert{_tableName}",
                         param: parameters,
                         transaction: transaction,
@@ -230,9 +206,9 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
             var rowAffects = 0;
-            await OpenConnectionAsync();
+            using var conn = await CreateConnectionAsync();
 
-            using (var transaction = _dbConnection.BeginTransaction())
+            using (var transaction = conn.BeginTransaction())
             {
                 try
                 {
@@ -244,7 +220,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
-                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
+                    rowAffects = await conn.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
                 }
@@ -279,7 +255,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             long total = 0;
             var data = Enumerable.Empty<TEntity>();
 
-            await OpenConnectionAsync();
+            using var conn = await CreateConnectionAsync();
 
             string store = string.Format("Proc_{0}_FilterPaging", _tableName);
             var parameters = new DynamicParameters();
@@ -289,7 +265,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
             parameters.Add("@v_sort", sort);
             parameters.Add("@v_searchFields", JsonSerializer.Serialize(searchFields));
 
-            using var reader = await _dbConnection.QueryMultipleAsync(
+            using var reader = await conn.QueryMultipleAsync(
                 new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
 
             data = (await reader.ReadAsync<TEntity>()).ToList();

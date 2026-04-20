@@ -21,11 +21,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<int> CountEmployeeByDepartmentAsync(string code)
         {
             string storedProcedureName = "Proc_CountEmployeeByDepartmentCode";
+            using var conn = await CreateConnectionAsync();
 
             var parameters = new DynamicParameters();
             parameters.Add("@p_DepartmentCode", code);
 
-            var result = await _dbConnection.QuerySingleAsync<int>(
+            var result = await conn.QuerySingleAsync<int>(
                 storedProcedureName,
                 parameters,
                 commandType: CommandType.StoredProcedure
@@ -43,11 +44,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<Department> GetDepartmentByCode(string code)
         {
             string query = SQLExtension.GetQuery("Department.GetByCode");
+            using var conn = await CreateConnectionAsync();
             var @param = new Dictionary<string, object>
             {
                 {"@DepartmentCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query,
+            return await conn.QueryFirstOrDefaultAsync<Department>(query,
                 @param, commandType: System.Data.CommandType.Text);
         }
     }

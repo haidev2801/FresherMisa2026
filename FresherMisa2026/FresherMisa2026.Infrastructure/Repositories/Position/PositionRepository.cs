@@ -16,11 +16,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<Position> GetPositionByCode(string code)
         {
             string query = SQLExtension.GetQuery("Position.GetByCode");
+            using var conn = await CreateConnectionAsync();
             var param = new Dictionary<string, object>
             {
                 {"@PositionCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Position>(query, param,
+            return await conn.QueryFirstOrDefaultAsync<Position>(query, param,
                 commandType: CommandType.Text);
         }
     }
