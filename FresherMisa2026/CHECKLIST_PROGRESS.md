@@ -84,4 +84,25 @@
  - [x] Thêm các tham số `pageNumber` và `pageSize` vào endpoint `GET /api/employees/filter`
  - [x] Reponse trả về thêm thông tin paging: tổng số trang, trang hiện tại
  - [x] Test gọi API với paging → trả về đúng số lượng bản ghi theo pageSize và thông tin paging chính xác
+ Git commit: "feat(task-3.3): add paging to employee filter API"
+
+ - **Task 3.4:Tối Ưu SQL Query với Index (2 điểm)**
+ - Index đã tạo
+ - [x]IX_Employee_DepartmentID → (DepartmentID)
+ - [x]IX_Employee_PositionID → (PositionID)
+ - [x]IX_Employee_Department_Position_Gender → (DepartmentID, PositionID, Gender)
+ - [x]IX_Employee_HireDate → (HireDate)
+ - [x]IX_Employee_CreatedDate → (CreatedDate)
+ - [x]EmployeeCode đã có sẵn unique index UQ_EmployeeCode
+ - Giải thích ngắn gọn
+ - DepartmentID: tăng tốc filter theo phòng ban và join với bảng department.
+ - PositionID: tăng tốc filter theo vị trí/chức vụ.
+ - EmployeeCode: đã có unique index → vừa đảm bảo không trùng, vừa hỗ trợ tìm kiếm theo mã.
+ - Composite (DepartmentID, PositionID, Gender): tối ưu truy vấn filter nhiều điều kiện thường dùng.
+ - HireDate: tăng tốc filter theo khoảng ngày vào làm.
+ - CreatedDate: hỗ trợ sort và paging (ORDER BY).
+ - Kết luận
+   Các index được tạo dựa trên các cột xuất hiện nhiều trong WHERE, JOIN, ORDER BY, giúp:
+   giảm full table scan tăng tốc truy vấn filter tối ưu phân trang và sắp xếp dữ liệu
+ Git commit: "feat(task-3.4): optimize SQL queries with indexes"
 ---
