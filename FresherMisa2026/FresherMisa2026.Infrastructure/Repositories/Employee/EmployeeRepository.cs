@@ -48,8 +48,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
             string query = SQLExtension.GetQuery("Employee.Filter");
             var param = new DynamicParameters();
 
-            param.Add("@DepartmentID", request.DepartmentId?.ToString());
-            param.Add("@PositionID", request.PositionId?.ToString());
+            param.Add("@DepartmentID", request.DepartmentId);
+            param.Add("@PositionID", request.PositionId);
             param.Add("@SalaryFrom", request.SalaryFrom);
             param.Add("@SalaryTo", request.SalaryTo);
             param.Add("@Gender", request.Gender);
