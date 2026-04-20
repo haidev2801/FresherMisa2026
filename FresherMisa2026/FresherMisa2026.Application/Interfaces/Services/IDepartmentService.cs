@@ -4,29 +4,31 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FresherMisa2026.Application.Interfaces.Repositories
+namespace FresherMisa2026.Application.Interfaces.Services
 {
-    public interface IDepartmentRepository : IBaseRepository<Department>
+    public interface IDepartmentService : IBaseService<Department>
     {
         /// <summary>
-        /// Lấy ra phòng ban theo mã
+        /// Lấy department theo code
         /// </summary>
-        /// <param name="code"></param>
         /// <returns></returns>
-        Task<Department> GetDepartmentByCode(string code);
+        /// Created By: dvhai (10/04/2026)
+        Task<Department> GetDepartmentByCodeAsync(string code);
 
         /// <summary>
         /// Lấy danh sách nhân viên theo mã phòng ban
         /// </summary>
         /// <param name="code">Mã phòng ban</param>
         /// <returns>Danh sách nhân viên</returns>
-        Task<IEnumerable<Employee>> GetEmployeesByDepartmentCode(string code);
+        /// Created by: Anhs (20/04/2026)
+        Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code);
 
         /// <summary>
-        /// Đếm số nhân viên theo mã phòng ban
+        /// Đếm số nhân viên trong phòng ban theo mã
         /// </summary>
         /// <param name="code">Mã phòng ban</param>
         /// <returns>Số lượng nhân viên</returns>
-        Task<long> GetEmployeeCountByDepartmentCode(string code);
+        /// Created by: Anhs (20/04/2026)
+        Task<long> GetEmployeeCountByDepartmentCodeAsync(string code);
     }
 }

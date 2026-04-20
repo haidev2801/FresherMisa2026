@@ -1,4 +1,4 @@
-﻿using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
@@ -31,11 +31,13 @@ namespace FresherMisa2026.Application.Services
         #endregion
 
         #region Protected Helpers - có thể override trong derived class
-        protected static ServiceResponse CreateSuccessResponse(object? data = null) => new()
+        protected static ServiceResponse CreateSuccessResponse(object? data = null, string? userMessage = null, string? devMessage = null) => new()
         {
             IsSuccess = true,
             Code = (int)ResponseCode.Success,
-            Data = data
+            Data = data,
+            UserMessage = userMessage,
+            DevMessage = devMessage
         };
 
         protected static ServiceResponse CreateErrorResponse(ResponseCode code, string devMessage, string? userMessage = null) => new()
@@ -110,26 +112,33 @@ namespace FresherMisa2026.Application.Services
             {
                 //3. Xóa thành công thì làm gì
                 AfterDelete();
-                return CreateSuccessResponse(rowAffects);
+                return CreateSuccessResponse(
+                    rowAffects,
+                    "Xóa dữ liệu thành công",
+                    $"Delete {_tableName} thành công"
+                );
             }
 
             return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để xóa");
         }
 
         /// <summary>
-        /// Validate tất cả
+        /// Hàm validate chính - phân luồng kiểm tra:
+        /// 1. Kiểm tra [IRequired] → nếu lỗi thì dừng luôn
+        /// 2. Nếu không lỗi required → chạy ValidateCustom (sync) + ValidateCustomAsync (async)
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi validate</returns>
         /// CREATED BY: DVHAI (07/07/2021)
-        private List<ValidationError> Validate(TEntity entity)
+        /// UPDATE BY: Anhs (19/04/2024) - Thêm validate async
+        private async Task<List<ValidationError>> Validate(TEntity entity)
         {
             var errors = new List<ValidationError>();
             var properties = GetCachedProperties(entity.GetType());
 
+            //1. Kiểm tra các trường bắt buộc nhập [IRequired]
             foreach (var property in properties)
             {
-                //1.1 Kiểm tra xem có attribute cần phải validate không
                 if (property.IsDefined(typeof(IRequired), false))
                 {
                     var error = ValidateRequired(entity, property);
@@ -140,15 +149,24 @@ namespace FresherMisa2026.Application.Services
                 }
             }
 
-            //2. Validate tùy chỉnh từng màn hình
-            var customErrors = ValidateCustom(entity);
-            errors.AddRange(customErrors);
+            //2. Nếu required fail → trả về luôn, không cần validate tiếp
+            if (errors.Count > 0)
+            {
+                return errors;
+            }
+
+            //3. Validate custom đồng bộ (format, độ dài, ngày tháng, ...)
+            errors.AddRange(ValidateCustom(entity));
+
+            //4. Validate custom bất đồng bộ (kiểm tra trùng mã - cần truy vấn DB)
+            var asyncErrors = await ValidateCustomAsync(entity);
+            errors.AddRange(asyncErrors);
 
             return errors;
         }
 
         /// <summary>
-        /// Validate bắt buộc nhập
+        /// Validate bắt buộc 
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <param name="propertyInfo">Thuộc tính của thực thể</param>
@@ -174,7 +192,7 @@ namespace FresherMisa2026.Application.Services
         }
 
         /// <summary>
-        /// Validate từng màn hình
+        /// Validate tùy chỉnh đồng bộ từng màn hình (format, độ dài chuỗi, ngày tháng, ...)
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi tùy chỉnh</returns>
@@ -184,6 +202,17 @@ namespace FresherMisa2026.Application.Services
             return new List<ValidationError>();
         }
 
+        /// <summary>
+        /// Validate tùy chỉnh bất đồng bộ - chỉ dùng cho các kiểm tra cần truy vấn DB
+        /// (vd: kiểm tra mã nhân viên trùng lặp)
+        /// </summary>
+        /// <param name="entity">Thực thể</param>
+        /// <returns>Danh sách lỗi tùy chỉnh</returns>
+        /// CREATED BY: Anhs (19/04/2024)
+        protected virtual Task<List<ValidationError>> ValidateCustomAsync(TEntity entity)
+        {
+            return Task.FromResult(new List<ValidationError>());
+        }
 
         /// <summary>
         /// Thêm một thực thể
@@ -191,14 +220,15 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
         /// CREATED BY: DVHAI (11/07/2021)
+        /// UPDATE BY: Anhs (19/04/2026) - Thêm validate async
         public async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
             entity.State = ModelSate.Add;
 
-            //1. Validate tất cả các trường nếu được gắn thẻ
-            var errors = Validate(entity);
+            //1. Validate: required -> custom sync -> custom async
+            var errors = await Validate(entity);
 
-            //2. Sử lí lỗi tương ứng
+            //2. Xử lí kết quả
             if (errors.Count == 0)
             {
                 var result = await _baseRepository.InsertAsync(entity);
@@ -219,6 +249,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
         /// CREATED BY: DVHAI (11/07/2021)
+        /// UPDATE BY: Anhs (19/04/2026) - Thêm validate async
         public async Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity)
         {
             if (entityId == Guid.Empty)
@@ -229,9 +260,9 @@ namespace FresherMisa2026.Application.Services
             //1. Trạng thái
             entity.State = ModelSate.Update;
 
-            //2. Validate tất cả các trường nếu được gắn thẻ
-            var errors = Validate(entity);
-            
+            //2. Validate: required -> custom sync -> custom async
+            var errors = await Validate(entity);
+
             if (errors.Count == 0)
             {
                 int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
@@ -273,6 +304,8 @@ namespace FresherMisa2026.Application.Services
             var response = new PagingResponse<TEntity>
             {
                 Total = total,
+                PageSize = pagingRequest.PageSize,
+                PageIndex = pagingRequest.PageIndex,
                 Data = data.ToList()
             };
 

@@ -15,6 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 //DI
+builder.Services.AddMemoryCache();
 builder.Services.AddApplicationDI();
 builder.Services.AddInfrastructure();
 
@@ -32,6 +33,7 @@ if (app.Environment.IsDevelopment())
 SQLExtension.Initialize();
 
 //Middlewares
+app.UseMiddleware<ResponseTimeMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
