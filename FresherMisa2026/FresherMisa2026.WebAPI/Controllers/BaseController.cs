@@ -88,19 +88,12 @@ namespace FresherMisa2026.WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ServiceResponse>> Post([FromBody] TEntity entity)
         {
-            try
-            {
-                var response = await _baseService.InsertAsync(entity);
-                
-                if (!response.IsSuccess)
-                    return BadRequest(response);
+            var response = await _baseService.InsertAsync(entity);
 
-                return StatusCode((int)ResponseCode.Created, response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            if (!response.IsSuccess)
+                return BadRequest(response);
+
+            return StatusCode((int)ResponseCode.Created, response);
         }
 
         /// <summary>

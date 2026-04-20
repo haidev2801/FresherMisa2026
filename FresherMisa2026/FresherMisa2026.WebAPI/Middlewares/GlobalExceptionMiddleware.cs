@@ -1,4 +1,5 @@
 ﻿using FresherMisa2026.Entities;
+using MySqlConnector;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Text.Json;
@@ -39,12 +40,15 @@ namespace FresherMisa2026.WebAPI.Middlewares
         /// Updated by: Anhs (20/04/2026)
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
+            var isDuplicateEmployeeCode = IsDuplicateEmployeeCodeException(exception);
+
             // Set status code and content type
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = exception switch
             {
                 ArgumentException => (int)HttpStatusCode.BadRequest,
                 FormatException => (int)HttpStatusCode.BadRequest,
+                _ when isDuplicateEmployeeCode => (int)HttpStatusCode.BadRequest,
                 KeyNotFoundException => (int)HttpStatusCode.NotFound,
                 _ => (int)HttpStatusCode.InternalServerError
             };
@@ -54,8 +58,8 @@ namespace FresherMisa2026.WebAPI.Middlewares
             {
                 IsSuccess = false,
                 Code = context.Response.StatusCode,
-                UserMessage = GetVietnameseUserMessage(exception.Message),
-                DevMessage = exception.Message // Optional: include for dev
+                UserMessage = GetUserMessage(exception),
+                DevMessage = exception.Message
             };
 
             // Serialize the response to JSON
@@ -64,7 +68,38 @@ namespace FresherMisa2026.WebAPI.Middlewares
             return context.Response.WriteAsync(jsonResponse);
         }
 
-        private static string GetVietnameseUserMessage(string devMessage)
+        private static string GetUserMessage(Exception exception)
+        {
+            if (IsDuplicateEmployeeCodeException(exception))
+            {
+                return "Mã nhân viên đã tồn tại";
+            }
+
+            return GetUserMessageByText(exception.Message);
+        }
+
+        private static bool IsDuplicateEmployeeCodeException(Exception exception)
+        {
+            if (exception is MySqlException mySqlException)
+            {
+                if (mySqlException.Number == 1062)
+                {
+                    return mySqlException.Message.Contains("UQ_EmployeeCode", StringComparison.OrdinalIgnoreCase)
+                        || mySqlException.Message.Contains("EmployeeCode", StringComparison.OrdinalIgnoreCase);
+                }
+
+                if (mySqlException.Number == 1644)
+                {
+                    return mySqlException.Message.Contains("EmployeeCode đã tồn tại", StringComparison.OrdinalIgnoreCase)
+                        || mySqlException.Message.Contains("Mã nhân viên đã tồn tại", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return exception.Message.Contains("EmployeeCode đã tồn tại", StringComparison.OrdinalIgnoreCase)
+                || exception.Message.Contains("Mã nhân viên đã tồn tại", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetUserMessageByText(string devMessage)
         {
             if (string.IsNullOrWhiteSpace(devMessage))
             {
