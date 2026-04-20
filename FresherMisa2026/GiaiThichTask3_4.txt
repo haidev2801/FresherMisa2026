@@ -1,0 +1,20 @@
+Dựa trên nguyên lý hoạt động của MySQL và Dapper trong dự án, đây là lý do tại sao các Index trên lại cần thiết:
+
+UIX_Employee_EmployeeCode:
+
+Đây là Index có độ chọn lọc (selectivity) cao nhất. Nó giúp tìm đích danh 1 bản ghi gần như tức thì.
+Ngoài ra, nó đóng vai trò là "chốt chặn" cứng để xử lý Race Condition (Task 3.2) mà code C# không thể đảm bảo 100%.
+IX_Employee_DepartmentID_IsDeleted & IX_Employee_PositionID_IsDeleted:
+
+Trong Query.json, các câu lệnh lấy nhân viên theo ID phòng ban/vị trí luôn kèm theo điều kiện AND IsDeleted = FALSE.
+Việc tạo Composite Index (Index gộp) bao gồm cả IsDeleted giúp MySQL tìm kiếm nhanh mà không cần lọc thêm ở tầng dữ liệu (Filtering).
+IX_Employee_CreatedDate:
+
+Tại EmployeeRepository.cs, câu lệnh SQL phân trang kết thúc bằng ORDER BY CreatedDate DESC.
+Nếu không có Index này, khi dữ liệu lên đến hàng trăm nghìn bản ghi, MySQL sẽ phải quét toàn bộ kết quả lọc rồi mới sắp xếp, gây tốn CPU và RAM. Index này cho phép MySQL lấy dữ liệu đã được sắp xếp sẵn.
+IX_Employee_Gender_IsDeleted_CreatedDate:
+
+Giới tính (Gender) và IsDeleted có độ đa dạng thấp nhưng thường xuyên được dùng để thu hẹp phạm vi tìm kiếm trước khi sắp xếp. Index này hỗ trợ cực tốt cho các màn hình Dashboard liệt kê danh sách nhân viên.
+Salary & HireDate:
+
+Trong Task 2.2, chúng ta lọc theo khoảng (>= và <=). MySQL có thể sử dụng Index để nhảy nhanh đến điểm bắt đầu của khoảng và duyệt đến điểm kết thúc, thay vì quét toàn bộ bảng (Full Table Scan).

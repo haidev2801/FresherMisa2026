@@ -16,6 +16,12 @@ namespace FresherMisa2026.WebAPI.Controllers
             _employeeService = employeeService;
         }
 
+        /// <summary>
+        /// Lấy employee bằng code
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        /// Created by: Phuong (17/04/2026)
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
@@ -44,6 +50,28 @@ namespace FresherMisa2026.WebAPI.Controllers
             response.IsSuccess = true;
 
             return response;
+        }
+
+        /// <summary>
+        /// API Lọc nhân viên theo nhiều điều kiện
+        /// </summary>
+        /// Created by: Phuong (18/04/2026)
+        [HttpGet("filter")]
+        public async Task<ActionResult<ServiceResponse>> GetFilter(
+            [FromQuery] Guid? departmentId,
+            [FromQuery] Guid? positionId,
+            [FromQuery] decimal? salaryFrom,
+            [FromQuery] decimal? salaryTo,
+            [FromQuery] int? gender,
+            [FromQuery] DateTime? hireDateFrom,
+            [FromQuery] DateTime? hireDateTo,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int pageIndex = 1)
+        {
+            var response = await _employeeService.GetEmployeesFilterAsync(
+                departmentId, positionId, salaryFrom, salaryTo, gender, hireDateFrom, hireDateTo, 
+                pageSize, pageIndex);
+            return Ok(response);
         }
     }
 }

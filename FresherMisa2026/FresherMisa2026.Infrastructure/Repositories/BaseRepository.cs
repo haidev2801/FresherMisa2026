@@ -1,9 +1,9 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
@@ -24,21 +24,35 @@ namespace FresherMisa2026.Infrastructure.Repositories
         //Properties
         string _connectionString = string.Empty;
         IConfiguration _configuration;
+        protected readonly IMemoryCache _memoryCache;
         protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
+        protected readonly string _cacheKeyAll;
 
 
         //Constructor
-        public BaseRepository(IConfiguration configuration)
+        public BaseRepository(IConfiguration configuration, IMemoryCache memoryCache)
         {
             _configuration = configuration;
+            _memoryCache = memoryCache;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
             _tableName = _modelType.GetTableName();
+            _cacheKeyAll = $"{_tableName}_All";
         }
 
+        /// <summary>
+        /// Tạo cache key cho từng bản ghi theo ID
+        /// </summary>
+        /// Created by: Phuong (18/04/2026)
+        private string GetEntityCacheKey(Guid entityId) => $"{_tableName}_{entityId}";
+
+        private void ClearCache(Guid? entityId = null) {
+            _memoryCache.Remove(_cacheKeyAll);
+            if (entityId.HasValue) _memoryCache.Remove(GetEntityCacheKey(entityId.Value));
+        }
 
         /// <summary>
         /// Dispose connection
@@ -77,9 +91,23 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <returns>Danh sách tất cả bản ghi</returns>
         /// Created By: dvhai (09/04/2026)
-        public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
+        public async Task<IEnumerable<TEntity>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            if (_memoryCache.TryGetValue(_cacheKeyAll, out IEnumerable<TEntity> entities))
+            {
+                return entities;
+            }
+
+            entities = await GetEntitiesUsingCommandTextAsync();
+
+            if (entities != null)
+            {
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+                _memoryCache.Set(_cacheKeyAll, entities, cacheOptions);
+            }
+
+            return entities;
         }
 
         /// <summary>
@@ -89,6 +117,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// CREATED BY: DVHAI (11/07/2021)
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
+            await OpenConnectionAsync();
             var query = new StringBuilder($"select * from {_tableName}");
             int whereCount = 0;
 
@@ -111,7 +140,18 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            string cacheKey = GetEntityCacheKey(entityId);
+            if (_memoryCache.TryGetValue(cacheKey, out TEntity entity))
+            {
+                return entity;
+            }
+
+            entity = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            if (entity != null)
+            {
+                _memoryCache.Set(cacheKey, entity, TimeSpan.FromMinutes(5));
+            }
+            return entity;
         }
 
         /// <summary>
@@ -121,6 +161,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <returns></returns>
         private async Task<TEntity> GetEntitieByIdUsingCommandTextAsync(string id)
         {
+            await OpenConnectionAsync();
             var query = new StringBuilder($"select * from {_tableName}");
             int whereCount = 0;
 
@@ -172,6 +213,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                    ClearCache(entityId);
                 }
                 catch
                 {
@@ -191,7 +233,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi thêm mới</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<int> InsertAsync(TEntity entity)
+        public virtual async Task<int> InsertAsync(TEntity entity)
         {
             var rowAffects = 0;
             await OpenConnectionAsync();
@@ -207,6 +249,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                    ClearCache();
                 }
                 catch
                 {
@@ -226,7 +269,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi bị ảnh hưởng</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
+        public virtual async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
             var rowAffects = 0;
             await OpenConnectionAsync();
@@ -246,6 +289,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+                    ClearCache(entityId);
                 }
                 catch
                 {
@@ -334,3 +378,5 @@ namespace FresherMisa2026.Infrastructure.Repositories
         #endregion
     }
 }
+
+// 21ms -> 12ms
