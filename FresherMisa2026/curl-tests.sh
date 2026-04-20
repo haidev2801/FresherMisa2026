@@ -1,10 +1,10 @@
 # =====================================================
 # API Test Collection - FresherMisa2026
 # Run: copy and paste into terminal
-# Base URL: http://localhost:5000
+# Base URL: match WebAPI launchSettings.json (default http://localhost:5237)
 # =====================================================
 
-BASE_URL="http://localhost:5000/api"
+BASE_URL="http://localhost:5237/api"
 
 echo "========================================"
 echo "DEPARTMENT API TESTS"

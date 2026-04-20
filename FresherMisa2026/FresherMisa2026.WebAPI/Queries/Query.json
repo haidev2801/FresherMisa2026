@@ -1,7 +1,10 @@
 {
-  "Department.GetByCode": "SELECT * FROM Department WHERE DepartmentCode=@DepartmentCode",
-  "Position.GetByCode": "SELECT * FROM Position WHERE PositionCode=@PositionCode",
-  "Employee.GetByCode": "SELECT * FROM Employee WHERE EmployeeCode=@EmployeeCode",
+  "Department.GetByCode": "SELECT * FROM Department WHERE DepartmentCode COLLATE utf8mb4_unicode_ci = @DepartmentCode COLLATE utf8mb4_unicode_ci",
+  "Position.GetByCode": "SELECT * FROM Position WHERE PositionCode COLLATE utf8mb4_unicode_ci = @PositionCode COLLATE utf8mb4_unicode_ci",
+  "Employee.GetByCode": "SELECT * FROM Employee WHERE EmployeeCode COLLATE utf8mb4_unicode_ci = @EmployeeCode COLLATE utf8mb4_unicode_ci",
   "Employee.GetByDepartmentId": "SELECT * FROM Employee WHERE DepartmentID=@DepartmentID AND IsDeleted = FALSE",
-  "Employee.GetByPositionId": "SELECT * FROM Employee WHERE PositionID=@PositionID AND IsDeleted = FALSE"
+  "Employee.CountByDepartmentId": "SELECT COUNT(1) FROM Employee WHERE DepartmentID=@DepartmentID AND IsDeleted = FALSE",
+  "Employee.GetByPositionId": "SELECT * FROM Employee WHERE PositionID=@PositionID AND IsDeleted = FALSE",
+  "Employee.GetByFilter": "SELECT * FROM Employee WHERE IsDeleted=FALSE AND (@DepartmentID IS NULL OR DepartmentID=@DepartmentID) AND (@PositionID IS NULL OR PositionID=@PositionID) AND (@salaryFrom IS NULL OR Salary>=@salaryFrom) AND (@salaryTo IS NULL OR Salary<=@salaryTo) AND (@gender IS NULL OR Gender=@gender) AND (@hireDateFrom IS NULL OR HireDate>=DATE(@hireDateFrom)) AND (@hireDateTo IS NULL OR HireDate<=DATE(@hireDateTo)) ORDER BY HireDate IS NULL, HireDate DESC, CreatedDate DESC, EmployeeID LIMIT @pageSize OFFSET @offset",
+  "Employee.GetByFilterCount": "SELECT COUNT(1) FROM Employee WHERE IsDeleted=FALSE AND (@DepartmentID IS NULL OR DepartmentID=@DepartmentID) AND (@PositionID IS NULL OR PositionID=@PositionID) AND (@salaryFrom IS NULL OR Salary>=@salaryFrom) AND (@salaryTo IS NULL OR Salary<=@salaryTo) AND (@gender IS NULL OR Gender=@gender) AND (@hireDateFrom IS NULL OR HireDate>=DATE(@hireDateFrom)) AND (@hireDateTo IS NULL OR HireDate<=DATE(@hireDateTo))"
 }

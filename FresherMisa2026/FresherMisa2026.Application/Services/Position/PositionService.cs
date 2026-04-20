@@ -24,7 +24,7 @@ namespace FresherMisa2026.Application.Services
         {
             var position = await _positionRepository.GetPositionByCode(code);
             if (position == null)
-                throw new Exception("Position not found");
+                throw new KeyNotFoundException("Position not found");
 
             return position;
         }

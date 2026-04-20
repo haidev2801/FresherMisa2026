@@ -3,6 +3,7 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,13 +13,16 @@ namespace FresherMisa2026.Application.Services
     public class DepartmentService : BaseService<Department>, IDepartmentSerice
     {
         private readonly IDepartmentRepository _deptRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
         public DepartmentService(
             IBaseRepository<Department> baseRepository,
-            IDepartmentRepository departmentRepository
+            IDepartmentRepository departmentRepository,
+            IEmployeeRepository employeeRepository
             ) : base(baseRepository)
         {
             _deptRepository = departmentRepository;
+            _employeeRepository = employeeRepository;
         }
 
         /// <summary>
@@ -30,18 +34,40 @@ namespace FresherMisa2026.Application.Services
         {
             var department = await _deptRepository.GetDepartmentByCode(code);
             if (department == null)
-                throw new Exception("department is null");
+                throw new KeyNotFoundException("Department not found");
 
             return department;
+        }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
+        /// Created By: NgoHai (16/04/2026)
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            var department = await GetDepartmentByCodeAsync(code);
+            return await _employeeRepository.GetEmployeesByDepartmentId(department.DepartmentID);
+        }
+
+        /// <summary>
+        /// Đếm số nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Số lượng nhân viên</returns>
+        /// Created By: NgoHai (16/04/2026)
+        public async Task<int> GetEmployeeCountByDepartmentCodeAsync(string code)
+        {
+            var department = await GetDepartmentByCodeAsync(code);
+            return await _deptRepository.GetEmployeeCountByDepartmentId(department.DepartmentID);
         }
 
         #region OVERRIDE METHODS
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
-            //1. Validate còn nhân viên trong phòng ban không
-            bool hasEmployee = true;
-
-            return !hasEmployee;
+            var employeeCount = await _deptRepository.GetEmployeeCountByDepartmentId(entityId);
+            return employeeCount == 0;
         }
 
         /// <summary>
@@ -60,5 +86,6 @@ namespace FresherMisa2026.Application.Services
             return errors;
         }
         #endregion OVERRIDE METHODS
+
     }
 }

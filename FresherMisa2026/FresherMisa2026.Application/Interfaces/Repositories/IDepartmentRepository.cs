@@ -13,5 +13,12 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         /// <param name="code"></param>
         /// <returns></returns>
         Task<Department> GetDepartmentByCode(string code);
+
+        /// <summary>
+        /// Đếm số nhân viên theo phòng ban
+        /// </summary>
+        /// <param name="departmentId">ID phòng ban</param>
+        /// <returns>Số lượng nhân viên</returns>
+        Task<int> GetEmployeeCountByDepartmentId(Guid departmentId);
     }
 }

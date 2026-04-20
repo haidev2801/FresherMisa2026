@@ -190,8 +190,8 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<ServiceResponse> InsertAsync(TEntity entity)
+        /// CREATED BY: NgoHai (18/04/2026)
+        public virtual async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
             entity.State = ModelSate.Add;
 
@@ -219,7 +219,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
         /// CREATED BY: DVHAI (11/07/2021)
-        public async Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity)
+        public virtual async Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity)
         {
             if (entityId == Guid.Empty)
             {
@@ -234,12 +234,23 @@ namespace FresherMisa2026.Application.Services
             
             if (errors.Count == 0)
             {
-                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
-                if (rowAffects > 0)
+                try
                 {
-                    return CreateSuccessResponse(rowAffects);
+                    int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
+                    if (rowAffects > 0)
+                    {
+                        return CreateSuccessResponse(rowAffects);
+                    }
+                    return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
                 }
-                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+                catch (KeyNotFoundException ex)
+                {
+                    return CreateErrorResponse(ResponseCode.NotFound, ex.Message);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return CreateErrorResponse(ResponseCode.BadRequest, ex.Message);
+                }
             }
 
             //3. Validate fail - trả về BadRequest
@@ -273,6 +284,8 @@ namespace FresherMisa2026.Application.Services
             var response = new PagingResponse<TEntity>
             {
                 Total = total,
+                PageSize = pagingRequest.PageSize,
+                PageIndex = pagingRequest.PageIndex,
                 Data = data.ToList()
             };
 
