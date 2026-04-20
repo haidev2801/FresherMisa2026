@@ -1,8 +1,9 @@
-﻿using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,6 +34,22 @@ namespace FresherMisa2026.Application.Services
                 throw new Exception("department is null");
 
             return department;
+        }
+
+        /// <summary>
+        /// Task 2.3: Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            return await _deptRepository.GetEmployeesByDepartmentCode(code);
+        }
+
+        /// <summary>
+        /// Task 2.3: Đếm số nhân viên theo mã phòng ban
+        /// </summary>
+        public async Task<int> GetEmployeeCountByDepartmentCodeAsync(string code)
+        {
+            return await _deptRepository.GetEmployeeCountByDepartmentCode(code);
         }
 
         #region OVERRIDE METHODS

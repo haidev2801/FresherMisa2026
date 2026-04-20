@@ -1,0 +1,14 @@
+Using launch settings from E:\Fresher_MISA\BE\Misa_BE\FresherMisa2026\FresherMisa2026\FresherMisa2026.WebAPI\Properties\launchSettings.json...
+✅ Loaded 5 queries from Queries/Query.json
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5237
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: E:\Fresher_MISA\BE\Misa_BE\FresherMisa2026\FresherMisa2026\FresherMisa2026.WebAPI
+Before run middleware
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+After run middleware
