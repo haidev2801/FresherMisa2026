@@ -180,11 +180,6 @@ namespace FresherMisa2026.Application.Services
                 return new ValidationError(propertyName, $"Trường {propertyDisplayName} bắt buộc nhập");
             }
 
-            if (propertyValue is Guid? nullableGuidValue && (!nullableGuidValue.HasValue || nullableGuidValue.Value == Guid.Empty))
-            {
-                return new ValidationError(propertyName, $"Trường {propertyDisplayName} bắt buộc nhập");
-            }
-
             return null;
         }
 
