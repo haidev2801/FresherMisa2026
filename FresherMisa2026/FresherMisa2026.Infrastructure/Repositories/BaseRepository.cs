@@ -2,7 +2,9 @@
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Exceptions;
 using FresherMisa2026.Entities.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
 using System;
@@ -27,16 +29,19 @@ namespace FresherMisa2026.Infrastructure.Repositories
         protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
+        private readonly IMemoryCache _cache;
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
 
         //Constructor
-        public BaseRepository(IConfiguration configuration)
+        public BaseRepository(IConfiguration configuration, IMemoryCache cache)
         {
             _configuration = configuration;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
             _tableName = _modelType.GetTableName();
+            _cache = cache;
         }
 
 
@@ -79,7 +84,14 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            // Cache key duy nhất cho từng loại entity
+            var cacheKey = $"GetAll_{_tableName}";
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity> cached))
+                return cached!;
+
+            var result = await GetEntitiesUsingCommandTextAsync();
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
         }
 
         /// <summary>
@@ -111,7 +123,15 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            // Cache key theo từng entity id
+            var cacheKey = $"GetById_{_tableName}_{entityId}";
+            if (_cache.TryGetValue(cacheKey, out TEntity cached))
+                return cached!;
+
+            var result = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            if (result != null)
+                _cache.Set(cacheKey, result, CacheDuration);
+            return result;
         }
 
         /// <summary>
@@ -208,12 +228,24 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
                     transaction.Commit();
                 }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    // Lỗi 1062 là MySQL Duplicate Entry — vi phạm unique constraint.
+                    // Trường hợp này xảy ra khi 2 request cùng lúc vượt qua validate ở service
+                    // nhưng khi insert thì DB phát hiện trùng (race condition).
+                    // Rollback transaction rồi chuyển thành DuplicateKeyException
+                    // để tầng service có thể xử lý và trả về message phù hợp.
+                    transaction.Rollback();
+                    throw new DuplicateKeyException(ex.Message);
+                }
                 catch
                 {
                     transaction.Rollback();
                     throw;
                 }
             }
+            // Xoá cache GetAll để dữ liệu mới được phản ánh
+            _cache.Remove($"GetAll_{_tableName}");
 
             //3.Trả về số bản ghi thêm mới
             return rowAffects;
@@ -253,8 +285,21 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     throw;
                 }
             }
+
+            // Xoá cache để dữ liệu sau update được cập nhật
+            InvalidateCache(entityId);
+
             //4. Trả về dữ liệu
             return rowAffects;
+        }
+
+        /// <summary>
+        /// Xoá cache GetAll và GetById khi dữ liệu thay đổi
+        /// </summary>
+        private void InvalidateCache(Guid entityId)
+        {
+            _cache.Remove($"GetAll_{_tableName}");
+            _cache.Remove($"GetById_{_tableName}_{entityId}");
         }
 
         /// <summary>

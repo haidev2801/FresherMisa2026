@@ -165,7 +165,8 @@ namespace FresherMisa2026.Application.Services
             //3. Tên hiển thị
             var propertyDisplayName = typeof(TEntity).GetColumnDisplayName(propertyName);
 
-            if (propertyValue == null || string.IsNullOrEmpty(propertyValue.ToString()))
+            if (propertyValue == null || string.IsNullOrEmpty(propertyValue.ToString())
+                || (propertyValue is Guid guid && guid == Guid.Empty))
             {
                 return new ValidationError(propertyName, $"Trường {propertyDisplayName} bắt buộc nhập");
             }
@@ -199,17 +200,18 @@ namespace FresherMisa2026.Application.Services
             var errors = Validate(entity);
 
             //2. Sử lí lỗi tương ứng
-            if (errors.Count == 0)
+            if (errors.Count > 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
+                return CreateErrorResponse(
+                    ResponseCode.BadRequest,
+                    "Validate thất bại",
+                    string.Join("; ", errors.Select(e => e.Message))
+                );
             }
 
-            return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
-                string.Join("; ", errors.Select(e => e.Message))
-            );
+            // DuplicateKeyException (race condition) sẽ bubble up lên GlobalExceptionMiddleware
+            var result = await _baseRepository.InsertAsync(entity);
+            return CreateSuccessResponse(result);
         }
 
         /// <summary>
@@ -273,6 +275,8 @@ namespace FresherMisa2026.Application.Services
             var response = new PagingResponse<TEntity>
             {
                 Total = total,
+                PageSize = pagingRequest.PageSize,
+                PageIndex = pagingRequest.PageIndex,
                 Data = data.ToList()
             };
 
@@ -382,6 +386,7 @@ namespace FresherMisa2026.Application.Services
         {
             return Task.FromResult(true);
         }
+
         #endregion
     }
 
