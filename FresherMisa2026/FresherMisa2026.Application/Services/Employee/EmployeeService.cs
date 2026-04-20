@@ -5,6 +5,7 @@ using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -39,18 +40,43 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
-        protected override List<ValidationError> ValidateCustom(Employee employee)
+
+
+        protected override async Task<List<ValidationError>> ValidateCustomAsync(Employee entity)
         {
             var errors = new List<ValidationError>();
 
-            if (!string.IsNullOrEmpty(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
+            // 1. Trùng mã
+            var existed = await _employeeRepository.GetEmployeeByCode(entity.EmployeeCode);
+            if (existed != null && existed.EmployeeID != entity.EmployeeID)
             {
-                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
+                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên đã tồn tại"));
             }
 
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            // 2. Email
+            if (!string.IsNullOrEmpty(entity.Email))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                var regex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+                if (!regex.IsMatch(entity.Email))
+                {
+                    errors.Add(new ValidationError("Email", "Email không đúng định dạng"));
+                }
+            }
+
+            // 3. Phone
+            if (!string.IsNullOrEmpty(entity.PhoneNumber))
+            {
+                var regex = new Regex(@"^(0|\+84)[0-9]{9,10}$");
+                if (!regex.IsMatch(entity.PhoneNumber))
+                {
+                    errors.Add(new ValidationError("PhoneNumber", "Số điện thoại không đúng định dạng"));
+                }
+            }
+
+            // 4. DOB
+            if (entity.DateOfBirth.HasValue && entity.DateOfBirth >= DateTime.Now)
+            {
+                errors.Add(new ValidationError("DateOfBirth", "Ngày sinh phải nhỏ hơn ngày hiện tại"));
             }
 
             return errors;
