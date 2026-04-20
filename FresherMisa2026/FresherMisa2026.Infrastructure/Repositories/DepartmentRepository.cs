@@ -3,9 +3,7 @@ using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Data;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -20,6 +18,23 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
         }
 
+        public async Task<int> CountEmployeeByDepartmentAsync(string code)
+        {
+            string storedProcedureName = "Proc_CountEmployeeByDepartmentCode";
+            using var conn = await CreateConnectionAsync();
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@p_DepartmentCode", code);
+
+            var result = await conn.QuerySingleAsync<int>(
+                storedProcedureName,
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+
+            return result;
+        }
+
         /// <summary>
         /// Lấy department theo code
         /// </summary>
@@ -29,11 +44,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public async Task<Department> GetDepartmentByCode(string code)
         {
             string query = SQLExtension.GetQuery("Department.GetByCode");
+            using var conn = await CreateConnectionAsync();
             var @param = new Dictionary<string, object>
             {
                 {"@DepartmentCode", code }
             };
-            return await _dbConnection.QueryFirstOrDefaultAsync<Department>(query, @param, commandType: System.Data.CommandType.Text);
+            return await conn.QueryFirstOrDefaultAsync<Department>(query,
+                @param, commandType: System.Data.CommandType.Text);
         }
     }
 }

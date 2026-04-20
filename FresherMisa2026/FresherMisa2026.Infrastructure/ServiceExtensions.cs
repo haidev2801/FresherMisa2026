@@ -1,11 +1,9 @@
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Repositories;
+using FresherMisa2026.Application.Interfaces.Services;
+using FresherMisa2026.Infrastructure.Implementations;
 using FresherMisa2026.Infrastructure.Repositories;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FresherMisa2026.Infrastructure
 {
@@ -17,9 +15,12 @@ namespace FresherMisa2026.Infrastructure
             //base
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
+            services.AddMemoryCache();
+
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddScoped<IPositionRepository, PositionRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ICacheService, MemoryCacheService>();
 
             return services;
         }

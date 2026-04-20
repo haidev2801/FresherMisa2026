@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FresherMisa2026.Entities.Enums
+﻿namespace FresherMisa2026.Entities.Enums
 {
     public enum ResponseCode
     {
@@ -10,6 +6,7 @@ namespace FresherMisa2026.Entities.Enums
         Created = 201,
         BadRequest = 400,
         NotFound = 404,
+        Conflict = 409,
         InternalServerError = 500
     }
 }

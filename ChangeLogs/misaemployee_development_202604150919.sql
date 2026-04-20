@@ -201,7 +201,8 @@ CREATE TABLE employee (
   DepartmentID char(36) NOT NULL COMMENT 'Phòng ban',
   PositionID char(36) NOT NULL COMMENT 'Chức vụ',
   Salary decimal(18, 4) DEFAULT 0.0000 COMMENT 'Lương cơ bản',
-  CreatedDate datetime DEFAULT NULL COMMENT 'Ngày tạo'
+  CreatedDate datetime DEFAULT NULL COMMENT 'Ngày tạo',
+  HireDate datetime DEFAULT NULL COMMENT 'Ngày tuyển dụng'
 )
 ENGINE = INNODB,
 CHARACTER SET utf8mb4,
