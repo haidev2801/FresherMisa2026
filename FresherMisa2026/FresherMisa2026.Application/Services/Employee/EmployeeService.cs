@@ -41,6 +41,30 @@ namespace FresherMisa2026.Application.Services
         }
 
 
+        // Lọc nhân viên theo nhiều tiêu chí
+        // Nếu request.DepartmentId = Guid.Empty thì không lọc theo phòng ban
+        // Nếu request.PositionId = Guid.Empty thì không lọc theo chức vụ
+        // author: Dieuhoang 21/04/2026
+        public async Task<ServiceResponse> GetEmployeeByFilter(FilterEmployeeRq request)
+        {
+            var response = new FilterResponse<Employee>();
+
+            var rq = new FilterEmployeeRq
+            {
+                DepartmentID = request.DepartmentID == Guid.Empty ? null : request.DepartmentID,
+                PositionID = request.PositionID == Guid.Empty ? null : request.PositionID,
+                SalaryFrom = request.SalaryFrom,
+                SalaryTo = request.SalaryTo,
+                Gender = request.Gender,
+                HireDateFrom = request.HireDateFrom,
+                HireDateTo = request.HireDateTo,
+            };
+
+            response = await _employeeRepository.GetEmployeesByFilter(rq);
+
+            return CreateSuccessResponse(response);
+        }
+
 
         protected override async Task<List<ValidationError>> ValidateCustomAsync(Employee entity)
         {

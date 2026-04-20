@@ -1,9 +1,12 @@
 using Dapper;
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
+using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
+using System.Data;
+
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -41,6 +44,39 @@ namespace FresherMisa2026.Infrastructure.Repositories
                 {"@PositionID", positionId }
             };
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+        }
+
+
+        // Thực hiện lọc nhân viên theo các tiêu chí được cung cấp trong request
+        public async Task<FilterResponse<Employee>> GetEmployeesByFilter(FilterEmployeeRq request)
+        {
+            var filterResponse = new FilterResponse<Employee>();
+            await OpenConnectionAsync();
+
+            const string store = "Proc_Employee_Filter";
+
+            var parameters = new DynamicParameters();
+            parameters.Add("p_DepartmentID", request.DepartmentID);
+            parameters.Add("p_PositionID", request.PositionID);
+            parameters.Add("p_SalaryFrom", request.SalaryFrom);
+            parameters.Add("p_SalaryTo", request.SalaryTo);
+            parameters.Add("p_Gender", request.Gender);
+            parameters.Add("p_HireDateFrom", request.HireDateFrom?.Date);
+            parameters.Add("p_HireDateTo", request.HireDateTo?.Date);
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+                new CommandDefinition(
+                    store,
+                    parameters,
+                    commandType: CommandType.StoredProcedure));
+
+            var data = (await reader.ReadAsync<Employee>()).ToList();
+            var total = await reader.ReadFirstAsync<long>();
+
+            filterResponse.Data = data;
+            filterResponse.Total = total;
+
+            return filterResponse;
         }
     }
 }

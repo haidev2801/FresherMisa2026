@@ -1,3 +1,4 @@
+using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
@@ -9,5 +10,7 @@ namespace FresherMisa2026.Application.Interfaces.Repositories
         Task<Employee> GetEmployeeByCode(string code);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId);
         Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId);
+
+        public Task<FilterResponse<Employee>> GetEmployeesByFilter(FilterEmployeeRq request);
     }
 }
