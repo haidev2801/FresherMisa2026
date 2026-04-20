@@ -8,10 +8,10 @@ namespace FresherMisa2026.Entities.Employee
     public class Employee : BaseModel
     {
         [Key]
+        [IRequired]
         public Guid EmployeeID { get; set; }
-
         public string EmployeeCode { get; set; }
-
+        [IRequired]
         public string EmployeeName { get; set; }
 
         public int? Gender { get; set; }
@@ -30,6 +30,6 @@ namespace FresherMisa2026.Entities.Employee
 
         public decimal? Salary { get; set; }
 
-        public DateTime? CreatedDate { get; set; }
+        public DateTime? HireDate { get; set; }
     }
 }

@@ -20,7 +20,7 @@ namespace FresherMisa2026.Entities
         /// <summary>
         /// Ngày tạo
         /// </summary>
-        public DateTime? CreateDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
         
         /// <summary>
         /// Người sửa

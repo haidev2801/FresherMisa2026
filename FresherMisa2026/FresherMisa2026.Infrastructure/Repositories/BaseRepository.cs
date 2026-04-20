@@ -1,16 +1,13 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
@@ -56,7 +53,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <summary>
         /// Mở kết nối database
         /// </summary>
-        private async Task OpenConnectionAsync()
+        protected async Task OpenConnectionAsync()
         {
             if (_dbConnection.State != ConnectionState.Open)
             {
@@ -90,13 +87,16 @@ namespace FresherMisa2026.Infrastructure.Repositories
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
             var query = new StringBuilder($"select * from {_tableName}");
-            int whereCount = 0;
 
             if (_modelType.GetHasDeletedColumn())
             {
-                whereCount++;
                 query.Append($" where IsDeleted = FALSE");
             }
+            // - Tạo connection trong phạm vi method (short-lived).
+            // - Kết thúc method là Dispose -> trả connection về pool (không hủy socket ngay).
+            // - Đây là pattern tận dụng connection pooling tốt hơn, an toàn hơn khi xử lý đồng thời.
+            await using var connection = new MySqlConnection(_connectionString);
+            await connection.OpenAsync();
 
             var entities = await _dbConnection.QueryAsync<TEntity>(query.ToString(), commandType: CommandType.Text);
 
@@ -200,10 +200,14 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
-                    //1.Duyệt các thuộc tính trên bản ghi và tạo parameters
+                    //1. Ánh xạ giá trị id
+                    var keyName = _modelType.GetKeyName();
+                    entity.GetType().GetProperty(keyName).SetValue(entity, Guid.NewGuid());
+
+                    //2.Duyệt các thuộc tính trên bản ghi và tạo parameters
                     var parameters = MappingDbType(entity);
 
-                    //2.Thực hiện thêm bản ghi
+                    //3.Thực hiện thêm bản ghi
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
@@ -235,12 +239,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
             {
                 try
                 {
-                    //1. Duyệt các thuộc tính trên customer và tạo parameters
-                    var parameters = MappingDbType(entity);
-
-                    //2. Ánh xạ giá trị id
+                    //1. Ánh xạ giá trị id
                     var keyName = _modelType.GetKeyName();
                     entity.GetType().GetProperty(keyName).SetValue(entity, entityId);
+
+                    //2. Duyệt các thuộc tính trên customer và tạo parameters
+                    var parameters = MappingDbType(entity);
 
                     //3. Kết nối tới CSDL:
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);

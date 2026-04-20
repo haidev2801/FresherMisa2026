@@ -1,59 +1,105 @@
 using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Employee;
-using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FresherMisa2026.Application.Services
 {
-    public class EmployeeService : BaseService<Employee>, IEmployeeService
+    public class EmployeeService : BaseService<Employee>, IEmployeeService, IUniqueMessage
     {
         private readonly IEmployeeRepository _employeeRepository;
-
         public EmployeeService(
             IBaseRepository<Employee> baseRepository,
-            IEmployeeRepository employeeRepository
-            ) : base(baseRepository)
+            IEmployeeRepository employeeRepository,
+                IMemoryCache cache
+            ) : base(baseRepository, cache)
         {
             _employeeRepository = employeeRepository;
         }
 
-        public async Task<Employee> GetEmployeeByCodeAsync(string code)
+        public Dictionary<string, string> UniqueMessages => new()
         {
-            var employee = await _employeeRepository.GetEmployeeByCode(code);
-            if (employee == null)
-                throw new Exception("Employee not found");
+             { "UQ_EmployeeCode", "Mã nhân viên đã tồn tại" }
+        };
 
-            return employee;
+        /// <summary>
+        /// Lấy danh sách nhân viên theo bộ lọc
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<ServiceResponse> GetEmployeeByFilter(FilterEmployeesRequest request)
+        {
+            var response = new FilterResponse<Employee>();
+
+            var rq = new FilterEmployeesRequest
+            {
+                DepartmentId = request.DepartmentId == Guid.Empty ? null : request.DepartmentId,
+                PositionId = request.PositionId == Guid.Empty ? null : request.PositionId,
+                SalaryFrom = request.SalaryFrom,
+                SalaryTo = request.SalaryTo,
+                Gender = request.Gender,
+                HireDateFrom = request.HireDateFrom,
+                HireDateTo = request.HireDateTo,
+                PageSize = request.PageSize ?? 10,
+                PageIndex = request.PageIndex ?? 1
+            };
+
+            response = await _employeeRepository.GetEmployeesByFilter(rq);
+
+            return CreateSuccessResponse(response);
         }
 
-        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentIdAsync(Guid departmentId)
-        {
-            return await _employeeRepository.GetEmployeesByDepartmentId(departmentId);
-        }
-
-        public async Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId)
-        {
-            return await _employeeRepository.GetEmployeesByPositionId(positionId);
-        }
-
+        /// <summary>
+        /// Validate theo yêu cầu nghiệp vụ
+        /// </summary>
+        /// <param name="employee"></param>
+        /// <returns></returns>
         protected override List<ValidationError> ValidateCustom(Employee employee)
         {
             var errors = new List<ValidationError>();
+            // Mã nhân viên không được trùng lặp
+            //Xử lý trong insertAsync BaseService
 
-            if (!string.IsNullOrEmpty(employee.EmployeeCode) && employee.EmployeeCode.Length > 20)
+            //-Email phải đúng định dạng(nếu có)
+            if (!string.IsNullOrEmpty(employee.Email))
             {
-                errors.Add(new ValidationError("EmployeeCode", "Mã nhân viên không được vượt quá 20 ký tự"));
+                try
+                {
+                    var addr = new System.Net.Mail.MailAddress(employee.Email);
+                }
+                catch
+                {
+                    errors.Add(new ValidationError(
+                        "Email",
+                        "Email không đúng định dạng"
+                    ));
+                }
             }
-
-            if (string.IsNullOrEmpty(employee.EmployeeName))
+            //-Số điện thoại phải đúng định dạng(nếu có)
+            if (!string.IsNullOrEmpty(employee.PhoneNumber))
             {
-                errors.Add(new ValidationError("EmployeeName", "Tên nhân viên không được để trống"));
+                if (!System.Text.RegularExpressions.Regex.IsMatch(employee.PhoneNumber, @"^0\d{9,10}$"))
+                {
+                    errors.Add(new ValidationError(
+                        "PhoneNumber",
+                        "Số điện thoại không đúng định dạng"
+                    ));
+                }
             }
-
+            //-Ngày sinh phải nhỏ hơn ngày hiện tại
+            if (employee.DateOfBirth >= DateTime.Today)
+            {
+                errors.Add(new ValidationError(
+                    "DateOfBirth",
+                    "Ngày sinh phải nhỏ hơn ngày hiện tại"
+                ));
+            }
             return errors;
         }
+
     }
 }
