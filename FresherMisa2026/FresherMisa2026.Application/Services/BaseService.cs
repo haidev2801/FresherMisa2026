@@ -6,6 +6,8 @@ using FresherMisa2026.Entities.Extensions;
 using System.Collections.Concurrent;
 using System.Reflection;
 using Microsoft.Extensions.Caching.Memory;
+using MySqlConnector;
+using FresherMisa2026.Application.Interfaces.Extensions;
 
 namespace FresherMisa2026.Application.Services
 {
@@ -247,9 +249,31 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                RemoveEntityCache();
-                return CreateSuccessResponse(result);
+                //test duplicate employeecode by unique index in database, nếu có lỗi sẽ ném ra MySqlException với mã lỗi 1062
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    RemoveEntityCache();
+                    return CreateSuccessResponse(result);
+                }
+                catch (MySqlException ex)
+                {
+                    if (ex.Number == 1062)
+                    {
+                        if (this is IUniqueMessage uniqueMessage)
+                        {
+                            foreach (var item in uniqueMessage.UniqueMessages)
+                            {
+                                if (ex.Message.Contains(item.Key, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return CreateErrorResponse(ResponseCode.BadRequest, "Trùng lặp dữ liệu", item.Value);
+                                }
+                            }
+                        }
+                        return CreateErrorResponse(ResponseCode.BadRequest, "Dữ liệu đã tồn tại trong hệ thống", "Dữ liệu đã tồn tại");
+                    }
+                    return CreateErrorResponse(ResponseCode.InternalServerError, ex.Message);
+                }
             }
 
             return CreateErrorResponse(

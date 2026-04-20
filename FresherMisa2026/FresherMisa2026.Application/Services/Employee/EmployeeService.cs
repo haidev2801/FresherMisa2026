@@ -1,4 +1,5 @@
 using FresherMisa2026.Application.Interfaces;
+using FresherMisa2026.Application.Interfaces.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace FresherMisa2026.Application.Services
 {
-    public class EmployeeService : BaseService<Employee>, IEmployeeService
+    public class EmployeeService : BaseService<Employee>, IEmployeeService, IUniqueMessage
     {
         private readonly IEmployeeRepository _employeeRepository;
         public EmployeeService(
@@ -18,6 +19,11 @@ namespace FresherMisa2026.Application.Services
         {
             _employeeRepository = employeeRepository;
         }
+
+        public Dictionary<string, string> UniqueMessages => new()
+        {
+             { "UQ_EmployeeCode", "Mã nhân viên đã tồn tại" }
+        };
 
         /// <summary>
         /// Lấy danh sách nhân viên theo bộ lọc
@@ -54,14 +60,8 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
             // Mã nhân viên không được trùng lặp
-            var existingEmployee = _employeeRepository.GetEmployeeByCode(employee.EmployeeCode).Result;
-                if (existingEmployee.EmployeeCode != employee.EmployeeCode && existingEmployee != null)
-            {
-                errors.Add(new ValidationError(
-                    "EmployeeCode",
-                    "Mã nhân viên đã tồn tại"
-                ));
-            }
+            //Xử lý trong insertAsync BaseService
+
             //-Email phải đúng định dạng(nếu có)
             if (!string.IsNullOrEmpty(employee.Email))
             {

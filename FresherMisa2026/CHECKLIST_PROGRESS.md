@@ -70,4 +70,14 @@
 - [x] Review code để đảm bảo không có breaking changes
 - [x] Test performance trước và sau khi refactor
 - [x] Đảm bảo cache được clear khi có thay đổi dữ liệu
+ Git commit: "refactor(task-3.1): optimize BaseRepository with connection pooling and caching"
+
+ - **Task 3.2:  Xử Lý Race Condition trong Validate  (2 điểm)**
+
+ - [x] Vấn đề: Khi nhiều request cùng tạo hoặc cập nhật nhân viên với cùng mã nhân viên, có thể xảy ra
+ - [x] Thêm xử lý trong insertAsyc trong BaseService để kiểm tra tồn tại mã nhân viên trước khi insert, nếu đã tồn tại thì trả về lỗi
+ - [x] Thêm UniqueMessage cho trường EmployeeCode để đảm bảo ở tầng database cũng không cho phép trùng lặp
+ - [x] Test đồng thời nhiều request POST với cùng `EmployeeCode` → chỉ một request thành công, các request còn lại trả về lỗi "Mã nhân viên đã tồn tại"
+ Git commit: "fix(task-3.2): handle race condition for employee code validation"
+ 
 ---
