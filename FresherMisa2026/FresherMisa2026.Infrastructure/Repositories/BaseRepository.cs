@@ -1,8 +1,9 @@
-﻿using Dapper;
+using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
 using System;
@@ -15,30 +16,61 @@ using System.Text.Json.Serialization;
 namespace FresherMisa2026.Infrastructure.Repositories
 {
     /// <summary>
-    /// Base repository
+    /// Base repository với connection pooling và caching
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// Created By: dvhai (09/04/2026)
+    /// Refactored: Task 3.1 - Connection pooling + IMemoryCache
     public class BaseRepository<TEntity> : IBaseRepository<TEntity>, IDisposable where TEntity : BaseModel
     {
         //Properties
-        string _connectionString = string.Empty;
+        private readonly string _connectionString;
         IConfiguration _configuration;
         protected IDbConnection _dbConnection = null;
         protected string _tableName;
         public Type _modelType = null;
 
+        // Task 3.1: Cache
+        private static readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+        private static readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
 
         //Constructor
+        /// <summary>
+        /// Task 3.1: Sử dụng connection string với connection pooling.
+        /// MySqlConnector mặc định đã hỗ trợ connection pooling qua connection string.
+        /// Thêm Pooling=true;MinimumPoolSize=5;MaximumPoolSize=100 để tối ưu.
+        /// </summary>
         public BaseRepository(IConfiguration configuration)
         {
             _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+            var baseConnStr = _configuration.GetConnectionString("DefaultConnection")!;
+            
+            // Task 3.1: Đảm bảo connection pooling được bật
+            if (!baseConnStr.Contains("Pooling=", StringComparison.OrdinalIgnoreCase))
+            {
+                baseConnStr += "Pooling=true;MinimumPoolSize=2;MaximumPoolSize=50;";
+            }
+            _connectionString = baseConnStr;
             _dbConnection = new MySqlConnection(_connectionString);
             _modelType = typeof(TEntity);
             _tableName = _modelType.GetTableName();
         }
 
+        /// <summary>
+        /// Task 3.1: Tạo cache key dựa trên table name và optional id
+        /// </summary>
+        private string GetCacheKey(string suffix = "all") => $"{_tableName}_{suffix}";
+
+        /// <summary>
+        /// Task 3.1: Xóa tất cả cache liên quan đến entity này
+        /// Được gọi khi có thay đổi dữ liệu (Insert/Update/Delete)
+        /// </summary>
+        private void InvalidateCache()
+        {
+            _cache.Remove(GetCacheKey("all"));
+            // Lưu ý: Không thể xóa tất cả cache theo prefix với IMemoryCache
+            // Nên ta dùng pattern: xóa cache "all" khi có thay đổi
+        }
 
         /// <summary>
         /// Dispose connection
@@ -73,13 +105,26 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
         #region Method Get
         /// <summary>
-        /// Lấy danh sách entity
+        /// Lấy danh sách entity - Task 3.1: Có cache 5 phút
         /// </summary>
         /// <returns>Danh sách tất cả bản ghi</returns>
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
-            return await GetEntitiesUsingCommandTextAsync();
+            var cacheKey = GetCacheKey("all");
+
+            // Task 3.1: Kiểm tra cache trước
+            if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity>? cachedData) && cachedData != null)
+            {
+                return cachedData;
+            }
+
+            var data = await GetEntitiesUsingCommandTextAsync();
+
+            // Task 3.1: Lưu vào cache với thời gian 5 phút
+            _cache.Set(cacheKey, data, _cacheExpiration);
+
+            return data;
         }
 
         /// <summary>
@@ -104,14 +149,30 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy bản ghi theo id
+        /// Lấy bản ghi theo id - Task 3.1: Có cache 5 phút
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi tìm thấy hoặc null</returns>
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
-            return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+            var cacheKey = GetCacheKey($"id_{entityId}");
+
+            // Task 3.1: Kiểm tra cache trước
+            if (_cache.TryGetValue(cacheKey, out TEntity? cachedEntity) && cachedEntity != null)
+            {
+                return cachedEntity;
+            }
+
+            var entity = await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
+
+            // Task 3.1: Lưu vào cache
+            if (entity != null)
+            {
+                _cache.Set(cacheKey, entity, _cacheExpiration);
+            }
+
+            return entity;
         }
 
         /// <summary>
@@ -148,7 +209,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Xóa bản ghi theo id
+        /// Xóa bản ghi theo id - Task 3.1: Invalidate cache sau khi xóa
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số bản ghi bị xóa</returns>
@@ -172,6 +233,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Delete{_tableName}ById", param: dynamicParams, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    // Task 3.1: Invalidate cache khi xóa thành công
+                    if (rowAffects > 0)
+                    {
+                        InvalidateCache();
+                        _cache.Remove(GetCacheKey($"id_{entityId}"));
+                    }
                 }
                 catch
                 {
@@ -186,7 +254,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
 
         /// <summary>
-        /// Thêm bản ghi mới
+        /// Thêm bản ghi mới - Task 3.1: Invalidate cache sau khi thêm
         /// </summary>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi thêm mới</returns>
@@ -207,6 +275,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Insert{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    // Task 3.1: Invalidate cache khi thêm thành công
+                    if (rowAffects > 0)
+                    {
+                        InvalidateCache();
+                    }
                 }
                 catch
                 {
@@ -220,7 +294,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Cập nhật thông tin bản ghi
+        /// Cập nhật thông tin bản ghi - Task 3.1: Invalidate cache sau khi cập nhật
         /// </summary>
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
@@ -246,6 +320,13 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     rowAffects = await _dbConnection.ExecuteAsync($"Proc_Update{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
 
                     transaction.Commit();
+
+                    // Task 3.1: Invalidate cache khi cập nhật thành công
+                    if (rowAffects > 0)
+                    {
+                        InvalidateCache();
+                        _cache.Remove(GetCacheKey($"id_{entityId}"));
+                    }
                 }
                 catch
                 {
