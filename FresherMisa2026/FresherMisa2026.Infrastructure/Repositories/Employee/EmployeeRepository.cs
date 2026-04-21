@@ -49,11 +49,24 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await connection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
-        public async Task<IEnumerable<Employee>> FilterEmployees(EmployeeFilterRequest request)
+        public async Task<(long Total, IEnumerable<Employee> Data)> FilterEmployees(EmployeeFilterRequest request)
         {
             using var connection = CreateConnection();
-            string query = SQLExtension.GetQuery("Employee.Filter");
+            string countQuery = SQLExtension.GetQuery("Employee.FilterPagingCount");
+            string dataQuery = SQLExtension.GetQuery("Employee.FilterPagingData");
+            var param = BuildFilterPagingParameters(request);
+
+            long total = await connection.ExecuteScalarAsync<long>(countQuery, param, commandType: System.Data.CommandType.Text);
+            var data = await connection.QueryAsync<Employee>(dataQuery, param, commandType: System.Data.CommandType.Text);
+
+            return (total, data);
+        }
+
+        private static DynamicParameters BuildFilterPagingParameters(EmployeeFilterRequest request)
+        {
             var param = new DynamicParameters();
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+            var pageIndex = request.PageIndex <= 0 ? 1 : request.PageIndex;
 
             param.Add("@DepartmentID", request.DepartmentId);
             param.Add("@PositionID", request.PositionId);
@@ -62,8 +75,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             param.Add("@Gender", request.Gender);
             param.Add("@HireDateFrom", request.HireDateFrom?.Date);
             param.Add("@HireDateTo", request.HireDateTo?.Date);
+            param.Add("@PageSize", pageSize);
+            param.Add("@Offset", (pageIndex - 1) * pageSize);
 
-            return await connection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
+            return param;
         }
     }
 }

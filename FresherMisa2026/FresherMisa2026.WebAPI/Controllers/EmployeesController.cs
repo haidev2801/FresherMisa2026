@@ -47,14 +47,16 @@ namespace FresherMisa2026.WebAPI.Controllers
         }
 
         [HttpGet("filter")]
-        public async Task<ActionResult<ServiceResponse>> Filter(
+        public async Task<ActionResult<PagingResponse<Employee>>> Filter(
             [FromQuery] Guid? departmentId,
             [FromQuery] Guid? positionId,
             [FromQuery] decimal? salaryFrom,
             [FromQuery] decimal? salaryTo,
             [FromQuery] int? gender,
             [FromQuery] DateTime? hireDateFrom,
-            [FromQuery] DateTime? hireDateTo
+            [FromQuery] DateTime? hireDateTo,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int pageIndex = 1
         )
         {
             if (gender.HasValue && (gender.Value < 0 || gender.Value > 2))
@@ -87,6 +89,26 @@ namespace FresherMisa2026.WebAPI.Controllers
                 });
             }
 
+            if (pageSize <= 0)
+            {
+                return BadRequest(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = 400,
+                    DevMessage = "pageSize phải lớn hơn 0."
+                });
+            }
+
+            if (pageIndex <= 0)
+            {
+                return BadRequest(new ServiceResponse
+                {
+                    IsSuccess = false,
+                    Code = 400,
+                    DevMessage = "pageIndex phải lớn hơn 0."
+                });
+            }
+
             var request = new EmployeeFilterRequest
             {
                 DepartmentId = departmentId,
@@ -95,15 +117,12 @@ namespace FresherMisa2026.WebAPI.Controllers
                 SalaryTo = salaryTo,
                 Gender = gender,
                 HireDateFrom = hireDateFrom,
-                HireDateTo = hireDateTo
+                HireDateTo = hireDateTo,
+                PageSize = pageSize,
+                PageIndex = pageIndex
             };
 
-            var response = new ServiceResponse
-            {
-                Data = await _employeeService.FilterEmployeesAsync(request),
-                IsSuccess = true
-            };
-
+            var response = await _employeeService.FilterEmployeesAsync(request);
             return Ok(response);
         }
     }
