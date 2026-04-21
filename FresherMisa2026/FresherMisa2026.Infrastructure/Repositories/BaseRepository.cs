@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
@@ -56,7 +56,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <summary>
         /// Mở kết nối database
         /// </summary>
-        private async Task OpenConnectionAsync()
+        protected async Task OpenConnectionAsync()
         {
             if (_dbConnection.State != ConnectionState.Open)
             {

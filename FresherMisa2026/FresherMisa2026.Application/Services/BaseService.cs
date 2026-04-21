@@ -122,14 +122,13 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi validate</returns>
         /// CREATED BY: DVHAI (07/07/2021)
-        private List<ValidationError> Validate(TEntity entity)
+        private async Task<List<ValidationError>> ValidateAsync(TEntity entity)
         {
             var errors = new List<ValidationError>();
             var properties = GetCachedProperties(entity.GetType());
 
             foreach (var property in properties)
             {
-                //1.1 Kiểm tra xem có attribute cần phải validate không
                 if (property.IsDefined(typeof(IRequired), false))
                 {
                     var error = ValidateRequired(entity, property);
@@ -140,8 +139,8 @@ namespace FresherMisa2026.Application.Services
                 }
             }
 
-            //2. Validate tùy chỉnh từng màn hình
-            var customErrors = ValidateCustom(entity);
+            
+            var customErrors = await ValidateCustomAsync(entity);
             errors.AddRange(customErrors);
 
             return errors;
@@ -153,7 +152,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thực thể</param>
         /// <param name="propertyInfo">Thuộc tính của thực thể</param>
         /// <returns>Lỗi validate hoặc null nếu hợp lệ</returns>
-        /// CREATED BY: DVHAI (07/07/2021)
+        /// <author name="HoangDieu" date="21/04/2026"/>
         private ValidationError? ValidateRequired(TEntity entity, PropertyInfo propertyInfo)
         {
             //1. Tên trường
@@ -167,7 +166,7 @@ namespace FresherMisa2026.Application.Services
 
             if (propertyValue == null || string.IsNullOrEmpty(propertyValue.ToString()))
             {
-                return new ValidationError(propertyName, $"Trường {propertyDisplayName} bắt buộc nhập");
+                return new ValidationError(propertyName, $"Trường {propertyDisplayName} chưa được điền, bắt buộc nhập ");
             }
 
             return null;
@@ -196,7 +195,7 @@ namespace FresherMisa2026.Application.Services
             entity.State = ModelSate.Add;
 
             //1. Validate tất cả các trường nếu được gắn thẻ
-            var errors = Validate(entity);
+            var errors = await ValidateAsync(entity);
 
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
@@ -230,7 +229,7 @@ namespace FresherMisa2026.Application.Services
             entity.State = ModelSate.Update;
 
             //2. Validate tất cả các trường nếu được gắn thẻ
-            var errors = Validate(entity);
+            var errors = await ValidateAsync(entity);
             
             if (errors.Count == 0)
             {
@@ -372,15 +371,20 @@ namespace FresherMisa2026.Application.Services
         protected virtual void AfterDelete()
         {
         }
-
+        protected virtual Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
+        { return Task.FromResult(true); }  
         /// <summary>
         /// Trước khi xóa
         /// </summary>
+        /// <author name="Hoàng Diệu" date="21/04/2026"/>
         /// <param name="entityId">Id bản ghi cần xóa</param>
         /// <returns>Có thể xóa hay không</returns>
-        protected virtual Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
+        /// 
+        /// 
+
+        protected virtual async Task<List<ValidationError>> ValidateCustomAsync(TEntity entity)
         {
-            return Task.FromResult(true);
+            return new List<ValidationError>();
         }
         #endregion
     }

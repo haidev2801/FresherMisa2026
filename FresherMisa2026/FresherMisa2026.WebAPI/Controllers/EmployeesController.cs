@@ -9,14 +9,24 @@ namespace FresherMisa2026.WebAPI.Controllers
     public class EmployeesController : BaseController<Employee>
     {
         private readonly IEmployeeService _employeeService;
-
-        public EmployeesController(
-            IEmployeeService employeeService) : base(employeeService)
+        public EmployeesController(IBaseService<Employee> baseService, IEmployeeService employeeService) : base(baseService)
         {
             _employeeService = employeeService;
         }
 
-        [HttpGet("Code/{code}")]
+
+        // Thêm endpoint lọc nhân viên theo các tiêu chí
+        [HttpGet("Filter")]
+        public async Task<ActionResult<ServiceResponse>> GetFilter([FromQuery] FilterEmployeeRq filterRequest)
+        {
+            var response = await _employeeService.GetEmployeeByFilter(filterRequest);
+            return Ok(response);
+        }
+
+
+
+
+            [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
             var response = new ServiceResponse();
@@ -25,6 +35,7 @@ namespace FresherMisa2026.WebAPI.Controllers
 
             return response;
         }
+
 
         [HttpGet("Department/{departmentId}")]
         public async Task<ActionResult<ServiceResponse>> GetByDepartmentId(Guid departmentId)

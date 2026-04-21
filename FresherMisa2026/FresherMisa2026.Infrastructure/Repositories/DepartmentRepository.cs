@@ -2,9 +2,11 @@
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace FresherMisa2026.Infrastructure.Repositories
@@ -19,6 +21,51 @@ namespace FresherMisa2026.Infrastructure.Repositories
         {
 
         }
+
+
+        /// <summary>
+        /// Lấy số lượng nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="departmentCode"></param>
+        /// <returns></returns>
+        public async Task<int> GetCountEmployeesByDepartmentCode(string departmentCode)
+        {
+            await OpenConnectionAsync();
+
+            string store = string.Format("Proc_Employee_CountByDepartmentCode", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("p_DepartmentCode", departmentCode);
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+               new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            var total = await reader.ReadFirstAsync<long>();
+            return (int)total;
+        }
+
+
+        
+        /// <summary>
+        /// Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="departmentCode"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCode(string departmentCode)
+        {
+            await OpenConnectionAsync();
+
+            string store = string.Format("Proc_Employee_GetByDepartmentCode", _tableName);
+            var parameters = new DynamicParameters();
+            parameters.Add("p_DepartmentCode", departmentCode);
+
+            using var reader = await _dbConnection.QueryMultipleAsync(
+               new CommandDefinition(store, parameters, commandType: CommandType.StoredProcedure));
+
+            var data = (await reader.ReadAsync<Employee>()).ToList();
+            return data;
+        }
+
+
 
         /// <summary>
         /// Lấy department theo code

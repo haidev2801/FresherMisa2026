@@ -9,6 +9,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
 {
     public class PositionRepository : BaseRepository<Position>, IPositionRepository
     {
+        // Constructor nhận IConfiguration để truyền vào BaseRepository để thiết lập kết nối cơ sở dữ liệu (DI)
         public PositionRepository(IConfiguration configuration) : base(configuration)
         {
         }
