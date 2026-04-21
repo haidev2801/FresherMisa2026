@@ -5,23 +5,35 @@ using System.Text;
 
 namespace FresherMisa2026.Application.Interfaces
 {
+    /// <summary>
+    /// Interface repository dùng chung cho các thực thể
+    /// </summary>
+    /// <typeparam name="TEntity">Kiểu thực thể</typeparam>
     public interface IBaseRepository<TEntity>
     {
+        /// <summary>
+        /// Lấy danh sách thực thể có phân trang
+        /// </summary>
+        /// <param name="pageSize">Số bản ghi trên mỗi trang</param>
+        /// <param name="pageIndex">Chỉ số trang</param>
+        /// <param name="search">Từ khóa tìm kiếm</param>
+        /// <param name="searchFields">Danh sách trường tìm kiếm</param>
+        /// <param name="sort">Điều kiện sắp xếp</param>
+        /// <returns>Dữ liệu trang hiện tại và tổng số bản ghi</returns>
         public Task<(IEnumerable<TEntity> Data, int Total)> GetPaging(int pageSize,int pageIndex, string search, List<string> searchFields, string sort);
 
-        // <summary>
+        /// <summary>
         ///  Lấy danh sách thực thể
         /// </summary>
-        /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// <returns>Danh sách thực thể</returns>
         /// CREATED BY: NHLONG (07/07/2026)
         Task<IEnumerable<BaseModel>> GetEntitiesAsync();
 
-        // <summary>
+        /// <summary>
         ///  Lấy bản ghi theo id
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Bản ghi thông tin 1 bản ghi</return
+        /// <returns>Bản ghi thông tin 1 bản ghi</returns>
         /// CREATED BY: NHLONG (07/07/2026)
         Task<TEntity> GetEntityByIDAsync(Guid entityId);
 

@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace FresherMisa2026.WebAPI.Controllers
 {
     [ApiController]
+    /// <summary>
+    /// API quản lý vị trí
+    /// </summary>
     public class PositionsController : BaseController<Position>
     {
         private readonly IPositionService _positionService;
@@ -16,6 +19,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             _positionService = positionService;
         }
 
+        /// <summary>
+        /// Lấy vị trí theo mã
+        /// </summary>
+        /// <param name="code">Mã vị trí</param>
+        /// <returns>Thông tin vị trí</returns>
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {

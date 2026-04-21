@@ -12,6 +12,9 @@ using System.Text.RegularExpressions;
 
 namespace FresherMisa2026.Application.Services
 {
+    /// <summary>
+    /// Nghiệp vụ xử lý nhân viên
+    /// </summary>
     public class EmployeeService : BaseService<Employee>, IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
@@ -24,6 +27,11 @@ namespace FresherMisa2026.Application.Services
             _employeeRepository = employeeRepository;
         }
 
+        /// <summary>
+        /// Lấy nhân viên theo mã
+        /// </summary>
+        /// <param name="code">Mã nhân viên</param>
+        /// <returns>Nhân viên tìm thấy</returns>
         public async Task<Employee> GetEmployeeByCodeAsync(string code)
         {
             var employee = await _employeeRepository.GetEmployeeByEmployeeCodeAsync(code);
@@ -33,6 +41,11 @@ namespace FresherMisa2026.Application.Services
             return employee;
         }
 
+        /// <summary>
+        /// Lọc danh sách nhân viên
+        /// </summary>
+        /// <param name="request">Điều kiện lọc</param>
+        /// <returns>Kết quả phân trang nhân viên</returns>
         public async Task<ServiceResponse> GetFilter(FilterRequest request)
         {
             try
@@ -80,16 +93,31 @@ namespace FresherMisa2026.Application.Services
             }
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo Id phòng ban
+        /// </summary>
+        /// <param name="departmentId">Id phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentIdAsync(Guid departmentId)
         {
             return await _employeeRepository.GetEmployeesByDepartmentId(departmentId);
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo Id vị trí
+        /// </summary>
+        /// <param name="positionId">Id vị trí</param>
+        /// <returns>Danh sách nhân viên</returns>
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionIdAsync(Guid positionId)
         {
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+        /// <summary>
+        /// Validate tùy chỉnh cho Employee
+        /// </summary>
+        /// <param name="employee">Thông tin nhân viên</param>
+        /// <returns>Danh sách lỗi</returns>
         protected override List<ValidationError> ValidateCustom(Entities.Employee.Employee employee)
         {
             var errors = new List<ValidationError>();

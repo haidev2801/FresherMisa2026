@@ -4,15 +4,27 @@ using System.Text.Json;
 
 namespace FresherMisa2026.WebAPI.Middlewares
 {
+    /// <summary>
+    /// Middleware xử lý exception toàn cục
+    /// </summary>
     public class GlobalExceptionMiddleware
     {
         private readonly RequestDelegate _next;
 
+        /// <summary>
+        /// Khởi tạo middleware
+        /// </summary>
+        /// <param name="next">Middleware kế tiếp</param>
         public GlobalExceptionMiddleware(RequestDelegate next)
         {
             _next = next;
         }
 
+        /// <summary>
+        /// Thực thi middleware và bắt lỗi toàn cục
+        /// </summary>
+        /// <param name="context">HttpContext hiện tại</param>
+        /// <returns>Task xử lý request</returns>
         public async Task InvokeAsync(HttpContext context)
         {
             try
@@ -29,6 +41,12 @@ namespace FresherMisa2026.WebAPI.Middlewares
             }
         }
 
+        /// <summary>
+        /// Chuẩn hóa phản hồi khi có lỗi hệ thống
+        /// </summary>
+        /// <param name="context">HttpContext hiện tại</param>
+        /// <param name="exception">Exception phát sinh</param>
+        /// <returns>Task ghi phản hồi lỗi</returns>
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             // Set status code and content type

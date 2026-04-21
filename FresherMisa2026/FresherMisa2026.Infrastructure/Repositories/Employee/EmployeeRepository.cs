@@ -10,12 +10,25 @@ using System.Data;
 
 namespace FresherMisa2026.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Repository xử lý dữ liệu nhân viên
+    /// </summary>
     public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
     {
+        /// <summary>
+        /// Khởi tạo EmployeeRepository
+        /// </summary>
+        /// <param name="configuration">Cấu hình ứng dụng</param>
+        /// <param name="memoryCache">Bộ nhớ đệm</param>
         public EmployeeRepository(IConfiguration configuration, IMemoryCache memoryCache) : base(configuration, memoryCache)
         {
         }
 
+        /// <summary>
+        /// Lấy nhân viên theo mã
+        /// </summary>
+        /// <param name="code">Mã nhân viên</param>
+        /// <returns>Nhân viên tìm thấy</returns>
         public async Task<Employee> GetEmployeeByEmployeeCodeAsync(string code)
         {
             string query = SQLExtension.GetQuery("Employee.GetByCode");
@@ -26,6 +39,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await _dbConnection.QueryFirstOrDefaultAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
+        /// <summary>
+        /// Lọc danh sách nhân viên theo nhiều điều kiện
+        /// </summary>
+        /// <returns>Danh sách nhân viên và tổng số bản ghi</returns>
         public async Task<(IEnumerable<Employee> employees, int TotalRecords)> GetFilter(string? departmentId, string? positionId, decimal? salaryFrom, decimal? salaryTo, int? gender, DateTime? hireDateFrom, DateTime? hireDateTo, int PageSize = 20, int PageIndex = 1)
         {
             try
@@ -61,6 +78,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
             }
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="departmentCode">Mã phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string departmentCode)
         {
             string query = SQLExtension.GetQuery("Employee.GetEmployeesByDepartmentCode");
@@ -68,6 +90,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await _dbConnection.QueryAsync<Employee>(query, parameters);
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo Id phòng ban
+        /// </summary>
+        /// <param name="departmentId">Id phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentId(Guid departmentId)
         {
             string query = SQLExtension.GetQuery("Employee.GetByDepartmentId");
@@ -78,6 +105,11 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return await _dbConnection.QueryAsync<Employee>(query, param, commandType: System.Data.CommandType.Text);
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo Id vị trí
+        /// </summary>
+        /// <param name="positionId">Id vị trí</param>
+        /// <returns>Danh sách nhân viên</returns>
         public async Task<IEnumerable<Employee>> GetEmployeesByPositionId(Guid positionId)
         {
             string query = SQLExtension.GetQuery("Employee.GetByPositionId");

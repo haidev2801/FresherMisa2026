@@ -8,6 +8,9 @@ using System.Collections.Generic;
 
 namespace FresherMisa2026.Application.Services
 {
+    /// <summary>
+    /// Nghiệp vụ xử lý vị trí
+    /// </summary>
     public class PositionService : BaseService<Position>, IPositionService
     {
         private readonly IPositionRepository _positionRepository;
@@ -20,6 +23,11 @@ namespace FresherMisa2026.Application.Services
             _positionRepository = positionRepository;
         }
 
+        /// <summary>
+        /// Lấy vị trí theo mã
+        /// </summary>
+        /// <param name="code">Mã vị trí</param>
+        /// <returns>Vị trí tìm thấy</returns>
         public async Task<Position> GetPositionByCodeAsync(string code)
         {
             var position = await _positionRepository.GetPositionByCode(code);
@@ -29,6 +37,11 @@ namespace FresherMisa2026.Application.Services
             return position;
         }
 
+        /// <summary>
+        /// Validate tùy chỉnh cho Position
+        /// </summary>
+        /// <param name="position">Thông tin vị trí</param>
+        /// <returns>Danh sách lỗi</returns>
         protected override List<ValidationError> ValidateCustom(Position position)
         {
             var errors = new List<ValidationError>();

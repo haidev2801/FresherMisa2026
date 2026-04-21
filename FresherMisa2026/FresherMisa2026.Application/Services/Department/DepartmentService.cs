@@ -10,6 +10,9 @@ using System.Text;
 
 namespace FresherMisa2026.Application.Services
 {
+    /// <summary>
+    /// Nghiệp vụ xử lý phòng ban
+    /// </summary>
     public class DepartmentService : BaseService<Department>, IDepartmentSerice
     {
         private readonly IDepartmentRepository _deptRepository;
@@ -43,6 +46,11 @@ namespace FresherMisa2026.Application.Services
             return CreateSuccessResponse(ResponseCode.Success, department);
         }
 
+        /// <summary>
+        /// Đếm số nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Số lượng nhân viên</returns>
         public async Task<ServiceResponse> GetEmployeeCountByDepartmentCode(string code)
         {
             if (string.IsNullOrEmpty(code))
@@ -53,6 +61,11 @@ namespace FresherMisa2026.Application.Services
             return CreateSuccessResponse(ResponseCode.Success, employees.Count());
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
         public async Task<ServiceResponse> GetEmployeesByDepartmentCode(string code)
         {
             if (string.IsNullOrEmpty(code))
@@ -68,6 +81,11 @@ namespace FresherMisa2026.Application.Services
         }
 
         #region OVERRIDE METHODS
+        /// <summary>
+        /// Validate trước khi xóa phòng ban
+        /// </summary>
+        /// <param name="entityId">Id phòng ban</param>
+        /// <returns>True nếu có thể xóa</returns>
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
             //1. Validate còn nhân viên trong phòng ban không

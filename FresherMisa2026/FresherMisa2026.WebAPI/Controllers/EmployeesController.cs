@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace FresherMisa2026.WebAPI.Controllers
 {
     [ApiController]
+    /// <summary>
+    /// API quản lý nhân viên
+    /// </summary>
     public class EmployeesController : BaseController<Employee>
     {
         private readonly IEmployeeService _employeeService;
@@ -17,6 +20,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             _employeeService = employeeService;
         }
 
+        /// <summary>
+        /// Lấy nhân viên theo mã
+        /// </summary>
+        /// <param name="code">Mã nhân viên</param>
+        /// <returns>Thông tin nhân viên</returns>
         [HttpGet("Code/{code}")]
         public async Task<ActionResult<ServiceResponse>> GetByCode(string code)
         {
@@ -27,6 +35,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo Id phòng ban
+        /// </summary>
+        /// <param name="departmentId">Id phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
         [HttpGet("Department/{departmentId}")]
         public async Task<ActionResult<ServiceResponse>> GetByDepartmentId(Guid departmentId)
         {
@@ -37,6 +50,11 @@ namespace FresherMisa2026.WebAPI.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Lấy danh sách nhân viên theo Id vị trí
+        /// </summary>
+        /// <param name="positionId">Id vị trí</param>
+        /// <returns>Danh sách nhân viên</returns>
         [HttpGet("Position/{positionId}")]
         public async Task<ActionResult<ServiceResponse>> GetByPositionId(Guid positionId)
         {
@@ -47,6 +65,10 @@ namespace FresherMisa2026.WebAPI.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Lọc danh sách nhân viên
+        /// </summary>
+        /// <returns>Kết quả lọc nhân viên</returns>
         [HttpGet("filter")]
         public async Task<ActionResult<ServiceResponse>> Filter(
             string? departmentId,

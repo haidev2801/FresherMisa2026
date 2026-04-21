@@ -20,7 +20,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Base repository
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
-    /// Created By: dvhai (09/04/2026)
+    /// Created By: nhlong (09/04/2026)
     public class BaseRepository<TEntity> : IBaseRepository<TEntity>, IDisposable where TEntity : BaseModel
     {
         //Properties
@@ -78,7 +78,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <summary>
         /// Dispose connection
         /// </summary>
-        /// Created By: dvhai (09/04/2026)
+        /// Created By: nhlong (09/04/2026)
         public void Dispose()
         {
             if (_dbConnection != null && _dbConnection.State == ConnectionState.Open)
@@ -111,7 +111,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Lấy danh sách entity
         /// </summary>
         /// <returns>Danh sách tất cả bản ghi</returns>
-        /// Created By: dvhai (09/04/2026)
+        /// Created By: nhlong (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
             var version = GetCacheVersion();
@@ -132,7 +132,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Lấy tất cả theo command text
         /// </summary>
         /// <returns></returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        /// CREATED BY: nhlong (11/07/2021)
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
             var query = new StringBuilder($"select * from {_tableName}");
@@ -154,7 +154,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi tìm thấy hoặc null</returns>
-        /// CREATED BY: DVHAI (07/07/2021)
+        /// CREATED BY: nhlong (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
             var version = GetCacheVersion();
@@ -209,7 +209,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số bản ghi bị xóa</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        /// CREATED BY: nhlong (11/07/2021)
         public async Task<int> DeleteAsync(Guid entityId)
         {
             var rowAffects = 0;
@@ -256,7 +256,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi thêm mới</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        /// CREATED BY: nhlong (11/07/2021)
         public async Task<int> InsertAsync(TEntity entity)
         {
             var rowAffects = 0;
@@ -305,7 +305,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi bị ảnh hưởng</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        /// CREATED BY: nhlong (11/07/2021)
         public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
             var rowAffects = 0;
@@ -360,7 +360,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="searchFields">Danh sách trường tìm kiếm</param>
         /// <param name="sort">Sắp xếp theo</param>
         /// <returns>Tổng số bản ghi và danh sách dữ liệu</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+        /// CREATED BY: nhlong (07/07/2026)
         public async Task<(IEnumerable<TEntity> Data, int Total)> GetPaging(
             int pageSize,
             int pageIndex,

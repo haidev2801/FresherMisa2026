@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace FresherMisa2026.Application.Interfaces.Services
 {
+    /// <summary>
+    /// Interface nghiệp vụ vị trí
+    /// </summary>
     public interface IPositionService : IBaseService<Position>
     {
         /// <summary>
