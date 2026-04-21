@@ -1,5 +1,6 @@
 using FresherMisa2026.Application;
 using FresherMisa2026.Application.Extensions;
+using FresherMisa2026.Infrastructure.Database;
 using FresherMisa2026.Infrastructure;
 using FresherMisa2026.WebAPI.Middlewares;
 
@@ -23,6 +24,7 @@ builder.Services.AddApplicationDI();
 builder.Services.AddInfrastructure();
 
 var app = builder.Build();
+await DatabaseConstraintInitializer.EnsureEmployeeCodeUniqueIndexAsync(builder.Configuration);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

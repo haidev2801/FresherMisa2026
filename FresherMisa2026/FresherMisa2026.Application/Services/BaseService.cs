@@ -1,5 +1,6 @@
 ﻿using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Application.Interfaces.Services;
+using FresherMisa2026.Application.Exceptions;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
 using FresherMisa2026.Entities.Extensions;
@@ -221,8 +222,15 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    return CreateSuccessResponse(result);
+                }
+                catch (DuplicateDataException ex)
+                {
+                    return CreateErrorResponse(ResponseCode.BadRequest, ex.Message, ex.Message);
+                }
             }
 
             return CreateErrorResponse(
@@ -262,12 +270,19 @@ namespace FresherMisa2026.Application.Services
             
             if (errors.Count == 0)
             {
-                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
-                if (rowAffects > 0)
+                try
                 {
-                    return CreateSuccessResponse(rowAffects);
+                    int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
+                    if (rowAffects > 0)
+                    {
+                        return CreateSuccessResponse(rowAffects);
+                    }
+                    return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
                 }
-                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+                catch (DuplicateDataException ex)
+                {
+                    return CreateErrorResponse(ResponseCode.BadRequest, ex.Message, ex.Message);
+                }
             }
 
             //4. Validate fail - trả về BadRequest
@@ -420,3 +435,4 @@ namespace FresherMisa2026.Application.Services
     /// <param name="Message">Thông báo lỗi</param>
     public record ValidationError(string Field, string Message);
 }
+

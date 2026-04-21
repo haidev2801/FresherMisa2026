@@ -4,6 +4,23 @@
 
 USE misa_employee_development;
 
+-- Ensure database-level uniqueness for employee code (race-condition safe)
+SET @idx_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'employee'
+      AND index_name = 'UX_employee_EmployeeCode'
+);
+SET @idx_sql := IF(
+    @idx_exists = 0,
+    'ALTER TABLE employee ADD CONSTRAINT UX_employee_EmployeeCode UNIQUE (EmployeeCode)',
+    'SELECT 1'
+);
+PREPARE idx_stmt FROM @idx_sql;
+EXECUTE idx_stmt;
+DEALLOCATE PREPARE idx_stmt;
+
 DELIMITER $$
 
 DROP PROCEDURE IF EXISTS Proc_InsertEmployee $$

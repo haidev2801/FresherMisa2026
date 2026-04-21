@@ -1,4 +1,5 @@
-using Dapper;
+﻿using Dapper;
+using FresherMisa2026.Application.Exceptions;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Extensions;
@@ -85,11 +86,31 @@ namespace FresherMisa2026.Infrastructure.Repositories
             };
         }
 
+        private static bool IsDuplicateKeyException(MySqlException exception)
+        {
+            return exception.Number == 1062;
+        }
+
+        private static bool IsDeadlockException(MySqlException exception)
+        {
+            return exception.Number == 1213;
+        }
+
+        private string BuildDuplicateMessage()
+        {
+            if (_tableName.Equals("Employee", StringComparison.OrdinalIgnoreCase))
+            {
+                return "M\u00E3 nh\u00E2n vi\u00EAn \u0111\u00E3 t\u1ED3n t\u1EA1i";
+            }
+
+            return "D\u1EEF li\u1EC7u \u0111\u00E3 t\u1ED3n t\u1EA1i";
+        }
+
         #region Method Get
         /// <summary>
-        /// Lấy danh sách entity
+        /// Láº¥y danh sÃ¡ch entity
         /// </summary>
-        /// <returns>Danh sách tất cả bản ghi</returns>
+        /// <returns>Danh sÃ¡ch táº¥t cáº£ báº£n ghi</returns>
         /// Created By: dvhai (09/04/2026)
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
@@ -107,7 +128,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy tất cả theo command text
+        /// Láº¥y táº¥t cáº£ theo command text
         /// </summary>
         /// <returns></returns>
         /// CREATED BY: DVHAI (11/07/2021)
@@ -129,10 +150,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy bản ghi theo id
+        /// Láº¥y báº£n ghi theo id
         /// </summary>
-        /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Bản ghi tìm thấy hoặc null</returns>
+        /// <param name="entityId">Id cá»§a báº£n ghi</param>
+        /// <returns>Báº£n ghi tÃ¬m tháº¥y hoáº·c null</returns>
         /// CREATED BY: DVHAI (07/07/2021)
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
@@ -152,7 +173,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Lấy bản ghi theo id dùng command text
+        /// Láº¥y báº£n ghi theo id dÃ¹ng command text
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -177,10 +198,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Xóa bản ghi theo id
+        /// XÃ³a báº£n ghi theo id
         /// </summary>
-        /// <param name="entityId">Id của bản ghi</param>
-        /// <returns>Số bản ghi bị xóa</returns>
+        /// <param name="entityId">Id cá»§a báº£n ghi</param>
+        /// <returns>Sá»‘ báº£n ghi bá»‹ xÃ³a</returns>
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<int> DeleteAsync(Guid entityId)
         {
@@ -218,101 +239,135 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Thêm bản ghi mới
+        /// ThÃªm báº£n ghi má»›i
         /// </summary>
-        /// <param name="entity">Thông tin bản ghi</param>
-        /// <returns>Số bản ghi thêm mới</returns>
+        /// <param name="entity">ThÃ´ng tin báº£n ghi</param>
+        /// <returns>Sá»‘ báº£n ghi thÃªm má»›i</returns>
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<int> InsertAsync(TEntity entity)
         {
-            var rowAffects = 0;
+            const int maxRetryCount = 2;
 
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
-            using var transaction = connection.BeginTransaction();
-
-            try
+            for (var attempt = 1; attempt <= maxRetryCount; attempt++)
             {
-                var parameters = MappingDbType(entity);
+                var rowAffects = 0;
 
-                rowAffects = await connection.ExecuteAsync(
-                    $"Proc_Insert{_tableName}",
-                    param: parameters,
-                    transaction: transaction,
-                    commandType: CommandType.StoredProcedure);
+                using var connection = CreateConnection();
+                await connection.OpenAsync();
+                using var transaction = connection.BeginTransaction();
 
-                transaction.Commit();
+                try
+                {
+                    var parameters = MappingDbType(entity);
+
+                    rowAffects = await connection.ExecuteAsync(
+                        $"Proc_Insert{_tableName}",
+                        param: parameters,
+                        transaction: transaction,
+                        commandType: CommandType.StoredProcedure);
+
+                    transaction.Commit();
+
+                    if (rowAffects > 0)
+                    {
+                        InvalidateCache(ResolveEntityId(entity));
+                    }
+
+                    return rowAffects;
+                }
+                catch (MySqlException ex) when (IsDuplicateKeyException(ex))
+                {
+                    transaction.Rollback();
+                    throw new DuplicateDataException(BuildDuplicateMessage(), ex);
+                }
+                catch (MySqlException ex) when (IsDeadlockException(ex) && attempt < maxRetryCount)
+                {
+                    transaction.Rollback();
+                    await Task.Delay(50);
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
-            catch
-            {
-                transaction.Rollback();
-                throw;
-            }
 
-            if (rowAffects > 0)
-            {
-                InvalidateCache(ResolveEntityId(entity));
-            }
-
-            return rowAffects;
+            throw new InvalidOperationException("Không thể thêm dữ liệu do xung đột giao dịch.");
         }
 
         /// <summary>
-        /// Cập nhật thông tin bản ghi
+        /// Cáº­p nháº­t thÃ´ng tin báº£n ghi
         /// </summary>
-        /// <param name="entityId">Id bản ghi</param>
-        /// <param name="entity">Thông tin bản ghi</param>
-        /// <returns>Số bản ghi bị ảnh hưởng</returns>
+        /// <param name="entityId">Id báº£n ghi</param>
+        /// <param name="entity">ThÃ´ng tin báº£n ghi</param>
+        /// <returns>Sá»‘ báº£n ghi bá»‹ áº£nh hÆ°á»Ÿng</returns>
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
-            var rowAffects = 0;
+            const int maxRetryCount = 2;
 
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
-            using var transaction = connection.BeginTransaction();
-
-            try
+            for (var attempt = 1; attempt <= maxRetryCount; attempt++)
             {
-                var keyProperty = entity.GetType().GetProperty(_keyName);
-                if (keyProperty != null && keyProperty.CanWrite)
+                var rowAffects = 0;
+
+                using var connection = CreateConnection();
+                await connection.OpenAsync();
+                using var transaction = connection.BeginTransaction();
+
+                try
                 {
-                    keyProperty.SetValue(entity, entityId);
+                    var keyProperty = entity.GetType().GetProperty(_keyName);
+                    if (keyProperty != null && keyProperty.CanWrite)
+                    {
+                        keyProperty.SetValue(entity, entityId);
+                    }
+
+                    var parameters = MappingDbType(entity);
+
+                    rowAffects = await connection.ExecuteAsync(
+                        $"Proc_Update{_tableName}",
+                        param: parameters,
+                        transaction: transaction,
+                        commandType: CommandType.StoredProcedure);
+
+                    transaction.Commit();
+
+                    if (rowAffects > 0)
+                    {
+                        InvalidateCache(entityId);
+                    }
+
+                    return rowAffects;
                 }
-
-                var parameters = MappingDbType(entity);
-
-                rowAffects = await connection.ExecuteAsync(
-                    $"Proc_Update{_tableName}",
-                    param: parameters,
-                    transaction: transaction,
-                    commandType: CommandType.StoredProcedure);
-
-                transaction.Commit();
-            }
-            catch
-            {
-                transaction.Rollback();
-                throw;
-            }
-
-            if (rowAffects > 0)
-            {
-                InvalidateCache(entityId);
+                catch (MySqlException ex) when (IsDuplicateKeyException(ex))
+                {
+                    transaction.Rollback();
+                    throw new DuplicateDataException(BuildDuplicateMessage(), ex);
+                }
+                catch (MySqlException ex) when (IsDeadlockException(ex) && attempt < maxRetryCount)
+                {
+                    transaction.Rollback();
+                    await Task.Delay(50);
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
 
-            return rowAffects;
+            throw new InvalidOperationException("Không thể cập nhật dữ liệu do xung đột giao dịch.");
         }
 
         /// <summary>
-        /// Lấy danh sách thực thể paging
+        /// Láº¥y danh sÃ¡ch thá»±c thá»ƒ paging
         /// </summary>
-        /// <param name="pageSize">Số bản ghi mỗi trang</param>
-        /// <param name="pageIndex">Chỉ số trang</param>
-        /// <param name="search">Từ khóa tìm kiếm</param>
-        /// <param name="searchFields">Danh sách trường tìm kiếm</param>
-        /// <param name="sort">Sắp xếp theo</param>
-        /// <returns>Tổng số bản ghi và danh sách dữ liệu</returns>
+        /// <param name="pageSize">Sá»‘ báº£n ghi má»—i trang</param>
+        /// <param name="pageIndex">Chá»‰ sá»‘ trang</param>
+        /// <param name="search">Tá»« khÃ³a tÃ¬m kiáº¿m</param>
+        /// <param name="searchFields">Danh sÃ¡ch trÆ°á»ng tÃ¬m kiáº¿m</param>
+        /// <param name="sort">Sáº¯p xáº¿p theo</param>
+        /// <returns>Tá»•ng sá»‘ báº£n ghi vÃ  danh sÃ¡ch dá»¯ liá»‡u</returns>
         /// CREATED BY: DVHAI (07/07/2026)
         public async Task<(long Total, IEnumerable<TEntity> Data)> GetFilterPagingAsync(
             int pageSize,
@@ -343,10 +398,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Ánh xạ các thuộc tính sang kiểu dynamic
+        /// Ãnh xáº¡ cÃ¡c thuá»™c tÃ­nh sang kiá»ƒu dynamic
         /// </summary>
-        /// <param name="entity">Thực thể</param>
-        /// <returns>Dan sách các biến động</returns>
+        /// <param name="entity">Thá»±c thá»ƒ</param>
+        /// <returns>Dan sÃ¡ch cÃ¡c biáº¿n Ä‘á»™ng</returns>
         private DynamicParameters MappingDbType(TEntity entity)
         {
             var parameters = new DynamicParameters();
