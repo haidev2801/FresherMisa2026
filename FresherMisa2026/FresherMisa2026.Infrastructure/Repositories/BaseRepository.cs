@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;

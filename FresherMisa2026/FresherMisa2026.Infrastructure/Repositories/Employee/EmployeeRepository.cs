@@ -63,6 +63,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
             parameters.Add("p_Gender", request.Gender);
             parameters.Add("p_HireDateFrom", request.HireDateFrom?.Date);
             parameters.Add("p_HireDateTo", request.HireDateTo?.Date);
+            parameters.Add("p_pageSize", request.PageSize);
+            parameters.Add("p_pageIndex", request.PageIndex);
 
             using var reader = await _dbConnection.QueryMultipleAsync(
                 new CommandDefinition(
@@ -75,6 +77,8 @@ namespace FresherMisa2026.Infrastructure.Repositories
 
             filterResponse.Data = data;
             filterResponse.Total = total;
+            filterResponse.PageSize = request.PageSize ?? 0;
+            filterResponse.PageIndex = request.PageIndex ?? 0;
 
             return filterResponse;
         }
