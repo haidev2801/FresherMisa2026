@@ -3,8 +3,10 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Employee;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace FresherMisa2026.Application.Services
@@ -12,13 +14,16 @@ namespace FresherMisa2026.Application.Services
     public class DepartmentService : BaseService<Department>, IDepartmentSerice
     {
         private readonly IDepartmentRepository _deptRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
         public DepartmentService(
             IBaseRepository<Department> baseRepository,
-            IDepartmentRepository departmentRepository
+            IDepartmentRepository departmentRepository,
+            IEmployeeRepository employeeRepository
             ) : base(baseRepository)
         {
             _deptRepository = departmentRepository;
+            _employeeRepository = employeeRepository;
         }
 
         /// <summary>
@@ -33,6 +38,18 @@ namespace FresherMisa2026.Application.Services
                 throw new Exception("department is null");
 
             return department;
+        }
+
+        public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        {
+            var department = await GetDepartmentByCodeAsync(code);
+            return await _employeeRepository.GetEmployeesByDepartmentId(department.DepartmentID);
+        }
+
+        public async Task<int> GetEmployeeCountByDepartmentCodeAsync(string code)
+        {
+            var employees = await GetEmployeesByDepartmentCodeAsync(code);
+            return employees.Count();
         }
 
         #region OVERRIDE METHODS
