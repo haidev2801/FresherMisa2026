@@ -8,6 +8,9 @@ using System.Collections.Generic;
 
 namespace FresherMisa2026.Application.Services
 {
+    /// <summary>
+    /// Nghiệp vụ xử lý vị trí
+    /// </summary>
     public class PositionService : BaseService<Position>, IPositionService
     {
         private readonly IPositionRepository _positionRepository;
@@ -20,6 +23,11 @@ namespace FresherMisa2026.Application.Services
             _positionRepository = positionRepository;
         }
 
+        /// <summary>
+        /// Lấy vị trí theo mã
+        /// </summary>
+        /// <param name="code">Mã vị trí</param>
+        /// <returns>Vị trí tìm thấy</returns>
         public async Task<Position> GetPositionByCodeAsync(string code)
         {
             var position = await _positionRepository.GetPositionByCode(code);
@@ -29,9 +37,34 @@ namespace FresherMisa2026.Application.Services
             return position;
         }
 
+        /// <summary>
+        /// Validate tùy chỉnh cho Position
+        /// </summary>
+        /// <param name="position">Thông tin vị trí</param>
+        /// <returns>Danh sách lỗi</returns>
         protected override List<ValidationError> ValidateCustom(Position position)
         {
             var errors = new List<ValidationError>();
+
+            var existedPosition = string.IsNullOrWhiteSpace(position.PositionCode)
+                ? null
+                : _positionRepository.GetPositionByCode(position.PositionCode).Result;
+
+            if (existedPosition != null
+                && (position.State == ModelSate.Add || existedPosition.PositionID != position.PositionID))
+            {
+                errors.Add(new ValidationError("PositionCode", "Mã vị trí đã tồn tại"));
+            }
+
+            if (string.IsNullOrWhiteSpace(position.PositionCode))
+            {
+                errors.Add(new ValidationError("PositionCode", "Mã vị trí không được để trống"));
+            }
+
+            if (string.IsNullOrWhiteSpace(position.PositionName))
+            {
+                errors.Add(new ValidationError("PositionName", "Tên vị trí không được để trống"));
+            }
 
             if (!string.IsNullOrEmpty(position.PositionCode) && position.PositionCode.Length > 20)
             {

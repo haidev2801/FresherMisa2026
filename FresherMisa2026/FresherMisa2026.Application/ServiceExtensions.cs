@@ -7,8 +7,16 @@ using System.Text;
 
 namespace FresherMisa2026.Application
 {
+    /// <summary>
+    /// Đăng ký Dependency Injection cho tầng Application
+    /// </summary>
     public static class ServiceExtensions
     {
+        /// <summary>
+        /// Thêm các service của tầng Application vào DI container
+        /// </summary>
+        /// <param name="services">DI container</param>
+        /// <returns>DI container sau khi đăng ký</returns>
         public static IServiceCollection AddApplicationDI(
             this IServiceCollection services)
         {

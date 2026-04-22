@@ -3,22 +3,29 @@ using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Department;
+using FresherMisa2026.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace FresherMisa2026.Application.Services
 {
+    /// <summary>
+    /// Nghiệp vụ xử lý phòng ban
+    /// </summary>
     public class DepartmentService : BaseService<Department>, IDepartmentSerice
     {
         private readonly IDepartmentRepository _deptRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
         public DepartmentService(
             IBaseRepository<Department> baseRepository,
-            IDepartmentRepository departmentRepository
+            IDepartmentRepository departmentRepository,
+            IEmployeeRepository employeeRepository
             ) : base(baseRepository)
         {
             _deptRepository = departmentRepository;
+            _employeeRepository = employeeRepository;
         }
 
         /// <summary>
@@ -26,22 +33,65 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <returns></returns>
         /// Created By: dvhai (10/04/2026)
-        public async Task<Department> GetDepartmentByCodeAsync(string code)
+        public async Task<ServiceResponse> GetDepartmentByCodeAsync(string code)
         {
-            var department = await _deptRepository.GetDepartmentByCode(code);
+            // kiểm tra xem code có null hay rỗng không 
+            if (string.IsNullOrEmpty(code)){
+                return CreateErrorResponse(ResponseCode.BadRequest, "DepartmentCode không được trống", "Mã phòng ban không được để trống");
+            }
+            var department = await _deptRepository.GetDepartmentByCodeAsync(code);
             if (department == null)
-                throw new Exception("department is null");
+                return CreateErrorResponse(ResponseCode.NotFound, "DepartmentCode không tồn tại", "Không tìm thấy phòng ban");
 
-            return department;
+            return CreateSuccessResponse(ResponseCode.Success, department);
+        }
+
+        /// <summary>
+        /// Đếm số nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Số lượng nhân viên</returns>
+        public async Task<ServiceResponse> GetEmployeeCountByDepartmentCode(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "DepartmentCode không được trống", "Mã phòng ban không được để trống");
+            }
+            var employees = await _employeeRepository.GetEmployeesByDepartmentCodeAsync(code);
+            return CreateSuccessResponse(ResponseCode.Success, employees.Count());
+        }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên theo mã phòng ban
+        /// </summary>
+        /// <param name="code">Mã phòng ban</param>
+        /// <returns>Danh sách nhân viên</returns>
+        public async Task<ServiceResponse> GetEmployeesByDepartmentCode(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "DepartmentCode không được trống", "Mã phòng ban không được để trống");
+            }
+            var employees = await _employeeRepository.GetEmployeesByDepartmentCodeAsync(code);
+            if (employees.Count() <= 0)
+            {
+                return CreateErrorResponse(ResponseCode.NotFound, "", "Không tìm thấy nhân viên nào");
+            }
+            return CreateSuccessResponse(ResponseCode.Success, employees);
         }
 
         #region OVERRIDE METHODS
+        /// <summary>
+        /// Validate trước khi xóa phòng ban
+        /// </summary>
+        /// <param name="entityId">Id phòng ban</param>
+        /// <returns>True nếu có thể xóa</returns>
         protected override async Task<bool> ValidateBeforeDeleteAsync(Guid entityId)
         {
             //1. Validate còn nhân viên trong phòng ban không
-            bool hasEmployee = true;
-
-            return !hasEmployee;
+            var hasEmployee = await _employeeRepository.GetEmployeesByDepartmentId(entityId);
+            
+            return !(hasEmployee.Count() > 0);
         }
 
         /// <summary>
@@ -51,7 +101,26 @@ namespace FresherMisa2026.Application.Services
         {
             var errors = new List<ValidationError>();
 
-            // Ví dụ: Kiểm tra mã phòng ban không được vượt quá 20 ký tự
+            var existedDepartment = string.IsNullOrWhiteSpace(department.DepartmentCode)
+                ? null
+                : _deptRepository.GetDepartmentByCodeAsync(department.DepartmentCode).Result;
+
+            if (existedDepartment != null
+                && (department.State == ModelSate.Add || existedDepartment.DepartmentID != department.DepartmentID))
+            {
+                errors.Add(new ValidationError("DepartmentCode", "Mã phòng ban đã tồn tại"));
+            }
+
+            if (string.IsNullOrWhiteSpace(department.DepartmentCode))
+            {
+                errors.Add(new ValidationError("DepartmentCode", "Mã phòng ban không được để trống"));
+            }
+
+            if (string.IsNullOrWhiteSpace(department.DepartmentName))
+            {
+                errors.Add(new ValidationError("DepartmentName", "Tên phòng ban không được để trống"));
+            }
+
             if (!string.IsNullOrEmpty(department.DepartmentCode) && department.DepartmentCode.Length > 20)
             {
                 errors.Add(new ValidationError("DepartmentCode", "Mã phòng ban không được vượt quá 20 ký tự"));

@@ -2,7 +2,9 @@
 using FresherMisa2026.Application.Interfaces.Services;
 using FresherMisa2026.Entities;
 using FresherMisa2026.Entities.Enums;
+using FresherMisa2026.Entities.Exceptions;
 using FresherMisa2026.Entities.Extensions;
+
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -31,10 +33,10 @@ namespace FresherMisa2026.Application.Services
         #endregion
 
         #region Protected Helpers - có thể override trong derived class
-        protected static ServiceResponse CreateSuccessResponse(object? data = null) => new()
+        protected static ServiceResponse CreateSuccessResponse(ResponseCode? code = null, object? data = null) => new()
         {
             IsSuccess = true,
-            Code = (int)ResponseCode.Success,
+            Code = code != null ? (int)code : (int)ResponseCode.Success,
             Data = data
         };
 
@@ -43,7 +45,7 @@ namespace FresherMisa2026.Application.Services
             IsSuccess = false,
             Code = (int)code,
             DevMessage = devMessage,
-            Data = userMessage
+            UserMessage = userMessage
         };
 
         private static PropertyInfo[] GetCachedProperties(Type entityType)
@@ -61,7 +63,7 @@ namespace FresherMisa2026.Application.Services
         public async Task<ServiceResponse> GetEntitiesAsync()
         {
             var entities = await _baseRepository.GetEntitiesAsync();
-            return CreateSuccessResponse(entities.Cast<TEntity>().ToList());
+            return CreateSuccessResponse(ResponseCode.Success, entities.Cast<TEntity>().ToList());
         }
 
         /// <summary>
@@ -79,7 +81,7 @@ namespace FresherMisa2026.Application.Services
 
             var entity = await _baseRepository.GetEntityByIDAsync(entityId);
             return entity != null 
-                ? CreateSuccessResponse(entity) 
+                ? CreateSuccessResponse(ResponseCode.Success, entity) 
                 : CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi");
         }
 
@@ -91,6 +93,10 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (07/07/2026)
         public async Task<ServiceResponse> DeleteByIDAsync(Guid entityId)
         {
+            //int rowAffects = await _baseRepository.Delete(entityId);
+            //if(rowAffects > 0)
+            //    AfterDelete();
+            //return rowAffects > 0;
             if (entityId == Guid.Empty)
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
@@ -102,15 +108,23 @@ namespace FresherMisa2026.Application.Services
             {
                 return CreateErrorResponse(ResponseCode.BadRequest, "Không thể xóa bản ghi này");
             }
-            
+
             //2. Thực hiện xóa
-            int rowAffects = await _baseRepository.DeleteAsync(entityId);
-            
+            int rowAffects;
+            try
+            {
+                rowAffects = await _baseRepository.DeleteAsync(entityId);
+            }
+            catch (DatabaseException ex)
+            {
+                return CreateErrorResponse(ResponseCode.InternalServerError, "Lỗi thao tác database", ex.Message);
+            }
+
             if (rowAffects > 0)
             {
                 //3. Xóa thành công thì làm gì
                 AfterDelete();
-                return CreateSuccessResponse(rowAffects);
+                return CreateSuccessResponse(ResponseCode.Success, rowAffects);
             }
 
             return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để xóa");
@@ -193,6 +207,28 @@ namespace FresherMisa2026.Application.Services
         /// CREATED BY: DVHAI (11/07/2021)
         public async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
+            //entity.State = ModelSate.Add;
+
+            ////1. Validate tất cả các trường nếu được gắn thẻ
+            //var isValid = Validate(entity);
+
+            ////2. Sử lí lỗi tương ứng
+            //if (isValid)
+            //{
+            //    _serviceResult.IsSuccess = true;
+            //    _serviceResult.Data = await _baseRepository.Insert(entity);
+            //    _serviceResult.Code = (int)ResponseCode.Created;
+            //    _serviceResult.UserMessage = "Thêm thành công";
+            //}
+            //else
+            //{
+            //    _serviceResult.Code = (int)ResponseCode.BadRequest;
+            //    _serviceResult.DevMessage = "Validate thất bại";
+            //}
+
+            ////3. Trả về kế quả
+            //return _serviceResult;
+
             entity.State = ModelSate.Add;
 
             //1. Validate tất cả các trường nếu được gắn thẻ
@@ -201,13 +237,24 @@ namespace FresherMisa2026.Application.Services
             //2. Sử lí lỗi tương ứng
             if (errors.Count == 0)
             {
-                var result = await _baseRepository.InsertAsync(entity);
-                return CreateSuccessResponse(result);
-            }
+                try
+                {
+                    var result = await _baseRepository.InsertAsync(entity);
+                    return CreateSuccessResponse(ResponseCode.Created, result);
 
+                }
+                catch (DatabaseException ex)
+                {
+                    if (ex.ErrorCode == "1062")
+                    {
+                        return CreateErrorResponse(ResponseCode.Conflict, "Lỗi Insert dữ liệu vào database", ex.Message);
+                    }
+                    return CreateErrorResponse(ResponseCode.InternalServerError, "Lỗi Insert dữ liệu vào database", ex.Message);
+                }
+            }
             return CreateErrorResponse(
-                ResponseCode.BadRequest, 
-                "Validate thất bại", 
+                ResponseCode.BadRequest,
+                "Validate thất bại",
                 string.Join("; ", errors.Select(e => e.Message))
             );
         }
@@ -234,12 +281,23 @@ namespace FresherMisa2026.Application.Services
             
             if (errors.Count == 0)
             {
-                int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
-                if (rowAffects > 0)
+                try
                 {
-                    return CreateSuccessResponse(rowAffects);
+                    int rowAffects = await _baseRepository.UpdateAsync(entityId, entity);
+                    if (rowAffects > 0)
+                    {
+                        return CreateSuccessResponse(ResponseCode.Success, rowAffects);
+                    }
+                    return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
                 }
-                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+                catch (DatabaseException ex)
+                {
+                    if (ex.ErrorCode == "1062")
+                    {
+                        return CreateErrorResponse(ResponseCode.Conflict, "Lỗi Update dữ liệu vào database", ex.Message);
+                    }
+                    return CreateErrorResponse(ResponseCode.InternalServerError, "Lỗi Update dữ liệu vào database", ex.Message);
+                }
             }
 
             //3. Validate fail - trả về BadRequest
@@ -256,27 +314,16 @@ namespace FresherMisa2026.Application.Services
         /// <param name="pagingRequest">Thông tin phân trang</param>
         /// <returns>Danh sách thực thể phân trang</returns>
         /// CREATED BY: DVHAI (07/07/2026)
-        public async Task<ServiceResponse> GetFilterPagingAsync(PagingRequest pagingRequest)
+        public async Task<ServiceResponse> GetPaging(PagingRequest pagingRequest)
         {
-            var fields = string.IsNullOrEmpty(pagingRequest.SearchFields)
-                ? new List<string>()
-                : pagingRequest.SearchFields.Split(SearchFieldSeparator, StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            var (total, data) = await _baseRepository.GetFilterPagingAsync(
-                pagingRequest.PageSize, 
-                pagingRequest.PageIndex, 
-                pagingRequest.Search,
-                fields, 
-                pagingRequest.Sort
-            );
-
-            var response = new PagingResponse<TEntity>
+            var (records, total) = await _baseRepository.GetPaging(pagingRequest.PageSize, pagingRequest.PageIndex, pagingRequest.Search, pagingRequest.SearchFields, pagingRequest.Sort);
+            var pagingResponse = new PagingResponse<TEntity>
             {
-                Total = total,
-                Data = data.ToList()
+                Total = (int)total,
+                Data = records.ToList()
             };
 
-            return CreateSuccessResponse(response);
+            return CreateSuccessResponse(ResponseCode.Success, pagingResponse);
         }
         #endregion
 

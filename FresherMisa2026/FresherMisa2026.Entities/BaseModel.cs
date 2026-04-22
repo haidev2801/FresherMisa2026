@@ -4,12 +4,30 @@ using System.Text;
 
 namespace FresherMisa2026.Entities
 {
+    /// <summary>
+    /// Attribute đánh dấu trường bắt buộc nhập
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class IRequired : Attribute
     {
+        /// <summary>
+        /// Thông điệp lỗi khi trường bắt buộc bị bỏ trống
+        /// </summary>
+        public string Message { get; }
 
+        /// <summary>
+        /// Khởi tạo attribute bắt buộc
+        /// </summary>
+        /// <param name="message">Thông báo lỗi tùy chỉnh</param>
+        public IRequired(string message = "Field is required.")
+        {
+            Message = message;
+        }
     }
 
+    /// <summary>
+    /// Thực thể cơ sở dùng chung cho các bảng
+    /// </summary>
     public class BaseModel
     {
         /// <summary>

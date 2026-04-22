@@ -6,9 +6,19 @@ using System.Text.Json;
 
 namespace FresherMisa2026.Application.Extensions
 {
+    /// <summary>
+    /// Quản lý và truy xuất câu lệnh SQL từ file cấu hình
+    /// </summary>
     public static class SQLExtension
     {
+        /// <summary>
+        /// Bộ nhớ đệm chứa các query đã nạp
+        /// </summary>
         private static readonly ConcurrentDictionary<string, string> _queryCache = new();
+
+        /// <summary>
+        /// Đường dẫn file query hiện tại
+        /// </summary>
         private static string _currentFilePath;
 
         /// <summary>
@@ -76,6 +86,9 @@ namespace FresherMisa2026.Application.Extensions
             LoadQueries();
         }
 
+        /// <summary>
+        /// Đọc và nạp toàn bộ query từ file JSON
+        /// </summary>
         private static void LoadQueries()
         {
             if (string.IsNullOrEmpty(_currentFilePath))
@@ -121,6 +134,11 @@ namespace FresherMisa2026.Application.Extensions
             }
         }
 
+        /// <summary>
+        /// Chuẩn hóa chuỗi query trước khi lưu cache
+        /// </summary>
+        /// <param name="query">Query gốc</param>
+        /// <returns>Query đã chuẩn hóa</returns>
         private static string NormalizeQuery(string query)
         {
             // Remove extra whitespaces và normalize line endings

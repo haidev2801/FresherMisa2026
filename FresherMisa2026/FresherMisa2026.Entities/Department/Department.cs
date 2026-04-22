@@ -13,17 +13,19 @@ namespace FresherMisa2026.Entities.Department
         /// ID phòng ban
         /// </summary>
         [Key]
-        public Guid DepartmentID { get; set; }
+        public Guid DepartmentID { get; set; } = new Guid();
 
         /// <summary>
         /// Mã phòng ban
         /// </summary>
-        public string DepartmentCode { get; set; }
+        [IRequired]
+        public string? DepartmentCode { get; set; }
 
         /// <summary>
         /// Tên phòng ban
         /// </summary>
-        public string DepartmentName { get; set; }
+        [IRequired]
+        public string? DepartmentName { get; set; }
 
         /// <summary>
         /// Mô tả

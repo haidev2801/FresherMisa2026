@@ -9,11 +9,20 @@ using System.Text;
 
 namespace FresherMisa2026.Infrastructure
 {
+    /// <summary>
+    /// Đăng ký Dependency Injection cho tầng Infrastructure
+    /// </summary>
     public static class ServiceExtensions
     {
+        /// <summary>
+        /// Thêm các repository và hạ tầng vào DI container
+        /// </summary>
+        /// <param name="services">DI container</param>
+        /// <returns>DI container sau khi đăng ký</returns>
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services)
         {
+            services.AddMemoryCache();
             //base
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
