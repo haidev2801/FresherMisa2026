@@ -8,6 +8,7 @@ namespace FresherMisa2026.Entities.Position
     public class Position : BaseModel
     {
         [Key]
+        [IRequired]
         public Guid PositionID { get; set; }
 
         public string PositionCode { get; set; }

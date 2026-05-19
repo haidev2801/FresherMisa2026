@@ -251,18 +251,114 @@ Bài tập được chia thành **3 cấp độ**, từ cơ bản đến nâng c
 
 ### Cấp Độ 1
 - Repository Pattern là gì? Tại sao sử dụng?
+Repository Pattern là một design pattern dùng để tách logic truy cập dữ liệu (data access) ra khỏi business logic.
+Nó đóng vai trò như một lớp trung gian giữa:
+Business Layer
+Data Access Layer (Database)
+Lý do sử dụng:
+1. Separation of Concerns
+→ Tách business logic và data access
+2. Dễ test (Unit Test)
+→ Có thể mock repository
+3. Dễ thay đổi database
+→ Ví dụ chuyển từ SQL → MongoDB
+
+
 - DI trong .NET Core hoạt động như thế nào?
+Dependency Injection (DI) là kỹ thuật inject dependency từ bên ngoài thay vì tự tạo trong class.
+.NET Core có built-in DI container.
+
+Khi app start → đăng ký service
+Khi cần → tạo instance
+Inject vào constructor
+
+Service Lifetime - 3 loại:
+Transient → tạo mới mỗi lần request
+Scoped → tạo 1 lần mỗi HTTP request
+Singleton → tạo 1 lần toàn app
+
+
 - Sự khác biệt giữa `IBaseRepository` và `BaseRepository`?
+| `IBaseRepository`     | `BaseRepository` |
+| --------------------- | ---------------- |
+| Interface             | Class            |
+| Chỉ định nghĩa method | Implement method |
+| Không có logic        | Có logic         |
+| Dùng để inject        | Dùng để kế thừa  |
+
 
 ### Cấp Độ 2
 - Validation ở tầng nào là tốt nhất? Tại sao?
+Validation ở tầng logic nghiệp vụ (Application/Service) là tốt nhất vì:
+Client có thể bị bypass
+Ví dụ:
+  Postman
+  Curl
+  Hacker
+
+
 - Sự khác biệt giữa `[IRequired]` và DataAnnotations?
+[Required] (DataAnnotations) là Built-in của .NET và tự validate. Được dùng cho:
+  Model validation
+  MVC
+  API
+
+[IRequired] (Custom Attribute) tự tạo dùng để tạo rule validation riêng, phải tự code logic và dùng cho custom framework
+
+
 - Tại sao cần validate ở cả Client và Server?
+Vì Client để UX, Server để Security.
+
+Client Validation giúp:
+  User biết lỗi ngay
+  Giảm request sai
+  UX tốt
+
+Server Validation giúp:
+  Bảo mật
+  Ngăn dữ liệu sai
+  Không phụ thuộc client
+
 
 ### Cấp Độ 3
 - Caching strategy nào phù hợp cho API?
+Tuỳ loại dữ liệu.
+
+1. In-memory cache
+Ví dụ: IMemoryCache
+Phù hợp:
+  Dữ liệu nhỏ
+  Single server
+
+2. Distributed cache (thường dùng nhất)
+Ví dụ: Redis
+Phù hợp:
+  Multiple servers
+  Microservices
+
+3. Cache-Aside Pattern (phổ biến nhất)
+Kiểm tra xem có cache không rồi mới query dtb
+
+
 - Race condition xảy ra khi nào và cách xử lý?
+Race condition xảy ra khi nhiều thread cùng truy cập và sửa dữ liệu cùng lúc.
+
+Ví dụ:
+  User A update balance
+  User B update balance
+  → sai dữ liệu
+
+Cách xử lý:
+1. Lock
+2. Database Transaction
+3. Optimistic Concurrency
+4. Pessimistic Lock
+  Lock record trong DB.
+
+
 - Index trong SQL hoạt động như thế nào?
+Index giống mục lục của sách giúp tìm dữ liệu nhanh hơn do DTB được search theo index tree (B-Tree)
+Index phù hợp với cột hay dùng trong WHERE, JOIN, ORDER BY
 
 ---
 
