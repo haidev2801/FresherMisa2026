@@ -1,0 +1,695 @@
+{
+  "info": {
+    "_postman_id": "7d9e0db9-7d62-4c64-95e7-c7d44f3f3b31",
+    "name": "FresherMisa2026 - Positions CRUD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection để test CRUD Position cho FresherMisa2026. Có cả luồng thành công và các case lỗi phổ biến."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7173"
+    },
+    {
+      "key": "existingPositionId",
+      "value": "55555555-5555-5555-5555-555555555555"
+    },
+    {
+      "key": "missingPositionId",
+      "value": "99999999-9999-9999-9999-999999999999"
+    },
+    {
+      "key": "invalidEmptyGuid",
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "key": "protectedPositionId",
+      "value": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "key": "existingPositionCode",
+      "value": "ACC"
+    },
+    {
+      "key": "missingPositionCode",
+      "value": "NOT_EXIST_POSITION_CODE"
+    },
+    {
+      "key": "createdPositionId",
+      "value": ""
+    },
+    {
+      "key": "newPositionCode",
+      "value": ""
+    },
+    {
+      "key": "newPositionName",
+      "value": ""
+    },
+    {
+      "key": "updatedPositionCode",
+      "value": ""
+    },
+    {
+      "key": "updatedPositionName",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01. GET - All Positions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions"
+          ]
+        },
+        "description": "Lấy toàn bộ danh sách position."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response is success', function () {",
+              "    pm.expect(json.isSuccess).to.eql(true);",
+              "    pm.expect(json.code).to.eql(200);",
+              "    pm.expect(json.data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "02. GET - Position By Existing Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{existingPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{existingPositionId}}"
+          ]
+        },
+        "description": "Lấy position theo id tồn tại."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response contains requested id', function () {",
+              "    pm.expect(json.isSuccess).to.eql(true);",
+              "    pm.expect(json.data.positionID).to.eql(pm.collectionVariables.get('existingPositionId'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "03. GET - Position By Missing Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{missingPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{missingPositionId}}"
+          ]
+        },
+        "description": "Kiểm tra 404 khi id không tồn tại."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 404', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response is not found', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "04. GET - Position By Empty Guid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{invalidEmptyGuid}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{invalidEmptyGuid}}"
+          ]
+        },
+        "description": "Kiểm tra 400 khi id là Guid.Empty."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response says invalid id', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(400);",
+              "    pm.expect(json.devMessage).to.include('Id không hợp lệ');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "05. GET - Position By Existing Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/Code/{{existingPositionCode}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "Code",
+            "{{existingPositionCode}}"
+          ]
+        },
+        "description": "Lấy position theo code tồn tại."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response contains requested code', function () {",
+              "    pm.expect(json.isSuccess).to.eql(true);",
+              "    pm.expect(json.data.positionCode).to.eql(pm.collectionVariables.get('existingPositionCode'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "06. GET - Position By Missing Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/Code/{{missingPositionCode}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "Code",
+            "{{missingPositionCode}}"
+          ]
+        },
+        "description": "Kiểm tra 404 khi code không tồn tại."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 404', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response is not found', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "07. POST - Create Position Success",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"positionCode\": \"{{newPositionCode}}\",\n  \"positionName\": \"{{newPositionName}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions"
+          ]
+        },
+        "description": "Tạo mới position hợp lệ, tự sinh code ngẫu nhiên để tránh trùng."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now().toString().slice(-6);",
+              "pm.collectionVariables.set('newPositionCode', `POS${suffix}`);",
+              "pm.collectionVariables.set('newPositionName', `Position ${suffix}`);",
+              "pm.collectionVariables.set('updatedPositionCode', `UPD${suffix}`);",
+              "pm.collectionVariables.set('updatedPositionName', `Updated Position ${suffix}`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Create response is success', function () {",
+              "    pm.expect(json.isSuccess).to.eql(true);",
+              "    pm.expect(json.code).to.eql(200);",
+              "});",
+              "",
+              "pm.collectionVariables.set('createdPositionId', '');"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "08. POST - Create Position Duplicate Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"positionCode\": \"ACC\",\n  \"positionName\": \"Duplicate Accountant\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions"
+          ]
+        },
+        "description": "Kiểm tra lỗi trùng PositionCode."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response indicates duplicate code', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(400);",
+              "    const msg = (json.devMessage || json.userMessage || '').toString();",
+              "    pm.expect(msg).to.include('PositionCode đã tồn tại');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "09. POST - Create Position Required Validation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"positionCode\": \"\",\n  \"positionName\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions"
+          ]
+        },
+        "description": "Kiểm tra validate bắt buộc nhập."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response indicates required validation', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(400);",
+              "    pm.expect((json.devMessage || '').toString()).to.include('bắt buộc nhập');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "10. PUT - Update Position Success",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"positionCode\": \"{{updatedPositionCode}}\",\n  \"positionName\": \"{{updatedPositionName}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{existingPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{existingPositionId}}"
+          ]
+        },
+        "description": "Cập nhật bản ghi tồn tại. Mặc định dùng ACC để cập nhật thành code mới ngẫu nhiên."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('updatedPositionCode')) {",
+              "    const suffix = Date.now().toString().slice(-6);",
+              "    pm.collectionVariables.set('updatedPositionCode', `UPD${suffix}`);",
+              "    pm.collectionVariables.set('updatedPositionName', `Updated Position ${suffix}`);",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Update response is success', function () {",
+              "    pm.expect(json.isSuccess).to.eql(true);",
+              "    pm.expect(json.code).to.eql(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "11. PUT - Update Position Missing Id",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"positionCode\": \"POS_MISSING\",\n  \"positionName\": \"Missing Position\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{missingPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{missingPositionId}}"
+          ]
+        },
+        "description": "Kiểm tra 404 khi update id không tồn tại."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 404', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response is not found', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "12. PUT - Update Position Duplicate Code",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"positionCode\": \"HR\",\n  \"positionName\": \"Duplicate Code Update\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{existingPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{existingPositionId}}"
+          ]
+        },
+        "description": "Kiểm tra lỗi duplicate khi update. existingPositionId nên khác position code HR."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response indicates duplicate code', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(400);",
+              "    const msg = (json.devMessage || json.userMessage || '').toString();",
+              "    pm.expect(msg).to.include('PositionCode đã tồn tại');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "13. DELETE - Protected Position",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{protectedPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{protectedPositionId}}"
+          ]
+        },
+        "description": "Kiểm tra chặn xóa position đang bị employee tham chiếu."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response indicates delete is blocked', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(400);",
+              "    const msg = (json.devMessage || json.userMessage || '').toString();",
+              "    pm.expect(msg).to.include('Không thể xóa chức vụ');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "14. DELETE - Missing Position",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/Positions/{{missingPositionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "Positions",
+            "{{missingPositionId}}"
+          ]
+        },
+        "description": "Kiểm tra 404 khi xóa id không tồn tại."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 404', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Response is not found', function () {",
+              "    pm.expect(json.isSuccess).to.eql(false);",
+              "    pm.expect(json.code).to.eql(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

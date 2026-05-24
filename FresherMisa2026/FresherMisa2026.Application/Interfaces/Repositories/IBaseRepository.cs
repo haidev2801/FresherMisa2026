@@ -1,4 +1,5 @@
 using FresherMisa2026.Entities;
+using FresherMisa2026.Entities.AdvancedFilter;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,6 +8,16 @@ namespace FresherMisa2026.Application.Interfaces
 {
     public interface IBaseRepository<TEntity>
     {
+        /// <summary>
+        /// Approach 1: Dynamic SQL — C# build WHERE, values parameterized, an toàn injection
+        /// </summary>
+        Task<(long Total, IEnumerable<TEntity> Data)> GetAdvancedFilterPagingAsync(AdvancedFilterRequest request);
+
+        /// <summary>
+        /// Approach 2: Stored Procedure — truyền filters JSON vào SP, SP tự build WHERE
+        /// </summary>
+        Task<(long Total, IEnumerable<TEntity> Data)> GetAdvancedFilterPagingWithProcAsync(AdvancedFilterRequest request);
+
         /// <summary>
         /// Lấy danh sách thực thể paging
         /// </summary>
@@ -49,6 +60,14 @@ namespace FresherMisa2026.Application.Interfaces
         Task<int> DeleteAsync(Guid entityId);
 
         /// <summary>
+        /// Xóa nhiều bản ghi trong một transaction
+        /// </summary>
+        /// <param name="ids">Danh sách Id cần xóa</param>
+        /// <returns>Số bản ghi bị xóa</returns>
+        /// CREATED BY: DVHAI (19/05/2026)
+        Task<int> DeleteManyAsync(List<Guid> ids);
+
+        /// <summary>
         /// Thêm bản ghi
         /// </summary>
         /// <param name="entity">Thông tin bản ghi</param>
@@ -64,5 +83,15 @@ namespace FresherMisa2026.Application.Interfaces
         /// <returns>Số bản ghi bị ảnh hưởng</returns>
         /// CREATED BY: DVHAI (07/07/2026)
         Task<int> UpdateAsync(Guid entityId, TEntity entity);
+
+        /// <summary>
+        /// Cập nhật một trường cụ thể của bản ghi (PATCH single field)
+        /// </summary>
+        /// <param name="entityId">Id bản ghi</param>
+        /// <param name="fieldName">Tên cột trong DB (đã validate qua reflection)</param>
+        /// <param name="value">Giá trị mới</param>
+        /// <returns>Số bản ghi bị ảnh hưởng</returns>
+        /// CREATED BY: NTDo (24/05/2026)
+        Task<int> PatchFieldAsync(Guid entityId, string fieldName, object? value);
     }
 }
