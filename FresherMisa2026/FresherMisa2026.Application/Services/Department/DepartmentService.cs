@@ -30,26 +30,38 @@ namespace FresherMisa2026.Application.Services
         /// Lấy department theo code
         /// </summary>
         /// Created By: dvhai (10/04/2026)
+        /// Modified by: ChucTC1 - 21/4/2026
+        /// Sửa bỏ throw để nó lấy được exception riêng
+        //public async Task<Department> GetDepartmentByCodeAsync(string code)
+        //{
+        //    var department = await _deptRepository.GetDepartmentByCode(code);
+        //    if (department == null)
+        //        throw new Exception("department is null");
+
+        //    return department;
+        //}
         public async Task<Department> GetDepartmentByCodeAsync(string code)
         {
-            var department = await _deptRepository.GetDepartmentByCode(code);
-            if (department == null)
-                throw new Exception("department is null");
-
-            return department;
+            return await _deptRepository.GetDepartmentByCode(code);
         }
 
         /// <summary>
         /// Lấy danh sách nhân viên theo mã phòng ban
         /// </summary>
+        //public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
+        //{
+        //    var department = await _deptRepository.GetDepartmentByCode(code);
+        //    if (department == null)
+        //        throw new Exception($"Không tìm thấy phòng ban có mã: {code}");
+
+        //    return await _employeeRepository.GetEmployeesByDepartmentId(department.DepartmentID);
+        //}
         public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentCodeAsync(string code)
         {
-            // 1. Tìm department theo code
             var department = await _deptRepository.GetDepartmentByCode(code);
             if (department == null)
-                throw new Exception($"Không tìm thấy phòng ban có mã: {code}");
+                return null;
 
-            // 2. Lấy danh sách nhân viên theo DepartmentID
             return await _employeeRepository.GetEmployeesByDepartmentId(department.DepartmentID);
         }
 

@@ -40,6 +40,21 @@ namespace FresherMisa2026.Application.Services
             return await _employeeRepository.GetEmployeesByPositionId(positionId);
         }
 
+
+        /// <summary>
+        /// Created by: ChucTC1 (18/04/2026)    
+        /// Hàm lọc nhân viên theo các tiêu chí: phòng ban, chức vụ, mức lương, giới tính, ngày tuyển dụng
+        /// </summary>
+        /// <param name="departmentId"></param>
+        /// <param name="positionId"></param>
+        /// <param name="salaryFrom"></param>
+        /// <param name="salaryTo"></param>
+        /// <param name="gender"></param>
+        /// <param name="hireDateFrom"></param>
+        /// <param name="hireDateTo"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="pageIndex"></param>
+        /// <returns></returns>
         public async Task<PagingResponse<Employee>> FilterEmployeesAsync(
             Guid? departmentId,
             Guid? positionId,

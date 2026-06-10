@@ -72,19 +72,25 @@ SHOW INDEX FROM employee;
 -- ============================================================
 
 -- Test 1: Filter theo DepartmentID (CÓ index)
--- EXPLAIN SELECT * FROM employee WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002';
+EXPLAIN SELECT * FROM employee WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002';
 
 -- Test 2: Filter theo PositionID (CÓ index)
--- EXPLAIN SELECT * FROM employee WHERE PositionID = '11111111-1111-1111-1111-111111111111';
+EXPLAIN SELECT * FROM employee WHERE PositionID = '11111111-1111-1111-1111-111111111111';
 
 -- Test 3: Tìm theo EmployeeCode (CÓ UNIQUE index)
--- EXPLAIN SELECT * FROM employee WHERE EmployeeCode = 'EMP001';
+EXPLAIN SELECT * FROM employee WHERE EmployeeCode = 'EMP001';
 
 -- Test 4: Filter kết hợp DepartmentID + PositionID + Gender (CÓ composite index)
--- EXPLAIN SELECT * FROM employee WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002' AND PositionID = '11111111-1111-1111-1111-111111111111' AND Gender = 1;
+EXPLAIN SELECT * FROM employee WHERE DepartmentID = '550e8400-e29b-41d4-a716-446655440002' AND PositionID = '11111111-1111-1111-1111-111111111111' 
+AND Gender = 1;
 
 -- Test 5: Filter Salary range (CÓ index)
--- EXPLAIN SELECT * FROM employee WHERE Salary >= 5000000 AND Salary <= 20000000;
+EXPLAIN SELECT * FROM employee WHERE Salary >= 5000000 AND Salary <= 20000000;
 
 -- Test 6: Filter không có index - LIKE trên tên (KHÔNG CÓ index → Full Table Scan)
--- EXPLAIN SELECT * FROM employee WHERE EmployeeName LIKE '%Nguyễn%';
+-- NOTE: Không nhận index với where có date, like có % ở đầu
+EXPLAIN SELECT * FROM employee WHERE EmployeeName LIKE 'Nguyễn%';
+
+-- 24/4/2026
+-- Học thêm analyze - phân tích chuyên sâu với explain
+-- EXPLAIN analyze select...

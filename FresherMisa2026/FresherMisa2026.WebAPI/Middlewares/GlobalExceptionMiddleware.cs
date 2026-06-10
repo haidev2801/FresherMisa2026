@@ -36,12 +36,12 @@ namespace FresherMisa2026.WebAPI.Middlewares
         }
 
         /// <summary>
-        /// Xử lý lỗi duplicate entry (race condition) - trả về 400
+        /// Xử lý lỗi duplicate entry (race condition) - trả về 409 Conflict
         /// </summary>
         private static Task HandleDuplicateEntryAsync(HttpContext context, DuplicateEntryException exception)
         {
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
 
             var response = new ServiceResponse
             {

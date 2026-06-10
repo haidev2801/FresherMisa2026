@@ -124,10 +124,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
             // Kiểm tra cache trước
             if (_cache.TryGetValue(cacheKey, out IEnumerable<TEntity> cachedEntities))
             {
+                //Console.WriteLine($"✅ CACHE HIT: {cacheKey}");
                 return cachedEntities;
             }
 
             // Nếu không có cache, truy vấn DB
+            //Console.WriteLine($"❌ CACHE MISS: {cacheKey} → query DB");
             var entities = await GetEntitiesUsingCommandTextAsync();
 
             // Lưu vào cache với thời gian 5 phút
@@ -293,9 +295,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     //3. Xóa cache danh sách khi insert thành công
                     InvalidateCache();
                 }
-                catch (MySqlException ex) when (ex.Number == 1062)
+                catch (MySqlException ex) when (ex.Number == 1062 || ex.Number == 1644)
                 {
-                    // Duplicate entry - race condition xảy ra
+                    // 1062: UNIQUE constraint violation (race condition)
+                    // 1644: SIGNAL từ stored procedure (duplicate check)
                     transaction.Rollback();
                     throw new DuplicateEntryException(ExtractDuplicateMessage(ex.Message));
                 }
@@ -341,9 +344,10 @@ namespace FresherMisa2026.Infrastructure.Repositories
                     //4. Xóa cache khi update thành công
                     InvalidateCache(entityId);
                 }
-                catch (MySqlException ex) when (ex.Number == 1062)
+                catch (MySqlException ex) when (ex.Number == 1062 || ex.Number == 1644)
                 {
-                    // Duplicate entry - race condition xảy ra
+                    // 1062: UNIQUE constraint violation (race condition)
+                    // 1644: SIGNAL từ stored procedure (duplicate check)
                     transaction.Rollback();
                     throw new DuplicateEntryException(ExtractDuplicateMessage(ex.Message));
                 }

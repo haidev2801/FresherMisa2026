@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities.Position;
@@ -13,7 +13,12 @@ namespace FresherMisa2026.Infrastructure.Repositories
         public PositionRepository(IConfiguration configuration, IMemoryCache cache) : base(configuration, cache)
         {
         }
-
+        /// <summary>
+        /// Lấy position theo code
+        /// </summary>
+        /// <param name="code">Mã position</param>
+        /// <returns>Position tìm thấy hoặc null</returns>
+        /// CREATED BY: ChucTC1 (18/04/2026)
         public async Task<Position> GetPositionByCode(string code)
         {
             string query = SQLExtension.GetQuery("Position.GetByCode");
