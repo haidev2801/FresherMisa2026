@@ -84,23 +84,33 @@ namespace FresherMisa2026.WebAPI.Controllers
 
         /// <summary>
         /// Thêm một thực thể mới
+        /// Modified by: ChucTC1 - 21/4/2026
+        /// Sửa: khi MySQL detect duplicate (error 1062), BaseRepository throw DuplicateEntryException
+        ///     nhưng exception này đi qua BaseController.Post() trước khi tới middleware
+        ///     nên sửa bỏ try catch để nó không tự catch  
         /// </summary>
         [HttpPost]
         public async Task<ActionResult<ServiceResponse>> Post([FromBody] TEntity entity)
         {
-            try
-            {
-                var response = await _baseService.InsertAsync(entity);
-                
-                if (!response.IsSuccess)
-                    return BadRequest(response);
+            //try
+            //{
+            //    var response = await _baseService.InsertAsync(entity);
 
-                return StatusCode((int)ResponseCode.Created, response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            //    if (!response.IsSuccess)
+            //        return BadRequest(response);
+
+            //    return StatusCode((int)ResponseCode.Created, response);
+            //}
+            //catch (Exception ex)
+            //{
+            //    return StatusCode(500, ex.Message);
+            //}
+            var response = await _baseService.InsertAsync(entity);
+
+            if (!response.IsSuccess)
+                return BadRequest(response);
+
+            return StatusCode((int)ResponseCode.Created, response);
         }
 
         /// <summary>

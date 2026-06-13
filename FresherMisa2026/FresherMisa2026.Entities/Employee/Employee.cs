@@ -10,8 +10,18 @@ namespace FresherMisa2026.Entities.Employee
         [Key]
         public Guid EmployeeID { get; set; }
 
+        /// <summary>
+        /// Mã nhân viên
+        /// </summary>
+        [IRequired]
+        [Display(Name = "Mã nhân viên")]
         public string EmployeeCode { get; set; }
 
+        /// <summary>
+        /// Tên nhân viên
+        /// </summary>
+        [IRequired]
+        [Display(Name = "Tên nhân viên")]
         public string EmployeeName { get; set; }
 
         public int? Gender { get; set; }
@@ -24,11 +34,31 @@ namespace FresherMisa2026.Entities.Employee
 
         public string? Address { get; set; }
 
+        /// <summary>
+        /// Phòng ban
+        /// </summary>
+        [IRequired]
+        [Display(Name = "Phòng ban")]
         public Guid DepartmentID { get; set; }
 
+        /// <summary>
+        /// Vị trí
+        /// </summary>
+        [IRequired]
+        [Display(Name = "Vị trí")]
         public Guid PositionID { get; set; }
 
         public decimal? Salary { get; set; }
+
+        /// <summary>
+        /// Ngày vào làm từ
+        /// </summary>
+        public DateTime? HireDateFrom { get; set; }
+
+        /// <summary>
+        /// Ngày vào làm đến
+        /// </summary>
+        public DateTime? HireDateTo { get; set; }
 
         public DateTime? CreatedDate { get; set; }
     }

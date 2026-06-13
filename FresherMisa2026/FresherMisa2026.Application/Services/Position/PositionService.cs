@@ -29,6 +29,13 @@ namespace FresherMisa2026.Application.Services
             return position;
         }
 
+        /// <summary>
+        /// Created by: ChucTC1 - 18/4/2026
+        /// Modified by: ChucTC1 - 21/4/2026
+        /// Sửa: vì chưa check null ở đây nên thêm điều kiện check null để tránh lỗi khi position.PositionCode là null
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
         protected override List<ValidationError> ValidateCustom(Position position)
         {
             var errors = new List<ValidationError>();
@@ -37,7 +44,15 @@ namespace FresherMisa2026.Application.Services
             {
                 errors.Add(new ValidationError("PositionCode", "Mã vị trí không được vượt quá 20 ký tự"));
             }
-
+            
+            if (!string.IsNullOrEmpty(position.PositionCode))
+            {
+                var existing = _positionRepository.GetPositionByCode(position.PositionCode).Result;
+                if (existing != null && existing.PositionID != position.PositionID)
+                {
+                    errors.Add(new ValidationError("PositionCode", "Mã vị trí đã tồn tại"));
+                }
+            }
             return errors;
         }
     }
